@@ -38,12 +38,46 @@ const apiLimiter = rateLimit({
   }
 });
 
+// NUEVA: Ruta detallada para depuración
+router.post('/debug/submit', (req, res) => {
+  try {
+    console.log('------------------------------------');
+    console.log('Ruta /api/form/debug/submit accedida');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Cuerpo:', JSON.stringify(req.body, null, 2));
+    console.log('URL original:', req.originalUrl);
+    console.log('Método:', req.method);
+    console.log('IP:', req.ip);
+    console.log('------------------------------------');
+    
+    // Responder para confirmar que la ruta funciona
+    res.status(200).json({
+      success: true,
+      message: 'Datos recibidos correctamente para depuración',
+      received: req.body,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error en ruta de depuración:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en el procesamiento',
+      error: error.message
+    });
+  }
+});
+
 // Ruta principal para procesar el formulario
 // Activar la validación para ayudar a detectar problemas de formato
 router.post('/submit', apiLimiter, validateFormData, (req, res) => {
   try {
+    console.log('------------------------------------');
     console.log('Ruta /api/form/submit accedida');
-    console.log('Cuerpo de la solicitud:', req.body);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Contenido recibido:', typeof req.body === 'object' ? 'Objeto JSON válido' : typeof req.body);
+    console.log('IP:', req.ip);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('------------------------------------');
     
     // Si llegamos aquí, los datos son válidos, pasarlos al controlador
     return formController.processForm(req, res);
@@ -63,17 +97,22 @@ router.get('/status/:requestId', formController.checkStatus);
 // Ruta para el panel de administración
 router.get('/admin/submissions', formController.getSubmissions);
 
-// Ruta para depuración (disponible en todos los entornos temporalmente)
+// NUEVA: Ruta para depuración (disponible en todos los entornos temporalmente)
 router.get('/debug/test', (req, res) => {
   res.status(200).json({
     message: 'Ruta de depuración funcionando correctamente',
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || 'production'
+    env: process.env.NODE_ENV || 'production',
+    headers: req.headers
   });
 });
 
-// Nueva ruta para verificación del formato de datos
+// NUEVA: Ruta para verificación del formato de datos
 router.post('/debug/echo', (req, res) => {
+  console.log('Ruta /api/form/debug/echo accedida');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Cuerpo:', JSON.stringify(req.body, null, 2));
+  
   res.status(200).json({
     message: 'Echo de datos recibidos',
     received: req.body,
