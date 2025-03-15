@@ -1,0 +1,60 @@
+# Dependencias
+node_modules/
+package-lock.json
+
+# Archivos de entorno y configuración
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+.env.backup
+
+# Archivos temporales
+temp/
+/temp
+*.tmp
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Directorio de construcción y distribución
+dist/
+build/
+out/
+coverage/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archivos de editor
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archivos generados
+.vercel
+.next
+.cache/
+public/uploads/
+uploads/
+
+# Archivos PDF generados temporalmente
+*.pdf
+
+# Otros
+.directory
+.Trash-*
+.nfs*
