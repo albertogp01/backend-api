@@ -26,10 +26,10 @@ router.get('/', (req, res) => {
 });
 
 // Crear limitador de peticiones para evitar abusos
-// Restringir a 5 solicitudes por minuto por IP
+// Restringir a 10 solicitudes por minuto por IP
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 10, // Aumentado a 10 solicitudes por ventana
+  max: 10, // 10 solicitudes por ventana
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -39,13 +39,13 @@ const apiLimiter = rateLimit({
 });
 
 // Ruta principal para procesar el formulario
-// Desactivar temporalmente la validación para permitir que el formulario funcione
-router.post('/submit', apiLimiter, (req, res) => {
+// Activar la validación para ayudar a detectar problemas de formato
+router.post('/submit', apiLimiter, validateFormData, (req, res) => {
   try {
     console.log('Ruta /api/form/submit accedida');
     console.log('Cuerpo de la solicitud:', req.body);
     
-    // Pasar directamente al controlador sin validación
+    // Si llegamos aquí, los datos son válidos, pasarlos al controlador
     return formController.processForm(req, res);
   } catch (error) {
     console.error('Error en ruta /submit:', error);
@@ -69,6 +69,16 @@ router.get('/debug/test', (req, res) => {
     message: 'Ruta de depuración funcionando correctamente',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'production'
+  });
+});
+
+// Nueva ruta para verificación del formato de datos
+router.post('/debug/echo', (req, res) => {
+  res.status(200).json({
+    message: 'Echo de datos recibidos',
+    received: req.body,
+    contentType: req.headers['content-type'],
+    timestamp: new Date().toISOString()
   });
 });
 
