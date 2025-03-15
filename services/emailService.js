@@ -17,6 +17,7 @@ const processedEmails = new Set();
  * @param {string} requestId - Identificador único de la solicitud
  * @returns {Promise<void>}
  */
+
 const sendEmail = async (email, pdfPath, requestId = null) => {
   // Si tenemos un ID de solicitud, verificamos si ya procesamos este ID
   if (requestId) {

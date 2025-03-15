@@ -31,7 +31,10 @@ const statistics = {
  */
 exports.processForm = async (req, res) => {
   try {
-    console.log("Formulario recibido");
+    console.log("==== NUEVA SOLICITUD DE FORMULARIO ====");
+    console.log("Datos recibidos:", JSON.stringify(req.body));
+    console.log("IP:", req.ip);
+    console.log("Fecha y hora:", new Date().toISOString());
     
     // Generar ID único para esta solicitud
     const requestId = uuidv4();
