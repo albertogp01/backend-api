@@ -21,7 +21,7 @@ app.use(cors({
   // Configurar los dominios permitidos
   origin: process.env.CORS_ALLOWED_ORIGINS 
     ? process.env.CORS_ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:3000', 'https://tudominio.com'],
+    : ['http://localhost:3000', 'https://fitform.coach'],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
