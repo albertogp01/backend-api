@@ -4,11 +4,11 @@
  */
 
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const formRoutes = require('./routes/formRoutes');
+const corsMiddleware = require('./middleware/cors');
 
 // Cargar variables de entorno desde .env
 dotenv.config();
@@ -18,16 +18,6 @@ const PORT = process.env.PORT || 8080;
 
 // Determinar el entorno de ejecución
 const isProduction = process.env.NODE_ENV === 'production';
-
-// Configurar orígenes permitidos para CORS
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
-  ? process.env.CORS_ALLOWED_ORIGINS.split(',') 
-  : ['https://fitform.coach', 'https://www.fitform.coach'];
-
-// Agregar localhost solo en desarrollo
-if (!isProduction) {
-  allowedOrigins.push('http://localhost:3000', 'http://localhost:8000');
-}
 
 // Middleware básico
 app.use(helmet({
@@ -46,26 +36,8 @@ app.use(helmet({
   xssFilter: true,
 }));
 
-// Configuración CORS segura
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permitir solicitudes sin origen (como las aplicaciones móviles o curl)
-    if (!origin) return callback(null, true);
-    
-    // Verificar si el origen está en la lista de permitidos
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.warn(`Origen bloqueado por CORS: ${origin}`);
-      callback(new Error('No permitido por CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'X-Request-Id'],
-  credentials: true,
-  maxAge: 86400 // 24 horas en segundos
-}));
+// Usar el middleware CORS personalizado
+app.use(corsMiddleware);
 
 // Límites para solicitudes JSON para prevenir ataques DoS
 app.use(express.json({ 
@@ -181,7 +153,6 @@ const server = app.listen(PORT, () => {
   ========================================
   🚀 Servidor API funcionando en puerto ${PORT}
   📄 Modo: ${process.env.NODE_ENV || 'development'}
-  🔒 CORS: ${allowedOrigins.join(', ')}
   ========================================
   `);
 });

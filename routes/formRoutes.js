@@ -25,21 +25,11 @@ router.get('/', (req, res) => {
   });
 });
 
-// Ruta de prueba simple
-router.get('/test', (req, res) => {
-  console.log('Ruta de prueba /api/form/test accedida');
-  res.status(200).json({
-    success: true,
-    message: 'Ruta de prueba funcionando correctamente',
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Crear limitador de peticiones para evitar abusos
 // Restringir a 5 solicitudes por minuto por IP
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 5, // 5 solicitudes por ventana
+  max: 10, // Aumentado a 10 solicitudes por ventana
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -48,33 +38,14 @@ const apiLimiter = rateLimit({
   }
 });
 
-// Versión simplificada de la ruta submit para pruebas
-router.post('/submit-test', (req, res) => {
-  console.log('Ruta /api/form/submit-test accedida');
-  console.log('Datos recibidos:', req.body);
-  res.status(200).json({ 
-    success: true, 
-    message: "Formulario recibido correctamente (endpoint de prueba)",
-    data: req.body,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Middleware de debugging para la ruta /submit
-router.use('/submit', (req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Accediendo a ruta /api/form/submit - Método: ${req.method}`);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
-  next();
-});
-
 // Ruta principal para procesar el formulario
-// Temporalmente desactivamos la validación para pruebas
+// Desactivar temporalmente la validación para permitir que el formulario funcione
 router.post('/submit', apiLimiter, (req, res) => {
   try {
-    console.log('Procesando solicitud en /api/form/submit');
+    console.log('Ruta /api/form/submit accedida');
+    console.log('Cuerpo de la solicitud:', req.body);
     
-    // Si el validador está causando problemas, pasamos directamente al controlador
+    // Pasar directamente al controlador sin validación
     return formController.processForm(req, res);
   } catch (error) {
     console.error('Error en ruta /submit:', error);
@@ -86,11 +57,10 @@ router.post('/submit', apiLimiter, (req, res) => {
   }
 });
 
-// Ruta para verificar el estado de un envío (útil para verificar si se procesó correctamente)
+// Ruta para verificar el estado de un envío
 router.get('/status/:requestId', formController.checkStatus);
 
-// Ruta para el panel de administración (protegerla adecuadamente en producción)
-// En producción, agregar middleware de autenticación
+// Ruta para el panel de administración
 router.get('/admin/submissions', formController.getSubmissions);
 
 // Ruta para depuración (disponible en todos los entornos temporalmente)
