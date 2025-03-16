@@ -23,29 +23,11 @@ module.exports = (req, res, next) => {
   const origin = req.headers.origin;
   console.log(`[CORS] Solicitud recibida de origen: ${origin || 'desconocido'}`);
   
-  // Verificar si el origen de la solicitud está en la lista de permitidos
-  if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes('*'))) {
-    console.log(`[CORS] Origen permitido: ${origin}`);
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (process.env.NODE_ENV === 'development' || process.env.CORS_ALLOW_ALL === 'true') {
-    // En desarrollo o si se configura explícitamente, ser más permisivos
-    console.log(`[CORS] Modo desarrollo: permitiendo origen ${origin || '*'}`);
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  } else if (origin) {
-    // Registrar intentos de acceso no permitidos
-    console.warn(`[CORS] Origen no permitido: ${origin}`);
-    
-    // Para depuración, permitir temporalmente cualquier origen en producción
-    // NOTA: Eliminar estas líneas después de solucionar el problema
-    console.log(`[CORS] TEMPORAL: Permitiendo origen no listado ${origin} para depuración`);
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  // Configurar otros headers CORS - MÁS PERMISIVOS PARA DIAGNÓSTICO
+  // Para depuración, permitir temporalmente cualquier origen
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Request-Id');
   
   // Configurar máximo tiempo de caché para preflight requests
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 horas
