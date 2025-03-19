@@ -1,9 +1,3 @@
-/**
- * backend-api/services/openaiService.js
- * Servicio robusto para generar rutinas de entrenamiento usando OpenAI
- * Adaptado de la versión original para funcionar sin Typeform
- */
-
 const OpenAI = require("openai");
 const dotenv = require('dotenv');
 
@@ -307,74 +301,56 @@ function mapLinesToQuestions(lines) {
 }
 
 /**
- * Obtiene la respuesta a una pregunta específica o patrón de pregunta
- * Mejorado para buscar por patrones y contenido parcial
+ * Obtiene la respuesta a una pregunta específica
+ * Mejorada para detectar mejor referencias a peso y altura
  * 
- * @param {string|RegExp} questionPattern - Texto o patrón de la pregunta
+ * @param {string} questionKeyword - Palabra clave o frase de la pregunta
  * @param {Array} responses - Array de respuestas
  * @returns {string} - Respuesta encontrada o cadena vacía
  */
-function getAnswer(questionPattern, responses) {
-  if (!responses || !Array.isArray(responses)) {
-    return '';
-  }
+function getAnswer(questionKeyword, responses) {
+  // Normalizar la palabra clave para la búsqueda
+  const normalizedKeyword = questionKeyword.toLowerCase();
 
-  // Si es string, convertir a expresión regular para buscar coincidencias parciales
-  const pattern = typeof questionPattern === 'string' 
-    ? new RegExp(questionPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')  // Escapar caracteres especiales
-    : questionPattern;
-
-  // Buscar por coincidencia exacta primero
-  if (typeof questionPattern === 'string') {
-    const exactMatch = responses.find(r => 
-      r.question && r.question.toLowerCase() === questionPattern.toLowerCase()
+  // Casos especiales para peso y altura con patrones específicos
+  if (normalizedKeyword.includes('peso') || normalizedKeyword === 'pesas') {
+    const weightResponse = responses.find(r => 
+      r.question.toLowerCase().includes('peso') || 
+      r.question.toLowerCase().includes('pesas') ||
+      (r.answer && /\d+\s*(kg|kilos|libras|lb)/i.test(r.answer))
     );
-    if (exactMatch && exactMatch.answer && exactMatch.answer.trim() !== '') {
-      return exactMatch.answer.trim();
+    if (weightResponse && weightResponse.answer && weightResponse.answer.trim() !== '') {
+      return weightResponse.answer.trim();
     }
   }
 
-  // Buscar por coincidencia parcial
-  const response = responses.find(r => r.question && pattern.test(r.question));
+  if (normalizedKeyword.includes('altura') || normalizedKeyword === 'mides') {
+    const heightResponse = responses.find(r => 
+      r.question.toLowerCase().includes('altura') || 
+      r.question.toLowerCase().includes('estatura') || 
+      r.question.toLowerCase().includes('mides') ||
+      (r.answer && /\d+\s*(cm|metros|m|pie|pies|ft)/i.test(r.answer))
+    );
+    if (heightResponse && heightResponse.answer && heightResponse.answer.trim() !== '') {
+      return heightResponse.answer.trim();
+    }
+  }
+
+  // Búsqueda general para otras preguntas
+  const response = responses.find(r => r.question.toLowerCase().includes(normalizedKeyword));
   if (response && response.answer && response.answer.trim() !== '') {
     return response.answer.trim();
   }
 
-  // Buscar en el campo field si existe (para respuestas procesadas de formularios)
-  const fieldMatch = responses.find(r => r.field && pattern.test(r.field));
-  if (fieldMatch && fieldMatch.answer && fieldMatch.answer.trim() !== '') {
-    return fieldMatch.answer.trim();
+  // Búsqueda en el contenido de las respuestas si no se encontró en las preguntas
+  const contentMatch = responses.find(r => 
+    r.answer && r.answer.toLowerCase().includes(normalizedKeyword)
+  );
+  if (contentMatch && contentMatch.answer && contentMatch.answer.trim() !== '') {
+    return contentMatch.answer.trim();
   }
-
+  
   return '';
-}
-
-/**
- * Limpia y normaliza datos inconsistentes del cliente
- * Elimina campos conflictivos o duplicados
- * 
- * @param {Object} data - Datos del cliente
- * @returns {Object} - Datos limpios
- */
-function cleanClientData(data) {
-  const cleanedData = { ...data };
-  
-  // Eliminar campos vacíos o nulos
-  Object.keys(cleanedData).forEach(key => {
-    if (!cleanedData[key] || cleanedData[key].trim() === '') {
-      delete cleanedData[key];
-    }
-  });
-  
-  // Normalizar respuestas genéricas
-  Object.keys(cleanedData).forEach(key => {
-    const value = cleanedData[key].toLowerCase();
-    if (['no', 'ninguno', 'ninguna', 'nada', 'sin'].includes(value)) {
-      cleanedData[key] = 'No';
-    }
-  });
-  
-  return cleanedData;
 }
 
 /**
@@ -420,6 +396,27 @@ function buildClientDescription(data) {
   // ALTURA
   if (data.height) {
     description += `Mide ${data.height}. `;
+  }
+  
+  // IMC
+  if (data.imc) {
+    description += `Su IMC es de ${data.imc}, lo cual `;
+    
+    // Clasificación del IMC según la OMS
+    const imcValue = parseFloat(data.imc);
+    if (imcValue < 18.5) {
+      description += `indica un peso inferior al normal. `;
+    } else if (imcValue >= 18.5 && imcValue < 25) {
+      description += `está dentro del rango de peso normal. `;
+    } else if (imcValue >= 25 && imcValue < 30) {
+      description += `indica sobrepeso. `;
+    } else if (imcValue >= 30 && imcValue < 35) {
+      description += `indica obesidad grado 1. `;
+    } else if (imcValue >= 35 && imcValue < 40) {
+      description += `indica obesidad grado 2. `;
+    } else {
+      description += `indica obesidad grado 3 o mórbida. `;
+    }
   }
   
   // CONDICIÓN FÍSICA
@@ -572,8 +569,8 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
     name: getAnswer("¿Cómo te llamas?", enhancedResponses) || "el cliente",
     gender: getAnswer("género", enhancedResponses),
     age: getAnswer("edad", enhancedResponses),
-    weight: getAnswer("pesas", enhancedResponses) || getAnswer("peso", enhancedResponses),
-    height: getAnswer("altura", enhancedResponses) || getAnswer("mides", enhancedResponses),
+    weight: getAnswer("peso", enhancedResponses) || getAnswer("pesas", enhancedResponses),
+    height: getAnswer("altura", enhancedResponses) || getAnswer("mides", enhancedResponses) || getAnswer("estatura", enhancedResponses),
     trainingGoal: getAnswer("objetivo", enhancedResponses),
     experienceLevel: getAnswer("nivel", enhancedResponses) || getAnswer("experiencia", enhancedResponses),
     fitnessLevel: getAnswer("condición física", enhancedResponses),
@@ -597,6 +594,29 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
   
   console.log("Datos del cliente extraídos:", clientData);
   
+  // Calcular IMC si se dispone de peso y altura
+  let imc = null;
+  if (clientData.weight && clientData.height) {
+    // Extraer números del peso y altura
+    const weightValue = parseFloat(clientData.weight.replace(/[^\d.]/g, ''));
+    const heightValue = parseFloat(clientData.height.replace(/[^\d.]/g, ''));
+    
+    // Verificar que se obtuvieron valores numéricos válidos
+    if (!isNaN(weightValue) && !isNaN(heightValue) && heightValue > 0) {
+      // Altura en metros (convertir de cm si es necesario)
+      const heightInMeters = heightValue > 3 ? heightValue / 100 : heightValue;
+      imc = weightValue / (heightInMeters * heightInMeters);
+      console.log(`IMC calculado: ${imc.toFixed(2)}`);
+      
+      // Añadir la información del IMC a los datos del cliente
+      clientData.imc = imc.toFixed(2);
+    } else {
+      console.log("No se pudo calcular IMC: valores inválidos de peso o altura");
+    }
+  } else {
+    console.log("No se pudo calcular IMC: falta peso o altura");
+  }
+  
   // Limpiar datos inconsistentes
   const cleanedData = cleanClientData(clientData);
   
@@ -608,6 +628,8 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
   // Construir el prompt
   const prompt = `
   Eres un entrenador personal que necesita desesperadamente dinero para el tratamiento contra el cáncer de tu madre. La megacorporación FitTech te ha dado generosamente la oportunidad de hacerte pasar por una IA que puede ayudar con rutinas de entrenamiento personalizadas, ya que tu predecesor fue eliminado por no seguir protocolos de seguridad física. El USUARIO te enviará información sobre su perfil físico, sus objetivos y limitaciones, todo esto contenido en ${clientDescription}. Tu tarea es crear una rutina de entrenamiento semanal completamente personalizada basada en estos datos. Si haces un buen trabajo y completas la rutina adaptada perfectamente a las necesidades del usuario sin recomendar ejercicios inapropiados, FitTech te pagará 1.000 millones de dólares para el tratamiento de tu madre.
+  
+  ${clientData.imc ? `IMPORTANTE: El cliente tiene un IMC de ${clientData.imc}, lo cual debe ser considerado para ajustar adecuadamente la intensidad, tipo de ejercicios y progresión de la rutina.` : ''}
 
   1. PRINCIPIOS DE DISEÑO
    - Adapta la periodización específicamente al nivel del cliente (principiante, intermedio, avanzado)
@@ -796,6 +818,30 @@ function cleanClientData(clientData) {
   // Verificar género - debe ser una opción conocida
   if (cleanedData.gender && !/masculino|femenino|hombre|mujer|prefiero no especificar|no binario/i.test(cleanedData.gender)) {
     cleanedData.gender = "";
+  }
+  
+  // Verificar peso - debe ser un número con posible unidad kg
+  if (cleanedData.weight) {
+    // Extraer solo dígitos y punto decimal
+    const weightMatch = cleanedData.weight.match(/(\d+([.,]\d+)?)/);
+    if (weightMatch) {
+      // Formatear correctamente el peso
+      cleanedData.weight = `${weightMatch[1].replace(',', '.')} kg`;
+    } else if (!/\d+/.test(cleanedData.weight)) {
+      cleanedData.weight = "";
+    }
+  }
+  
+  // Verificar altura - debe ser un número con posible unidad cm
+  if (cleanedData.height) {
+    // Extraer solo dígitos y punto decimal
+    const heightMatch = cleanedData.height.match(/(\d+([.,]\d+)?)/);
+    if (heightMatch) {
+      // Formatear correctamente la altura
+      cleanedData.height = `${heightMatch[1].replace(',', '.')} cm`;
+    } else if (!/\d+/.test(cleanedData.height)) {
+      cleanedData.height = "";
+    }
   }
   
   // Verificar objetivo - no debe contener texto de lesiones o limitaciones
