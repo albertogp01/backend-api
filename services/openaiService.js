@@ -307,18 +307,74 @@ function mapLinesToQuestions(lines) {
 }
 
 /**
- * Obtiene la respuesta a una pregunta específica
+ * Obtiene la respuesta a una pregunta específica o patrón de pregunta
+ * Mejorado para buscar por patrones y contenido parcial
  * 
- * @param {string} question - Texto de la pregunta
+ * @param {string|RegExp} questionPattern - Texto o patrón de la pregunta
  * @param {Array} responses - Array de respuestas
  * @returns {string} - Respuesta encontrada o cadena vacía
  */
-function getAnswer(question, responses) {
-  const response = responses.find(r => r.question.includes(question));
+function getAnswer(questionPattern, responses) {
+  if (!responses || !Array.isArray(responses)) {
+    return '';
+  }
+
+  // Si es string, convertir a expresión regular para buscar coincidencias parciales
+  const pattern = typeof questionPattern === 'string' 
+    ? new RegExp(questionPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')  // Escapar caracteres especiales
+    : questionPattern;
+
+  // Buscar por coincidencia exacta primero
+  if (typeof questionPattern === 'string') {
+    const exactMatch = responses.find(r => 
+      r.question && r.question.toLowerCase() === questionPattern.toLowerCase()
+    );
+    if (exactMatch && exactMatch.answer && exactMatch.answer.trim() !== '') {
+      return exactMatch.answer.trim();
+    }
+  }
+
+  // Buscar por coincidencia parcial
+  const response = responses.find(r => r.question && pattern.test(r.question));
   if (response && response.answer && response.answer.trim() !== '') {
     return response.answer.trim();
   }
+
+  // Buscar en el campo field si existe (para respuestas procesadas de formularios)
+  const fieldMatch = responses.find(r => r.field && pattern.test(r.field));
+  if (fieldMatch && fieldMatch.answer && fieldMatch.answer.trim() !== '') {
+    return fieldMatch.answer.trim();
+  }
+
   return '';
+}
+
+/**
+ * Limpia y normaliza datos inconsistentes del cliente
+ * Elimina campos conflictivos o duplicados
+ * 
+ * @param {Object} data - Datos del cliente
+ * @returns {Object} - Datos limpios
+ */
+function cleanClientData(data) {
+  const cleanedData = { ...data };
+  
+  // Eliminar campos vacíos o nulos
+  Object.keys(cleanedData).forEach(key => {
+    if (!cleanedData[key] || cleanedData[key].trim() === '') {
+      delete cleanedData[key];
+    }
+  });
+  
+  // Normalizar respuestas genéricas
+  Object.keys(cleanedData).forEach(key => {
+    const value = cleanedData[key].toLowerCase();
+    if (['no', 'ninguno', 'ninguna', 'nada', 'sin'].includes(value)) {
+      cleanedData[key] = 'No';
+    }
+  });
+  
+  return cleanedData;
 }
 
 /**
@@ -516,6 +572,8 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
     name: getAnswer("¿Cómo te llamas?", enhancedResponses) || "el cliente",
     gender: getAnswer("género", enhancedResponses),
     age: getAnswer("edad", enhancedResponses),
+    weight: getAnswer("pesas", enhancedResponses) || getAnswer("peso", enhancedResponses),
+    height: getAnswer("altura", enhancedResponses) || getAnswer("mides", enhancedResponses),
     trainingGoal: getAnswer("objetivo", enhancedResponses),
     experienceLevel: getAnswer("nivel", enhancedResponses) || getAnswer("experiencia", enhancedResponses),
     fitnessLevel: getAnswer("condición física", enhancedResponses),
