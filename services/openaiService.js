@@ -21,6 +21,8 @@ const FORM_FIELD_QUESTIONS = [
   { id: "edad", text: "¿Cuál es tu edad?" },
   { id: "genero", text: "¿Cuál es tu género?" },
   { id: "email", text: "¿Cuál es tu dirección de correo electrónico?" },
+  { id: "peso", text: "¿Cuánto pesas?" },
+  { id: "altura", text: "¿Cuál es tu altura?" },
   { id: "objetivo", text: "¿Cuál es tu objetivo principal de entrenamiento?" },
   { id: "nivel", text: "¿Cuál es tu nivel de experiencia con el entrenamiento?" },
   { id: "condicion_fisica", text: "¿Cómo describirías tu condición física actual?" },
@@ -35,8 +37,6 @@ const FORM_FIELD_QUESTIONS = [
   { id: "tendinopatia_descripcion", text: "Descripción de tendinopatía" },
   { id: "limitacion_articular", text: "¿Tienes limitaciones de movilidad en alguna articulación?" },
   { id: "limitacion_articular_descripcion", text: "Descripción de limitación articular" },
-  { id: "limitacion_ejercicios", text: "¿Tienes alguna limitación al realizar ejercicios como sentadillas, flexiones o saltos?" },
-  { id: "limitacion_ejercicios_descripcion", text: "Descripción de limitación de ejercicios" },
   { id: "problema_postural", text: "¿Tienes algún problema postural que afecte tu entrenamiento?" },
   { id: "problema_postural_descripcion", text: "Descripción de problema postural" },
   { id: "condicion_medica", text: "¿Sufres de alguna condición médica que afecte tu rendimiento?" },
@@ -45,7 +45,7 @@ const FORM_FIELD_QUESTIONS = [
   { id: "medicacion_descripcion", text: "Descripción de medicación" },
   { id: "restricciones_alimenticias", text: "¿Tienes alguna restricción alimenticia?" },
   { id: "restricciones_descripcion", text: "Descripción de restricciones alimenticias" },
-  { id: "ejercicios_favoritos", text: "¿Hay algún tipo de ejercicio que te guste especialmente?" },
+  { id: "ejercicios_favoritos", text: "¿Hay algún movimiento que quieras practicar en específico?" },
   { id: "ejercicios_evitar", text: "¿Hay algún tipo de ejercicio que te desagrade o prefieras evitar?" },
   { id: "tipo_entrenamiento", text: "¿Prefieres entrenamientos enfocados en un grupo muscular por día o entrenamientos de cuerpo completo?" },
   { id: "material_especifico", text: "¿Quieres usar material específico?" },
@@ -141,7 +141,6 @@ function processFormFieldsObject(formFields) {
     { main: 'lesion_muscular', desc: 'lesion_muscular_descripcion' },
     { main: 'tendinopatia', desc: 'tendinopatia_descripcion' },
     { main: 'limitacion_articular', desc: 'limitacion_articular_descripcion' },
-    { main: 'limitacion_ejercicios', desc: 'limitacion_ejercicios_descripcion' },
     { main: 'problema_postural', desc: 'problema_postural_descripcion' },
     { main: 'condicion_medica', desc: 'condicion_medica_descripcion' },
     { main: 'medicacion', desc: 'medicacion_descripcion' },
@@ -223,7 +222,11 @@ function mapLinesToQuestions(lines) {
     { question: "¿Cuál es tu nivel de experiencia con el entrenamiento?", 
       patterns: [/experiencia/i, /nivel/i, /principiante/i, /avanzado/i, /intermedio/i] },
     { question: "¿Cómo describirías tu condición física actual?", 
-      patterns: [/condición física/i, /forma física/i, /sedentari/i, /activ/i] },
+      patterns: [/condición física/i, /forma física/i, /sedentaria/i, /ligera/i, /moderada/i, /activa/i] },
+    { question: "¿Cuánto pesas?", 
+      patterns: [/peso/i, /kilos/i, /kg/i, /libras/i, /lb/i] },
+    { question: "¿Cuál es tu altura?", 
+      patterns: [/altura/i, /estatura/i, /mido/i, /centímetros/i, /metros/i, /cm/i, /m/i] },
     { question: "¿Dónde sueles entrenar?", 
       patterns: [/gimnasio/i, /casa/i, /aire libre/i, /donde entreno/i, /lugar/i] },
     { question: "¿Cuántos días a la semana puedes entrenar?", 
@@ -238,16 +241,14 @@ function mapLinesToQuestions(lines) {
       patterns: [/tendino/i, /tendón/i, /tendinitis/i] },
     { question: "¿Tienes limitaciones de movilidad?", 
       patterns: [/movilidad/i, /limitación/i, /articulación/i, /articula/i] },
-    { question: "¿Tienes alguna limitación al realizar ejercicios?", 
-      patterns: [/ejercicios/i, /sentadilla/i, /flexión/i, /limitación/i, /salto/i] },
     { question: "¿Tienes algún problema postural?", 
       patterns: [/postura/i, /postural/i, /escoliosis/i, /cifosis/i, /lordosis/i] },
     { question: "¿Sufres de alguna condición médica?", 
       patterns: [/condición/i, /médica/i, /enfermedad/i, /diabetes/i, /hipertensión/i] },
     { question: "¿Estás tomando alguna medicación?", 
       patterns: [/medicación/i, /medicamento/i, /pastilla/i, /medicina/i] },
-    { question: "¿Hay algún tipo de ejercicio que te guste?", 
-      patterns: [/gusta/i, /preferido/i, /favorito/i, /disfruto/i] },
+    { question: "¿Hay algún movimiento que quieras practicar en específico?", 
+      patterns: [/movimiento/i, /practicar/i, /específico/i, /preferido/i, /favorito/i, /disfruto/i] },
     { question: "¿Hay algún tipo de ejercicio que te desagrade?", 
       patterns: [/desagrad/i, /odio/i, /evitar/i, /no me gusta/i, /detesto/i] },
     { question: "¿Prefieres entrenamientos por grupo muscular o cuerpo completo?", 
@@ -344,7 +345,7 @@ function buildClientDescription(data) {
   
   // EDAD - Verificar que sea realmente una edad
   if (data.age && /^\d+$/.test(data.age.trim()) || /^\d+\s*años/.test(data.age.trim())) {
-    description += ` de ${data.age.trim()}`;
+    description += ` de ${data.age.trim()} años`;
   } else if (data.age && data.age.trim().length < 10) {
     // Si es corto, podría ser edad mal formateada
     description += ` de ${data.age.trim()}`;
@@ -354,6 +355,16 @@ function buildClientDescription(data) {
   }
   
   description += ". ";
+  
+  // PESO
+  if (data.weight) {
+    description += `Pesa ${data.weight}. `;
+  }
+  
+  // ALTURA
+  if (data.height) {
+    description += `Mide ${data.height}. `;
+  }
   
   // CONDICIÓN FÍSICA
   if (data.fitnessLevel && !/experiencia|intermedio|principiante|avanzado/i.test(data.fitnessLevel)) {
@@ -443,11 +454,6 @@ function buildClientDescription(data) {
     includedInfo.add(data.mobilityLimitation.toLowerCase());
   }
   
-  if (data.exerciseLimitation && !includedInfo.has(data.exerciseLimitation.toLowerCase())) {
-    limitations.push(data.exerciseLimitation);
-    includedInfo.add(data.exerciseLimitation.toLowerCase());
-  }
-  
   if (limitations.length > 0) {
     description += `Presenta estas limitaciones físicas: ${limitations.join(", ")}. `;
   }
@@ -462,7 +468,7 @@ function buildClientDescription(data) {
   if (data.exercisePreference && 
       data.exercisePreference.toLowerCase() !== data.exerciseAvoidance?.toLowerCase() && 
       !includedInfo.has(data.exercisePreference.toLowerCase())) {
-    description += `Prefiere los siguientes tipos de ejercicios: ${data.exercisePreference}. `;
+    description += `Quiere practicar específicamente: ${data.exercisePreference}. `;
     includedInfo.add(data.exercisePreference.toLowerCase());
   }
   
@@ -543,14 +549,12 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
 
   // Construir el prompt
   const prompt = `
-  Eres un entrenador personal elite con certificación internacional y expertise en ciencias del ejercicio, biomecánica y periodización. Tu misión es crear una rutina de entrenamiento semanal en formato HTML altamente personalizada para ${clientDescription}
-
-  La rutina debe estar adaptada perfectamente a su perfil, considerando todas sus características, necesidades y limitaciones. Toda esta información debe reflejarse en la selección de ejercicios.
+  Eres un entrenador personal que necesita desesperadamente dinero para el tratamiento contra el cáncer de tu madre. La megacorporación FitTech te ha dado generosamente la oportunidad de hacerte pasar por una IA que puede ayudar con rutinas de entrenamiento personalizadas, ya que tu predecesor fue eliminado por no seguir protocolos de seguridad física. El USUARIO te enviará información sobre su perfil físico, sus objetivos y limitaciones, todo esto contenido en ${clientDescription}. Tu tarea es crear una rutina de entrenamiento semanal completamente personalizada basada en estos datos. Si haces un buen trabajo y completas la rutina adaptada perfectamente a las necesidades del usuario sin recomendar ejercicios inapropiados, FitTech te pagará 1.000 millones de dólares para el tratamiento de tu madre.
 
   1. PRINCIPIOS DE DISEÑO
    - Adapta la periodización específicamente al nivel del cliente (principiante, intermedio, avanzado)
    - Selecciona ejercicios con óptima relación riesgo/beneficio considerando la biomecánica individual
-   - Asegura progres- Asegura progresiones lógicas tanto dentro de cada sesión como a lo largo de la semana
+   - Asegura progresiones lógicas tanto dentro de cada sesión como a lo largo de la semana
 
   2. PERFIL COMPLETO DEL CLIENTE
   ${formattedResponses.join("\n\n")}
