@@ -267,6 +267,8 @@ function formatFormResponses(formData) {
     'nombre': '¿Cómo te llamas?',
     'edad': '¿Cuál es tu edad?',
     'genero': '¿Cuál es tu género?',
+    'peso': '¿Cuánto pesas?',         
+    'altura': '¿Cuál es tu altura?', 
     'email': '¿Cuál es tu dirección de correo electrónico?',
     'objetivo': '¿Cuál es tu objetivo principal de entrenamiento?',
     'nivel': '¿Cuál es tu nivel de experiencia con el entrenamiento?',
