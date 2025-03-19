@@ -67,40 +67,49 @@ const sendEmail = async (email, pdfPath, requestId = null) => {
     subject: '✅ Tu rutina personalizada de entrenamiento está lista',
     text: 'Aquí tienes tu rutina personalizada de entrenamiento. Si tienes alguna duda, no dudes en contactarnos.',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #0a2a5e; margin-bottom: 5px;">Tu rutina personalizada está lista</h1>
-          <p style="color: #666; font-size: 16px;">Gracias por confiar en nosotros</p>
-        </div>
-        
-        <p>Hola,</p>
-        
-        <p>Nos complace entregarte tu rutina de entrenamiento personalizada, diseñada específicamente según las respuestas que has proporcionado en nuestro formulario.</p>
-        
-        <p>En el PDF adjunto encontrarás:</p>
-        <ul style="padding-left: 20px; margin-bottom: 20px;">
-          <li>Una rutina adaptada a tu nivel y objetivos</li>
-          <li>Ejercicios específicos con series, repeticiones y descansos</li>
-          <li>Variantes y alternativas para cada ejercicio</li>
-          <li>Recomendaciones técnicas para maximizar tus resultados</li>
-        </ul>
-        
-        <p>Si tienes alguna duda sobre los ejercicios o necesitas ajustes adicionales, no dudes en contactarnos respondiendo a este correo.</p>
-        
-        <div style="background-color: #f5f7fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p style="margin: 0; font-weight: bold;">💡 Consejo</p>
-          <p style="margin-top: 5px;">Para obtener los mejores resultados, sigue las indicaciones técnicas de cada ejercicio y mantén la constancia en tus entrenamientos.</p>
-        </div>
-        
-        <p>¡Te deseamos mucho éxito en tu camino fitness!</p>
-        
-        <p style="margin-bottom: 5px;">Saludos,</p>
-        <p style="margin-top: 0; font-weight: bold;">El equipo de FitForm</p>
-        
-        <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px; font-size: 12px; color: #777; text-align: center;">
-          <p>Si necesitas ayuda adicional, contáctanos en <a href="mailto:soporte@fitform.coach" style="color: #0a2a5e;">soporte@fitform.coach</a></p>
-        </div>
+          <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 25px; color: #333; line-height: 1.6; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+      <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f2f2f2;">
+        <h1 style="color: #0a2a5e; margin-bottom: 8px; font-size: 26px;">Tu rutina personalizada está lista</h1>
+        <p style="color: #666; font-size: 16px; margin-top: 0;">Gracias por confiar en nosotros</p>
       </div>
+      
+      <p>Hola,</p>
+      
+      <p>Nos complace entregarte tu rutina de entrenamiento personalizada, diseñada específicamente según las respuestas que has proporcionado en nuestro formulario.</p>
+      
+      <p>En el PDF adjunto encontrarás:</p>
+      <ul style="padding-left: 20px; margin-bottom: 20px;">
+        <li style="margin-bottom: 8px;">Una rutina adaptada a tu nivel y objetivos</li>
+        <li style="margin-bottom: 8px;">Ejercicios específicos con series, repeticiones y descansos</li>
+        <li style="margin-bottom: 8px;">Variantes y alternativas para cada ejercicio</li>
+        <li style="margin-bottom: 8px;">Recomendaciones técnicas para maximizar tus resultados</li>
+      </ul>
+      
+      <div style="background-color: #fff9e6; padding: 18px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #ffc107;">
+        <p style="margin: 0; font-weight: bold; font-size: 16px;">📋 Fase de prototipo - ¡Tu opinión es valiosa!</p>
+        <p style="margin-top: 8px;">Gracias por completar nuestro primer formulario. Lo que has visto hasta ahora es un prototipo en el que seguimos trabajando activamente. Semanalmente trataremos de actualizar el código para que las respuestas sean cada vez más precisas.</p>
+        <p>Por eso, nos encantaría que nos ayudaras con un último paso: completar un segundo cuestionario que nos permitirá ajustar y perfeccionar nuestro servicio.</p>
+        <p style="margin-bottom: 5px;">Puedes acceder al cuestionario aquí:</p>
+        <div style="text-align: center; margin: 15px 0;">
+          <a href="http://fitform.coach/cuestionario" style="background-color: #0a2a5e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Completar cuestionario</a>
+        </div>
+        <p style="font-size: 13px; color: #666; margin-top: 10px;">O copia y pega este enlace: <a href="http://fitform.coach/cuestionario" style="color: #0a2a5e;">http://fitform.coach/cuestionario</a></p>
+      </div>
+      
+      <p>Si tienes alguna duda sobre los ejercicios o necesitas ajustes adicionales, no dudes en contactarnos respondiendo a este correo.</p>
+      
+      <p>¡Te deseamos mucho éxito en tu camino fitness!</p>
+      
+      <div style="margin-top: 25px;">
+        <p style="margin-bottom: 5px;">Saludos cordiales,</p>
+        <p style="margin-top: 0; font-weight: bold; color: #0a2a5e;">El equipo de FitForm</p>
+      </div>
+      
+      <div style="border-top: 1px solid #eee; margin-top: 35px; padding-top: 20px; font-size: 13px; color: #777; text-align: center;">
+        <p style="margin-bottom: 10px;">Si necesitas ayuda adicional, contáctanos en <a href="mailto:soporte@fitform.coach" style="color: #0a2a5e; text-decoration: none; border-bottom: 1px dotted #0a2a5e;">soporte@fitform.coach</a></p>
+        <p style="margin: 0; font-size: 12px;">© 2025 FitForm. Todos los derechos reservados.</p>
+      </div>
+    </div>
     `,
     attachments: [
       {
