@@ -1,4 +1,138 @@
-const OpenAI = require("openai");
+/**
+ * Encuentra específicamente el tiempo de sesión entre las respuestas
+ * @param {Array} responses - Respuestas del cliente
+ * @returns {string} - Tiempo de sesión o cadena vacía
+ */
+function findSessionTime(responses) {
+  // Buscar primero por el campo específico
+  const sessionField = responses.find(r => r.field === 'tiempo_sesion');
+  if (sessionField && sessionField.answer && sessionField.answer.trim() !== '') {
+    return sessionField.answer.trim();
+  }
+  
+  // Buscar por preguntas específicas sobre el tiempo de sesión
+  const sessionQuestion = responses.find(r => 
+    r.question.toLowerCase().includes("tiempo") && r.question.toLowerCase().includes("sesión") ||
+    r.question.toLowerCase().includes("cuánto tiempo puedes dedicar")
+  );
+  
+  if (sessionQuestion && sessionQuestion.answer && sessionQuestion.answer.trim() !== '') {
+    return sessionQuestion.answer.trim();
+  }
+  
+  // Buscar respuestas que mencionen minutos u horas en relación al tiempo
+  const timePattern = responses.find(r => 
+    (r.question.toLowerCase().includes("tiempo") || r.question.toLowerCase().includes("sesión")) &&
+    r.answer && 
+    /\d+\s*(minutos?|min|horas?|hr)/i.test(r.answer)
+  );
+  
+  if (timePattern && timePattern.answer) {
+    return timePattern.answer.trim();
+  }
+  
+  return '';
+}
+
+/**
+ * Obtiene el peso del cliente excluyendo confusiones con el tiempo de sesión
+ * @param {Array} responses - Respuestas del cliente
+ * @param {string} sessionTime - Tiempo de sesión identificado
+ * @returns {string} - Peso o cadena vacía
+ */
+function getWeightExcludingSession(responses, sessionTime) {
+  // Buscar primero por el campo específico
+  const weightField = responses.find(r => r.field === 'peso');
+  if (weightField && weightField.answer && weightField.answer.trim() !== '') {
+    return weightField.answer.trim();
+  }
+  
+  // Buscar la pregunta específica sobre peso
+  const weightQuestion = responses.find(r => 
+    r.question.toLowerCase() === "¿cuánto pesas?" ||
+    (r.question.toLowerCase().includes("peso") && 
+     !r.question.toLowerCase().includes("tiempo") && 
+     !r.question.toLowerCase().includes("sesión"))
+  );
+  
+  if (weightQuestion && weightQuestion.answer && weightQuestion.answer.trim() !== '') {
+    // Verificar que no es el mismo valor que el tiempo de sesión
+    if (sessionTime && weightQuestion.answer.trim() === sessionTime) {
+      console.log("Respuesta de peso igual al tiempo de sesión. Ignorando.");
+      return '';
+    }
+    return weightQuestion.answer.trim();
+  }
+  
+  // Finalmente, buscar respuestas que parecen contener información de peso con formato específico
+  const weightPattern = responses.find(r => 
+    r.answer && 
+    /\b\d+\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
+    !r.question.toLowerCase().includes("tiempo") &&
+    !r.question.toLowerCase().includes("sesión")
+  );
+  
+  if (weightPattern && weightPattern.answer) {
+    // Verificar que no es el mismo valor que el tiempo de sesión
+    if (sessionTime && weightPattern.answer.trim() === sessionTime) {
+      console.log("Respuesta de peso con formato igual al tiempo de sesión. Ignorando.");
+      return '';
+    }
+    return weightPattern.answer.trim();
+  }
+  
+  return '';
+}
+
+/**
+ * Obtiene la altura del cliente excluyendo confusiones con el tiempo de sesión
+ * @param {Array} responses - Respuestas del cliente
+ * @param {string} sessionTime - Tiempo de sesión identificado
+ * @returns {string} - Altura o cadena vacía
+ */
+function getHeightExcludingSession(responses, sessionTime) {
+  // Buscar primero por el campo específico
+  const heightField = responses.find(r => r.field === 'altura');
+  if (heightField && heightField.answer && heightField.answer.trim() !== '') {
+    return heightField.answer.trim();
+  }
+  
+  // Buscar la pregunta específica sobre altura
+  const heightQuestion = responses.find(r => 
+    r.question.toLowerCase() === "¿cuál es tu altura?" ||
+    (r.question.toLowerCase().includes("altura") && 
+     !r.question.toLowerCase().includes("tiempo") && 
+     !r.question.toLowerCase().includes("sesión"))
+  );
+  
+  if (heightQuestion && heightQuestion.answer && heightQuestion.answer.trim() !== '') {
+    // Verificar que no es el mismo valor que el tiempo de sesión
+    if (sessionTime && heightQuestion.answer.trim() === sessionTime) {
+      console.log("Respuesta de altura igual al tiempo de sesión. Ignorando.");
+      return '';
+    }
+    return heightQuestion.answer.trim();
+  }
+  
+  // Finalmente, buscar respuestas que parecen contener información de altura con formato específico
+  const heightPattern = responses.find(r => 
+    r.answer && 
+    /\b\d+\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
+    !r.question.toLowerCase().includes("tiempo") &&
+    !r.question.toLowerCase().includes("sesión")
+  );
+  
+  if (heightPattern && heightPattern.answer) {
+    // Verificar que no es el mismo valor que el tiempo de sesión
+    if (sessionTime && heightPattern.answer.trim() === sessionTime) {
+      console.log("Respuesta de altura con formato igual al tiempo de sesión. Ignorando.");
+      return '';
+    }
+    return heightPattern.answer.trim();
+  }
+  
+  return '';
+}const OpenAI = require("openai");
 const dotenv = require('dotenv');
 
 // Cargar variables de entorno si no se ha hecho ya
@@ -314,26 +448,98 @@ function getAnswer(questionKeyword, responses) {
 
   // Casos especiales para peso y altura con patrones específicos
   if (normalizedKeyword.includes('peso') || normalizedKeyword === 'pesas') {
-    const weightResponse = responses.find(r => 
-      r.question.toLowerCase().includes('peso') || 
-      r.question.toLowerCase().includes('pesas') ||
-      (r.answer && /\d+\s*(kg|kilos|libras|lb)/i.test(r.answer))
+    // Primero buscar por la pregunta exacta sobre peso
+    const weightQuestion = "¿Cuánto pesas?";
+    const exactWeightResponse = responses.find(r => 
+      r.question.toLowerCase() === weightQuestion.toLowerCase()
     );
+    
+    if (exactWeightResponse && exactWeightResponse.answer && exactWeightResponse.answer.trim() !== '') {
+      return exactWeightResponse.answer.trim();
+    }
+    
+    // Si no encontramos respuesta exacta, buscamos por el campo específico
+    const weightField = responses.find(r => r.field === 'peso');
+    if (weightField && weightField.answer && weightField.answer.trim() !== '') {
+      return weightField.answer.trim();
+    }
+    
+    // Como tercera opción, buscamos en las preguntas que contienen la palabra peso
+    const weightResponse = responses.find(r => 
+      r.question.toLowerCase().includes('peso') &&
+      !r.question.toLowerCase().includes('altura') &&
+      !r.question.toLowerCase().includes('tiem') && 
+      !r.question.toLowerCase().includes('sesión')
+    );
+    
     if (weightResponse && weightResponse.answer && weightResponse.answer.trim() !== '') {
       return weightResponse.answer.trim();
     }
+    
+    // Finalmente, buscamos respuestas que parecen contener información de peso
+    const weightPattern = responses.find(r => 
+      r.answer && /\b\d+\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
+      !r.question.toLowerCase().includes('altura') &&
+      !r.question.toLowerCase().includes('tiempo') &&
+      !r.question.toLowerCase().includes('sesión')
+    );
+    
+    if (weightPattern && weightPattern.answer) {
+      return weightPattern.answer.trim();
+    }
   }
 
-  if (normalizedKeyword.includes('altura') || normalizedKeyword === 'mides') {
-    const heightResponse = responses.find(r => 
-      r.question.toLowerCase().includes('altura') || 
-      r.question.toLowerCase().includes('estatura') || 
-      r.question.toLowerCase().includes('mides') ||
-      (r.answer && /\d+\s*(cm|metros|m|pie|pies|ft)/i.test(r.answer))
+  if (normalizedKeyword.includes('altura') || normalizedKeyword === 'mides' || normalizedKeyword === 'estatura') {
+    // Primero buscar por la pregunta exacta sobre altura
+    const heightQuestion = "¿Cuál es tu altura?";
+    const exactHeightResponse = responses.find(r => 
+      r.question.toLowerCase() === heightQuestion.toLowerCase()
     );
+    
+    if (exactHeightResponse && exactHeightResponse.answer && exactHeightResponse.answer.trim() !== '') {
+      return exactHeightResponse.answer.trim();
+    }
+    
+    // Si no encontramos respuesta exacta, buscamos por el campo específico
+    const heightField = responses.find(r => r.field === 'altura');
+    if (heightField && heightField.answer && heightField.answer.trim() !== '') {
+      return heightField.answer.trim();
+    }
+    
+    // Como tercera opción, buscamos en las preguntas que contienen la palabra altura o estatura
+    const heightResponse = responses.find(r => 
+      (r.question.toLowerCase().includes('altura') || r.question.toLowerCase().includes('estatura')) &&
+      !r.question.toLowerCase().includes('peso') &&
+      !r.question.toLowerCase().includes('tiem') && 
+      !r.question.toLowerCase().includes('sesión')
+    );
+    
     if (heightResponse && heightResponse.answer && heightResponse.answer.trim() !== '') {
       return heightResponse.answer.trim();
     }
+    
+    // Finalmente, buscamos respuestas que parecen contener información de altura
+    const heightPattern = responses.find(r => 
+      r.answer && /\b\d+\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
+      !r.question.toLowerCase().includes('peso') &&
+      !r.question.toLowerCase().includes('tiempo') &&
+      !r.question.toLowerCase().includes('sesión')
+    );
+    
+    if (heightPattern && heightPattern.answer) {
+      return heightPattern.answer.trim();
+    }
+  }
+
+  // Prevenir confusión con tiempo de sesión
+  if ((normalizedKeyword.includes('altura') || normalizedKeyword.includes('peso')) && 
+      responses.some(r => r.question.toLowerCase().includes(normalizedKeyword) && 
+                          r.answer && 
+                          (r.answer.toLowerCase().includes('minuto') || 
+                           r.answer.toLowerCase().includes('hora') ||
+                           r.answer.toLowerCase().includes('sesión')))) {
+    console.log(`Posible confusión detectada con ${normalizedKeyword} y tiempo de sesión`);
+    return '';
   }
 
   // Búsqueda general para otras preguntas
@@ -565,18 +771,23 @@ function buildClientDescription(data) {
  */
 const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [], options = {}) => {
   // Extraer información relevante del cliente
+  // Primero identificar el tiempo de sesión para no confundirlo con otras medidas
+  const sessionTime = findSessionTime(enhancedResponses);
+  console.log("Tiempo de sesión identificado:", sessionTime);
+  
   const clientData = {
     name: getAnswer("¿Cómo te llamas?", enhancedResponses) || "el cliente",
     gender: getAnswer("género", enhancedResponses),
     age: getAnswer("edad", enhancedResponses),
-    weight: getAnswer("peso", enhancedResponses) || getAnswer("pesas", enhancedResponses),
-    height: getAnswer("altura", enhancedResponses) || getAnswer("mides", enhancedResponses) || getAnswer("estatura", enhancedResponses),
+    // Excluimos explícitamente respuestas relacionadas con tiempo de sesión para peso y altura
+    weight: getWeightExcludingSession(enhancedResponses, sessionTime),
+    height: getHeightExcludingSession(enhancedResponses, sessionTime),
     trainingGoal: getAnswer("objetivo", enhancedResponses),
     experienceLevel: getAnswer("nivel", enhancedResponses) || getAnswer("experiencia", enhancedResponses),
     fitnessLevel: getAnswer("condición física", enhancedResponses),
     trainingLocation: getAnswer("¿Dónde sueles entrenar?", enhancedResponses) || getAnswer("lugar", enhancedResponses),
     daysPerWeek: getAnswer("días", enhancedResponses) || getAnswer("semana", enhancedResponses),
-    sessionTime: getAnswer("tiempo", enhancedResponses) || getAnswer("sesión", enhancedResponses),
+    sessionTime: sessionTime,
     surgery: getAnswer("cirugía", enhancedResponses),
     muscleInjury: getAnswer("lesión muscular", enhancedResponses),
     tendinopathy: getAnswer("tendinopatía", enhancedResponses),
