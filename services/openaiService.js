@@ -307,17 +307,32 @@ function mapLinesToQuestions(lines) {
 }
 
 /**
- * Obtiene la respuesta a una pregunta específica
+ * Obtiene la respuesta a una pregunta específica o campo
  * 
- * @param {string} question - Texto de la pregunta
+ * @param {string} question - Texto de la pregunta o identificador del campo
  * @param {Array} responses - Array de respuestas
  * @returns {string} - Respuesta encontrada o cadena vacía
  */
 function getAnswer(question, responses) {
-  const response = responses.find(r => r.question.includes(question));
-  if (response && response.answer && response.answer.trim() !== '') {
-    return response.answer.trim();
+  // Buscar por el texto de la pregunta (método original, ahora con toLowerCase)
+  const responseByQuestion = responses.find(r => 
+    r.question && r.question.toLowerCase().includes(question.toLowerCase())
+  );
+  
+  if (responseByQuestion && responseByQuestion.answer && responseByQuestion.answer.trim() !== '') {
+    return responseByQuestion.answer.trim();
   }
+  
+  // Si no se encuentra por pregunta, buscar por campo (id)
+  const responseByField = responses.find(r => 
+    r.field && r.field.toLowerCase() === question.toLowerCase()
+  );
+  
+  if (responseByField && responseByField.answer && responseByField.answer.trim() !== '') {
+    return responseByField.answer.trim();
+  }
+  
+  // No se encontró respuesta
   return '';
 }
 
@@ -356,14 +371,14 @@ function buildClientDescription(data) {
   
   description += ". ";
   
-  // PESO
-  if (data.weight) {
-    description += `Pesa ${data.weight}. `;
+  // PESO - Asegurar que se incluye si está presente
+  if (data.weight && data.weight.trim() !== '') {
+    description += `Pesa ${data.weight.trim()}kg. `;
   }
   
-  // ALTURA
-  if (data.height) {
-    description += `Mide ${data.height}. `;
+  // ALTURA - Asegurar que se incluye si está presente
+  if (data.height && data.height.trim() !== '') {
+    description += `Mide ${data.height.trim()}cm. `;
   }
   
   // CONDICIÓN FÍSICA
@@ -390,7 +405,7 @@ function buildClientDescription(data) {
   
   // FRECUENCIA DE ENTRENAMIENTO
   if (data.daysPerWeek && /^\d+$|^un[oa]?|^dos|^tres|^cuatro|^cinco|^seis|^siete/i.test(data.daysPerWeek.trim())) {
-    description += `Puede entrenar ${data.daysPerWeek.toLowerCase()} a la semana `;
+    description += `Puede entrenar ${data.daysPerWeek.toLowerCase()} a la semana. `;
   }
   
   // DURACIÓN DE SESIÓN
@@ -415,17 +430,20 @@ function buildClientDescription(data) {
   // Información médica y lesiones (eliminar duplicados)
   let injuries = [];
   
-  if (data.surgery && !includedInfo.has(data.surgery.toLowerCase())) {
+  if (data.surgery && !includedInfo.has(data.surgery.toLowerCase()) && 
+      data.surgery.toLowerCase() !== 'no' && data.surgery.toLowerCase() !== 'ninguna') {
     injuries.push(data.surgery);
     includedInfo.add(data.surgery.toLowerCase());
   }
   
-  if (data.muscleInjury && !includedInfo.has(data.muscleInjury.toLowerCase())) {
+  if (data.muscleInjury && !includedInfo.has(data.muscleInjury.toLowerCase()) && 
+      data.muscleInjury.toLowerCase() !== 'no' && data.muscleInjury.toLowerCase() !== 'ninguna') {
     injuries.push(data.muscleInjury);
     includedInfo.add(data.muscleInjury.toLowerCase());
   }
   
-  if (data.tendinopathy && !includedInfo.has(data.tendinopathy.toLowerCase())) {
+  if (data.tendinopathy && !includedInfo.has(data.tendinopathy.toLowerCase()) && 
+      data.tendinopathy.toLowerCase() !== 'no' && data.tendinopathy.toLowerCase() !== 'ninguna') {
     injuries.push(data.tendinopathy);
     includedInfo.add(data.tendinopathy.toLowerCase());
   }
@@ -435,13 +453,15 @@ function buildClientDescription(data) {
   }
   
   // Condición médica
-  if (data.medicalCondition && !includedInfo.has(data.medicalCondition.toLowerCase())) {
+  if (data.medicalCondition && !includedInfo.has(data.medicalCondition.toLowerCase()) && 
+      data.medicalCondition.toLowerCase() !== 'no' && data.medicalCondition.toLowerCase() !== 'ninguna') {
     description += `Presenta la siguiente condición médica: ${data.medicalCondition}. `;
     includedInfo.add(data.medicalCondition.toLowerCase());
   }
   
   // Medicación
-  if (data.medication && !includedInfo.has(data.medication.toLowerCase())) {
+  if (data.medication && !includedInfo.has(data.medication.toLowerCase()) && 
+      data.medication.toLowerCase() !== 'no' && data.medication.toLowerCase() !== 'ninguna') {
     description += `Está tomando la siguiente medicación: ${data.medication}. `;
     includedInfo.add(data.medication.toLowerCase());
   }
@@ -449,7 +469,8 @@ function buildClientDescription(data) {
   // Limitaciones físicas (eliminar duplicados con lesiones)
   let limitations = [];
   
-  if (data.mobilityLimitation && !includedInfo.has(data.mobilityLimitation.toLowerCase())) {
+  if (data.mobilityLimitation && !includedInfo.has(data.mobilityLimitation.toLowerCase()) && 
+      data.mobilityLimitation.toLowerCase() !== 'no' && data.mobilityLimitation.toLowerCase() !== 'ninguna') {
     limitations.push(data.mobilityLimitation);
     includedInfo.add(data.mobilityLimitation.toLowerCase());
   }
@@ -459,7 +480,8 @@ function buildClientDescription(data) {
   }
   
   // Problema postural
-  if (data.posturalProblem && !includedInfo.has(data.posturalProblem.toLowerCase())) {
+  if (data.posturalProblem && !includedInfo.has(data.posturalProblem.toLowerCase()) && 
+      data.posturalProblem.toLowerCase() !== 'no' && data.posturalProblem.toLowerCase() !== 'ninguna') {
     description += `Tiene el siguiente problema postural: ${data.posturalProblem}. `;
     includedInfo.add(data.posturalProblem.toLowerCase());
   }
@@ -467,27 +489,35 @@ function buildClientDescription(data) {
   // Preferencias
   if (data.exercisePreference && 
       data.exercisePreference.toLowerCase() !== data.exerciseAvoidance?.toLowerCase() && 
-      !includedInfo.has(data.exercisePreference.toLowerCase())) {
-    description += `Quiere practicar específicamente: ${data.exercisePreference}. `;
+      !includedInfo.has(data.exercisePreference.toLowerCase()) &&
+      data.exercisePreference.toLowerCase() !== 'no' && 
+      data.exercisePreference.toLowerCase() !== 'ninguno') {
+    description += `Prefiere los siguientes tipos de ejercicios: ${data.exercisePreference}. `;
     includedInfo.add(data.exercisePreference.toLowerCase());
   }
   
   // Ejercicios a evitar (verificar que no es igual a preferencia)
   if (data.exerciseAvoidance && 
       data.exerciseAvoidance.toLowerCase() !== data.exercisePreference?.toLowerCase() && 
-      !includedInfo.has(data.exerciseAvoidance.toLowerCase())) {
+      !includedInfo.has(data.exerciseAvoidance.toLowerCase()) &&
+      data.exerciseAvoidance.toLowerCase() !== 'no' && 
+      data.exerciseAvoidance.toLowerCase() !== 'ninguno') {
     description += `Prefiere evitar: ${data.exerciseAvoidance}. `;
     includedInfo.add(data.exerciseAvoidance.toLowerCase());
   }
   
   // Estructura de entrenamiento
-  if (data.trainingPreference && !includedInfo.has(data.trainingPreference.toLowerCase())) {
+  if (data.trainingPreference && !includedInfo.has(data.trainingPreference.toLowerCase()) &&
+      data.trainingPreference.toLowerCase() !== 'no' && 
+      data.trainingPreference.toLowerCase() !== 'ninguno') {
     description += `En cuanto a la estructura de entrenamiento, prefiere ${data.trainingPreference.toLowerCase()}. `;
     includedInfo.add(data.trainingPreference.toLowerCase());
   }
   
   // Material específico
-  if (data.specificMaterial && !includedInfo.has(data.specificMaterial.toLowerCase())) {
+  if (data.specificMaterial && !includedInfo.has(data.specificMaterial.toLowerCase()) &&
+      data.specificMaterial.toLowerCase() !== 'no' && 
+      data.specificMaterial.toLowerCase() !== 'ninguno') {
     description += `Quiere entrenar con ${data.specificMaterial.toLowerCase()}. `;
     includedInfo.add(data.specificMaterial.toLowerCase());
   }
@@ -516,6 +546,8 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
     name: getAnswer("¿Cómo te llamas?", enhancedResponses) || "el cliente",
     gender: getAnswer("género", enhancedResponses),
     age: getAnswer("edad", enhancedResponses),
+    weight: getAnswer("peso", enhancedResponses),            // Añadir búsqueda directa por campo
+    height: getAnswer("altura", enhancedResponses),          // Añadir búsqueda directa por campo
     trainingGoal: getAnswer("objetivo", enhancedResponses),
     experienceLevel: getAnswer("nivel", enhancedResponses) || getAnswer("experiencia", enhancedResponses),
     fitnessLevel: getAnswer("condición física", enhancedResponses),
@@ -530,11 +562,21 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
     posturalProblem: getAnswer("postural", enhancedResponses),
     medicalCondition: getAnswer("condición médica", enhancedResponses),
     medication: getAnswer("medicación", enhancedResponses),
-    exercisePreference: getAnswer("guste", enhancedResponses) || getAnswer("preferido", enhancedResponses) || getAnswer("favorito", enhancedResponses),
-    exerciseAvoidance: getAnswer("desagrade", enhancedResponses) || getAnswer("evitar", enhancedResponses) || getAnswer("disgusten", enhancedResponses),
-    trainingPreference: getAnswer("grupo muscular", enhancedResponses) || getAnswer("cuerpo completo", enhancedResponses),
-    specificMaterial: getAnswer("material", enhancedResponses),
-    additionalInfo: getAnswer("adicional", enhancedResponses) || getAnswer("algo más", enhancedResponses)
+    exercisePreference: getAnswer("guste", enhancedResponses) || 
+                        getAnswer("preferido", enhancedResponses) || 
+                        getAnswer("favorito", enhancedResponses) || 
+                        getAnswer("ejercicios_favoritos", enhancedResponses),
+    exerciseAvoidance: getAnswer("desagrade", enhancedResponses) || 
+                       getAnswer("evitar", enhancedResponses) || 
+                       getAnswer("disgusten", enhancedResponses) || 
+                       getAnswer("ejercicios_evitar", enhancedResponses),
+    trainingPreference: getAnswer("grupo muscular", enhancedResponses) || 
+                        getAnswer("cuerpo completo", enhancedResponses) || 
+                        getAnswer("tipo_entrenamiento", enhancedResponses),
+    specificMaterial: getAnswer("material", enhancedResponses) || getAnswer("material_especifico", enhancedResponses),
+    additionalInfo: getAnswer("adicional", enhancedResponses) || 
+                    getAnswer("algo más", enhancedResponses) ||
+                    getAnswer("info_adicional", enhancedResponses)
   };
   
   console.log("Datos del cliente extraídos:", clientData);
@@ -709,78 +751,11 @@ La activación se realiza aparte y no se contabiliza dentro de este tiempo.
     console.error("Error en OpenAI API:", error);
     
     if (error.status === 429) {
-      throw new Error("Límite de API de OpenAI excedido. Intenta de nuevo más tarde.");
+      throw new Error("Límite excedido. Intenta de nuevo más tarde.");
     } else if (error.status >= 500) {
-      throw new Error("Error en el servicio de OpenAI. Intenta de nuevo más tarde.");
+      throw new Error("Error en el servicio. Intenta de nuevo más tarde.");
     }
     
     throw new Error(`Error generando la rutina: ${error.message}`);
   }
-};
-
-/**
- * Limpia y verifica la consistencia de los datos del cliente
- * 
- * @param {Object} clientData - Datos extraídos del cliente
- * @returns {Object} - Datos limpios y consistentes
- */
-function cleanClientData(clientData) {
-  const cleanedData = { ...clientData };
-
-  // Verificar edad - debería ser un número o contener dígitos
-  if (cleanedData.age && !/^\d+$|^\d+\s*años/i.test(cleanedData.age)) {
-    // Si la edad contiene texto de nivel de experiencia, limpiarla
-    if (/experiencia|intermedio|principiante|avanzado/i.test(cleanedData.age)) {
-      cleanedData.age = "";
-    }
-  }
-  
-  // Verificar género - debe ser una opción conocida
-  if (cleanedData.gender && !/masculino|femenino|hombre|mujer|prefiero no especificar|no binario/i.test(cleanedData.gender)) {
-    cleanedData.gender = "";
-  }
-  
-  // Verificar objetivo - no debe contener texto de lesiones o limitaciones
-  if (cleanedData.trainingGoal && /dolor|lesion|operado|limitaci[óo]n|cuesta/i.test(cleanedData.trainingGoal)) {
-    cleanedData.trainingGoal = "";
-  }
-  
-  // Verificar que ejercicios preferidos y a evitar no son iguales
-  if (cleanedData.exercisePreference && 
-      cleanedData.exerciseAvoidance && 
-      cleanedData.exercisePreference.toLowerCase() === cleanedData.exerciseAvoidance.toLowerCase()) {
-    // Si son iguales, probablemente uno está mal asignado
-    if (/evitar|no me gusta|no me gustan|no quiero|odio|detesto/i.test(cleanedData.exercisePreference)) {
-      // La preferencia parece una evitación
-      cleanedData.exerciseAvoidance = cleanedData.exercisePreference;
-      cleanedData.exercisePreference = "";
-    } else {
-      // Asumir que la evitación está mal
-      cleanedData.exerciseAvoidance = "";
-    }
-  }
-  
-  // Verificar días por semana (debe tener sentido como frecuencia)
-  if (cleanedData.daysPerWeek && !/^\d+$|^\d+\s*días|un|dos|tres|cuatro|cinco|seis|siete/i.test(cleanedData.daysPerWeek)) {
-    cleanedData.daysPerWeek = "";
-  }
-  
-  // Verificar tiempo por sesión (debe tener sentido como duración)
-  if (cleanedData.sessionTime && !/^\d+$|^\d+\s*min|hora|minutos/i.test(cleanedData.sessionTime)) {
-    cleanedData.sessionTime = "";
-  }
-  
-  return cleanedData;
-}
-
-// Exportar función principal y otras utilidades para testing
-module.exports = { 
-  generateRoutine,
-  // Exportar funciones auxiliares para testing
-  processFormFieldsObject,
-  processTextLines,
-  mapLinesToQuestions,
-  buildClientDescription,
-  getAnswer,
-  cleanClientData
 };
