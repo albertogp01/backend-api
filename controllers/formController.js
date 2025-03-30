@@ -70,35 +70,63 @@ exports.processForm = async (req, res, next) => { // Añadir next para pasar err
   const controllerRequestId = req.requestId || 'temp-' + Date.now();
   try {
     console.log(`[${controllerRequestId}] ==== NUEVA SOLICITUD DE FORMULARIO ====`);
-    // Evitar loguear todo el req.body si contiene datos sensibles
     console.log(`[${controllerRequestId}] Datos recibidos: ${req.body ? 'Presentes' : 'Ausentes'}`);
+
+    // ----> LOGS DE DIAGNÓSTICO AÑADIDOS <----
+    console.log(`[${controllerRequestId}] Intentando loguear req.body...`);
+    console.log(`[${controllerRequestId}] Contenido REAL req.body:`, req.body); // Verifica el contenido
+    console.log(`[${controllerRequestId}] Tipo de req.body:`, typeof req.body); // Verifica el tipo
+    // ----> FIN DE LOGS DE DIAGNÓSTICO <----
+
     console.log(`[${controllerRequestId}] IP (confiable): ${req.ip}`);
-    console.log(`[${controllerRequestId}] Fecha y hora: ${new Date().toISOString()}`); // Último log que vimos antes
+    console.log(`[${controllerRequestId}] Fecha y hora: ${new Date().toISOString()}`);
 
-    // Generar ID único para esta solicitud específica de procesamiento
     const processingRequestId = uuidv4();
-    console.log(`[${controllerRequestId}] ID de procesamiento generado: ${processingRequestId}`); // LOG NUEVO
+    console.log(`[${controllerRequestId}] ID de procesamiento generado: ${processingRequestId}`);
 
-    // Obtener datos del formulario y validar email
-    const { nombre, email, ...formData } = req.body;
-    const clientName = nombre || "Cliente";
+    let email, clientName, formData; // Declarar variables fuera del try específico
 
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      console.warn(`[${controllerRequestId}] Solicitud rechazada (400): Email inválido o faltante.`);
+    try {
+      // ---> INICIO TRY ESPECÍFICO PARA DESESTRUCTURACIÓN Y VALIDACIÓN INICIAL <---
+      console.log(`[${controllerRequestId}] Intentando desestructurar req.body...`);
+      // Desestructurar aquí dentro
+      const { nombre, email: extractedEmail, ...extractedFormData } = req.body;
+      email = extractedEmail; // Asignar a la variable externa
+      formData = extractedFormData; // Asignar a la variable externa
+      console.log(`[${controllerRequestId}] Desestructuración preliminar EXITOSA.`);
+
+      clientName = nombre || "Cliente"; // Asignar clientName
+
+      console.log(`[${controllerRequestId}] Validando email: ${email}`);
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        console.warn(`[${controllerRequestId}] Solicitud rechazada (400): Email inválido o faltante.`);
+        // Lanzar error para que lo capture el catch de este bloque try específico
+        throw new Error("Se requiere una dirección de correo electrónico válida.");
+      }
+      console.log(`[${processingRequestId}] Email validado correctamente: ${email}`);
+      // ---> FIN TRY ESPECÍFICO <---
+
+    } catch (validationError) {
+      console.error(`[${controllerRequestId}] ¡ERROR en validación inicial o desestructuración!:`, validationError.message);
+      // Devolver respuesta 400 directamente o pasar al manejador global
+      // Devolver directamente es más claro para errores de validación del cliente
       return res.status(400).json({
         success: false,
-        message: "Se requiere una dirección de correo electrónico válida."
+        message: validationError.message || "Datos de formulario inválidos."
       });
+      // Opcionalmente, si quieres usar el manejador global:
+      // return next(validationError);
     }
-    console.log(`[${processingRequestId}] Email validado: ${email}`); // LOG NUEVO
+
+    // --- Si llegamos aquí, la desestructuración y validación básica del email fueron exitosas ---
 
     // Crear objeto de seguimiento inicial
     const requestData = {
       id: processingRequestId, // Usar el ID de procesamiento
       timestamp: new Date().toISOString(),
       clientName,
-      email,
-      formData, // Guardar los datos específicos del formulario
+      email, // Usar la variable ya validada
+      formData, // Usar la variable ya extraída
       status: 'pending',
       message: 'Solicitud recibida, en cola para procesamiento...'
     };
@@ -153,10 +181,10 @@ exports.processForm = async (req, res, next) => { // Añadir next para pasar err
     console.log(`[${processingRequestId}] processFormDataInBackground programado. Fin de processForm.`); // LOG NUEVO
 
   } catch (error) {
-    // Capturar errores síncronos en el propio controlador
-    console.error(`[${controllerRequestId}] Error SÍNCRONO CAPTURADO en processForm:`, error);
+    // Capturar errores síncronos en el propio controlador (los que no capturó el try específico)
+    console.error(`[${controllerRequestId}] Error SÍNCRONO GENERAL CAPTURADO en processForm:`, error);
     // Pasar al manejador de errores global definido en server.js
-    next(error);
+    next(error); // Asegúrate de tener un manejador de errores global
   }
 };
 
@@ -285,7 +313,9 @@ async function processFormDataInBackground(requestData) {
 
     // Asegúrate de que FORM_FIELD_QUESTIONS está definido en algún lugar accesible
     // Si no lo está, necesitas definirlo aquí o importarlo
-    const FORM_FIELD_QUESTIONS = require('../config/formQuestions'); // EJEMPLO: Asumiendo que está en config/formQuestions.js
+    // EJEMPLO: Asumiendo que está en ../config/formQuestions.js
+    // ¡¡ASEGÚRATE DE QUE ESTA RUTA Y ARCHIVO SEAN CORRECTOS!!
+    const FORM_FIELD_QUESTIONS = require('../config/formQuestions');
 
     const routineInputData = formatFormDataToObjects(formData, FORM_FIELD_QUESTIONS); // Pasar FORM_FIELD_QUESTIONS
 
@@ -358,34 +388,42 @@ async function processFormDataInBackground(requestData) {
 
   } catch (error) {
     // --- Manejo Centralizado de Errores en Background ---
-    console.error(`[${requestId}] ERROR durante el procesamiento para ${email}:`, error.message);
+    console.error(`[${requestId}] ERROR durante el procesamiento en background para ${email}:`, error.message); // Modificado msg
     if (error.stack) {
         console.error(error.stack); // Loguear stacktrace completo para debug
     }
 
-    requestData.status = 'failed';
-    requestData.message = `Error al generar la rutina: ${error.message || 'Error desconocido'}`;
-    requestData.error = error.message || 'Error desconocido';
-    requestData.failedAt = new Date().toISOString();
+    // Asegurarse de que requestData exista antes de modificarlo
+    if (requestData) {
+        requestData.status = 'failed';
+        requestData.message = `Error al generar la rutina: ${error.message || 'Error desconocido'}`;
+        requestData.error = error.message || 'Error desconocido';
+        requestData.failedAt = new Date().toISOString();
+
+        // Mover de pending a failed (asegurarse que no esté ya en failed por el catch de setImmediate)
+        if (requestsStore.pending.has(requestId)) {
+            requestsStore.failed.set(requestId, requestData);
+            requestsStore.pending.delete(requestId);
+            console.log(`[${requestId}] Procesamiento movido a estado 'failed' desde catch interno de background.`); // Modificado msg
+        } else {
+            // Si ya no está en pending, quizás el catch externo ya lo movió, actualizarlo
+            if (requestsStore.failed.has(requestId)) {
+                requestsStore.failed.set(requestId, requestData); // Actualizar con detalles del error interno
+                console.log(`[${requestId}] Estado 'failed' actualizado con detalles del error interno de background.`); // Modificado msg
+            } else {
+                console.error(`[${requestId}] Error CRÍTICO: La solicitud no se encontró en pending ni failed después de un error interno de background.`);
+                // Guardarlo en failed igualmente para registro
+                requestsStore.failed.set(requestId, requestData);
+            }
+        }
+    } else {
+         console.error(`[${requestId}] Error CRÍTICO: requestData es null/undefined en el catch de processFormDataInBackground.`);
+    }
+
+    // Actualizar estadísticas de error (asegurarse que requestData existía)
     statistics.failedRoutines++; // Incrementar fallos de rutina específicamente
     statistics.processingErrors++; // También contar como error general de procesamiento
 
-    // Mover de pending a failed (asegurarse que no esté ya en failed por el catch de setImmediate)
-    if (requestsStore.pending.has(requestId)) {
-        requestsStore.failed.set(requestId, requestData);
-        requestsStore.pending.delete(requestId);
-        console.log(`[${requestId}] Procesamiento movido a estado 'failed' desde catch interno.`);
-    } else {
-        // Si ya no está en pending, quizás el catch externo ya lo movió, actualizarlo
-        if (requestsStore.failed.has(requestId)) {
-            requestsStore.failed.set(requestId, requestData); // Actualizar con detalles del error interno
-            console.log(`[${requestId}] Estado 'failed' actualizado con detalles del error interno.`);
-        } else {
-            console.error(`[${requestId}] Error: La solicitud no se encontró en pending ni failed después de un error interno.`);
-            // Guardarlo en failed igualmente para registro
-            requestsStore.failed.set(requestId, requestData);
-        }
-    }
 
     // Importante: No relanzar el error aquí para que no lo capture el catch de setImmediate de nuevo.
     // El estado ya está actualizado a 'failed'.
@@ -416,7 +454,7 @@ function formatFormDataToObjects(formData, formFieldQuestions) { // Añadido for
             }
         });
     } else {
-        console.error("formatFormDataToObjects: formFieldQuestions no es un array válido.");
+        console.error("formatFormDataToObjects: formFieldQuestions no es un array válido o no fue proporcionado.");
         return []; // Retornar vacío si el mapeo no es válido
     }
 
