@@ -29,6 +29,7 @@ const statistics = {
 };
 
 // ---- YA NO SE NECESITA FORM_FIELD_QUESTIONS AQUÍ ----
+// Se usa la versión definida dentro de openaiService.js
 
 // Limpieza periódica (opcional)
 const CLEANUP_INTERVAL = 60 * 60 * 1000;
@@ -66,7 +67,6 @@ exports.processForm = async (req, res, next) => {
     console.log(`[${controllerRequestId}] ==== NUEVA SOLICITUD DE FORMULARIO ====`);
     console.log(`[${controllerRequestId}] Datos recibidos: ${req.body ? 'Presentes' : 'Ausentes'}`);
 
-    // Logueo seguro de propiedades recibidas
     console.log(`[${controllerRequestId}] Verificando propiedades esperadas en req.body...`);
     try {
         console.log(`[${controllerRequestId}] req.body.nombre:`, req.body?.nombre);
@@ -85,18 +85,16 @@ exports.processForm = async (req, res, next) => {
 
     let email, clientName, formData;
 
-    // Validación inicial y desestructuración
     try {
       console.log(`[${controllerRequestId}] Intentando desestructurar req.body...`);
       if (typeof req.body !== 'object' || req.body === null) {
           throw new Error('El cuerpo de la solicitud (req.body) no es un objeto válido.');
       }
-      // Extraer nombre y email, el resto es formData
       const { nombre, email: extractedEmail, ...extractedFormData } = req.body;
       email = extractedEmail;
-      formData = extractedFormData; // Este es el objeto que pasaremos a generateRoutine
+      formData = extractedFormData;
       console.log(`[${controllerRequestId}] Desestructuración preliminar EXITOSA.`);
-      clientName = nombre || "Cliente"; // Usar nombre si existe, sino 'Cliente'
+      clientName = nombre || "Cliente";
 
       console.log(`[${controllerRequestId}] Validando email: ${email}`);
       if (!email || typeof email !== 'string' || !email.includes('@')) {
@@ -113,13 +111,12 @@ exports.processForm = async (req, res, next) => {
       });
     }
 
-    // Crear objeto de seguimiento
     const requestData = {
       id: processingRequestId,
       timestamp: new Date().toISOString(),
       clientName,
       email,
-      formData, // Guardamos el objeto formData crudo
+      formData,
       status: 'pending',
       message: 'Solicitud recibida, en cola para procesamiento...'
     };
@@ -132,7 +129,6 @@ exports.processForm = async (req, res, next) => {
     statistics.lastSubmissionTimestamp = requestData.timestamp;
     console.log(`[${processingRequestId}] Estadísticas actualizadas.`);
 
-    // Responder al cliente
     console.log(`[${processingRequestId}] Enviando respuesta 202 Accepted...`);
     res.status(202).json({
       success: true,
@@ -142,7 +138,6 @@ exports.processForm = async (req, res, next) => {
     });
     console.log(`[${processingRequestId}] Respuesta 202 enviada a ${req.ip}.`);
 
-    // Iniciar proceso en segundo plano
     console.log(`[${processingRequestId}] Programando processFormDataInBackground con setImmediate...`);
     setImmediate(() => {
         console.log(`[${processingRequestId}] setImmediate ejecutado: Iniciando processFormDataInBackground.`);
@@ -258,7 +253,7 @@ exports.getSubmissions = (req, res, next) => {
  * @description Función interna que realiza el procesamiento pesado de forma asíncrona.
  */
 async function processFormDataInBackground(requestData) {
-  // Validación inicial de requestData
+  // Validación inicial y desestructuración
    console.log(`[DEBUG] processFormDataInBackground: Entrando. ID preliminar: ${requestData?.id}`);
    if (!requestData || typeof requestData !== 'object' || !requestData.id || !requestData.email || typeof requestData.formData !== 'object') {
        console.error("[ERROR_CRITICO] processFormDataInBackground: requestData inválido o incompleto al inicio.", {
@@ -267,30 +262,44 @@ async function processFormDataInBackground(requestData) {
            formData_type: typeof requestData?.formData
        });
        statistics.processingErrors++;
-       return; // Salir
+       return;
    }
-
-  // Desestructuración
-  const { id: requestId, clientName, email, formData } = requestData; // formData es el objeto con los campos
+  const { id: requestId, clientName, email, formData } = requestData;
   console.log(`[${requestId}] DENTRO de processFormDataInBackground para ${clientName} (${email}).`);
 
+  // ----> INICIO DEL TRY...CATCH PRINCIPAL <----
   try {
-    // Actualizar estado a 'processing'
-    console.log(`[${requestId}] Iniciando procesamiento, actualizando estado...`);
-    requestData.status = 'processing';
-    requestData.message = 'Generando rutina personalizada con IA...'; // Mensaje más genérico al inicio
-    if(requestsStore.pending.has(requestId)) {
-        requestsStore.pending.set(requestId, requestData);
-    } else {
-        console.warn(`[${requestId}] processFormDataInBackground: No se encontró en 'pending' al actualizar a 'processing'.`);
-        // No necesariamente salir, podría haber sido movido a failed por un error anterior no fatal
-    }
+    // ----> LOGS ADICIONALES PARA ACTUALIZACIÓN DE ESTADO <----
+    console.log(`[${requestId}] [DEBUG] Verificando estado antes de actualizar...`);
+    const isInPending = requestsStore.pending.has(requestId);
+    console.log(`[${requestId}] [DEBUG] Solicitud encontrada en pending: ${isInPending}`);
 
-    // ---- PASO 1: LLAMAR A generateRoutine (que ahora maneja el formato interno) ----
-    console.log(`[${requestId}] Paso 1: Llamando a generateRoutine (OpenAI Service)...`);
-    // Pasar el objeto formData directamente
-    const routineHtml = await generateRoutine(formData); // generateRoutine usa su FORM_FIELD_QUESTIONS interno
-     if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
+    if (isInPending) {
+        console.log(`[${requestId}] [DEBUG] Intentando actualizar estado a 'processing'...`);
+        requestData.status = 'processing';
+        requestData.message = 'Generando rutina personalizada con IA...'; // Mensaje inicial
+        requestsStore.pending.set(requestId, requestData); // Actualizar estado en el Map
+        console.log(`[${requestId}] [DEBUG] Estado actualizado a 'processing' en store.`);
+    } else {
+        console.warn(`[${requestId}] processFormDataInBackground: No se encontró en 'pending' al intentar actualizar a 'processing'. Puede que ya haya fallado o completado.`);
+        // Decidir si continuar. Si ya falló/completó, podríamos salir.
+        if (!requestsStore.completed.has(requestId) && !requestsStore.failed.has(requestId)) {
+             // Si no está en ningún lado, es un estado inconsistente, salir.
+             console.error(`[${requestId}] Estado inconsistente: No encontrado en pending, completed ni failed. Abortando proceso background.`);
+             statistics.processingErrors++;
+             return;
+        }
+         console.log(`[${requestId}] Continuando proceso background aunque no estaba en 'pending' (podría estar en failed/completed).`);
+    }
+    // ----> FIN LOGS ADICIONALES <----
+
+    // ---- PASO 1: LLAMAR A generateRoutine ----
+    console.log(`[${requestId}] Paso 1: Preparando llamada a generateRoutine...`); // Log ANTES
+    const routineHtml = await generateRoutine(formData); // Llamada al servicio OpenAI
+    console.log(`[${requestId}] [DEBUG] Llamada a generateRoutine completada.`); // Log DESPUÉS
+
+    // Validar respuesta de generateRoutine
+    if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
         console.error(`[${requestId}] generateRoutine devolvió un resultado inválido o vacío.`);
         throw new Error("La generación de la rutina no produjo un resultado válido.");
     }
@@ -299,7 +308,7 @@ async function processFormDataInBackground(requestData) {
     // --- PASO 2: Generar PDF ---
     console.log(`[${requestId}] Paso 2: Creando PDF...`);
     requestData.message = 'Rutina generada, creando documento PDF...';
-    if(requestsStore.pending.has(requestId)) requestsStore.pending.set(requestId, requestData);
+    if(requestsStore.pending.has(requestId)) requestsStore.pending.set(requestId, requestData); // Actualizar mensaje
 
     const tempDir = process.env.TEMP_DIR || path.join(__dirname, '../temp');
     try {
@@ -324,11 +333,10 @@ async function processFormDataInBackground(requestData) {
     // --- PASO 3: Enviar Email ---
     console.log(`[${requestId}] Paso 3: Enviando email a ${email}...`);
     requestData.message = 'Documento PDF creado, enviando por email...';
-    if(requestsStore.pending.has(requestId)) requestsStore.pending.set(requestId, requestData);
+    if(requestsStore.pending.has(requestId)) requestsStore.pending.set(requestId, requestData); // Actualizar mensaje
 
-    // Pasar clientName a sendEmail (ya se hacía antes)
-    await sendEmail(email, clientName, pdfPath, requestId);
-    console.log(`[${requestId}] Llamada a sendEmail completada.`); // EmailService logueará éxito/error
+    await sendEmail(email, clientName, pdfPath, requestId); // Llamada al servicio de Email
+    console.log(`[${requestId}] Llamada a sendEmail completada.`); // Revisar logs de emailService para confirmación real
 
     // --- PASO 4: Finalización Exitosa ---
     console.log(`[${requestId}] Paso 4: Marcando como completado...`);
@@ -341,7 +349,7 @@ async function processFormDataInBackground(requestData) {
     if (requestsStore.pending.has(requestId)) requestsStore.pending.delete(requestId);
     console.log(`[${requestId}] Procesamiento completado exitosamente.`);
 
-    // Limpieza del PDF (async no bloqueante)
+    // Limpieza del PDF
     if (pdfPath) {
         fsPromises.unlink(pdfPath)
             .then(() => console.log(`[${requestId}] PDF temporal eliminado ASYNC: ${path.basename(pdfPath)}`))
