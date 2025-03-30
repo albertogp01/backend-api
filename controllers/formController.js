@@ -12,7 +12,6 @@ const path = require('path');
 const fs = require('fs');
 
 // Almacén en memoria para peticiones (Considerar Redis/DB en producción real)
-// Guardará el estado de cada solicitud (pending, completed, failed)
 const requestsStore = {
   pending: new Map(),   // Solicitudes en proceso { id: requestData }
   completed: new Map(), // Solicitudes completadas { id: requestData }
@@ -35,23 +34,31 @@ const MAX_AGE_FAILED = 7 * 24 * 60 * 60 * 1000; // 7 días en ms
 
 function cleanupOldRequests() {
     const now = Date.now();
-    console.log(`[${new Date().toISOString()}] Ejecutando limpieza de solicitudes antiguas...`);
+    // No loguear la limpieza cada vez si es muy frecuente, o usar nivel 'debug'
+    // console.log(`[${new Date().toISOString()}] Ejecutando limpieza de solicitudes antiguas...`);
 
+    let completedDeleted = 0;
     requestsStore.completed.forEach((data, id) => {
         if (now - new Date(data.completedAt || data.timestamp).getTime() > MAX_AGE_COMPLETED) {
-            console.log(`Eliminando solicitud completada antigua: ${id}`);
             requestsStore.completed.delete(id);
+            completedDeleted++;
         }
     });
+    if (completedDeleted > 0) console.log(`[Cleanup] Eliminadas ${completedDeleted} solicitudes completadas antiguas.`);
 
+    let failedDeleted = 0;
     requestsStore.failed.forEach((data, id) => {
          if (now - new Date(data.failedAt || data.timestamp).getTime() > MAX_AGE_FAILED) {
-            console.log(`Eliminando solicitud fallida antigua: ${id}`);
             requestsStore.failed.delete(id);
+            failedDeleted++;
         }
     });
+     if (failedDeleted > 0) console.log(`[Cleanup] Eliminadas ${failedDeleted} solicitudes fallidas antiguas.`);
 }
-setInterval(cleanupOldRequests, CLEANUP_INTERVAL);
+// Iniciar limpieza periódica (solo si el proceso va a estar corriendo mucho tiempo)
+// Considera si esto es necesario en un entorno serverless o de corta vida.
+// Si se ejecuta, almacenar el ID del intervalo para poder limpiarlo al cerrar (graceful shutdown)
+// const cleanupIntervalId = setInterval(cleanupOldRequests, CLEANUP_INTERVAL);
 
 /**
  * @description Maneja la recepción inicial de una solicitud de formulario POST.
@@ -59,76 +66,95 @@ setInterval(cleanupOldRequests, CLEANUP_INTERVAL);
  * @route POST /api/form/submit
  */
 exports.processForm = async (req, res, next) => { // Añadir next para pasar errores
+  // Usar el requestId inyectado por el middleware en server.js si existe
+  const controllerRequestId = req.requestId || 'temp-' + Date.now();
   try {
-    console.log(`[${req.requestId || 'N/A'}] ==== NUEVA SOLICITUD DE FORMULARIO ====`);
-    console.log(`[${req.requestId || 'N/A'}] Datos recibidos:`, req.body ? 'Presentes' : 'Ausentes'); // Evitar loguear datos sensibles directamente
-    console.log(`[${req.requestId || 'N/A'}] IP (confiable): ${req.ip}`); // req.ip es fiable si 'trust proxy' está bien configurado
-    console.log(`[${req.requestId || 'N/A'}] Fecha y hora:`, new Date().toISOString());
+    console.log(`[${controllerRequestId}] ==== NUEVA SOLICITUD DE FORMULARIO ====`);
+    // Evitar loguear todo el req.body si contiene datos sensibles
+    console.log(`[${controllerRequestId}] Datos recibidos: ${req.body ? 'Presentes' : 'Ausentes'}`);
+    console.log(`[${controllerRequestId}] IP (confiable): ${req.ip}`);
+    console.log(`[${controllerRequestId}] Fecha y hora: ${new Date().toISOString()}`); // Último log que vimos antes
 
-    // Generar ID único para esta solicitud
-    const requestId = uuidv4();
+    // Generar ID único para esta solicitud específica de procesamiento
+    const processingRequestId = uuidv4();
+    console.log(`[${controllerRequestId}] ID de procesamiento generado: ${processingRequestId}`); // LOG NUEVO
 
     // Obtener datos del formulario y validar email
     const { nombre, email, ...formData } = req.body;
-    const clientName = nombre || "Cliente"; // Nombre por defecto si no se proporciona
+    const clientName = nombre || "Cliente";
 
-    if (!email || typeof email !== 'string' || !email.includes('@')) { // Validación básica de email
-       console.warn(`[${req.requestId || 'N/A'}] Solicitud rechazada (400): Email inválido o faltante.`);
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+       console.warn(`[${controllerRequestId}] Solicitud rechazada (400): Email inválido o faltante.`);
       return res.status(400).json({
         success: false,
         message: "Se requiere una dirección de correo electrónico válida."
       });
     }
+    console.log(`[${processingRequestId}] Email validado: ${email}`); // LOG NUEVO
 
     // Crear objeto de seguimiento inicial
     const requestData = {
-      id: requestId,
+      id: processingRequestId, // Usar el ID de procesamiento
       timestamp: new Date().toISOString(),
       clientName,
-      email, // Guardar email para uso posterior (envío)
+      email,
       formData, // Guardar los datos específicos del formulario
       status: 'pending',
       message: 'Solicitud recibida, en cola para procesamiento...'
     };
+    console.log(`[${processingRequestId}] RequestData creado.`); // LOG NUEVO
 
     // Guardar en el almacén de pendientes
-    requestsStore.pending.set(requestId, requestData);
-    console.log(`[${requestId}] Solicitud encolada para ${clientName} (${email})`);
+    requestsStore.pending.set(processingRequestId, requestData);
+    console.log(`[${processingRequestId}] Guardado en pending store.`); // LOG NUEVO
 
     // Actualizar estadísticas
     statistics.totalSubmissions++;
     statistics.lastSubmissionTimestamp = requestData.timestamp;
+    console.log(`[${processingRequestId}] Estadísticas actualizadas.`); // LOG NUEVO
 
     // Responder inmediatamente al cliente indicando que se está procesando
-    res.status(202).json({ // Usar 202 Accepted para indicar procesamiento asíncrono
+    console.log(`[${processingRequestId}] Enviando respuesta 202 Accepted...`); // LOG NUEVO
+    res.status(202).json({ // Usar 202 Accepted
       success: true,
       message: "Formulario recibido. Tu rutina se está generando y se enviará a tu correo electrónico cuando esté lista.",
-      requestId: requestId,
-      statusUrl: `/api/form/status/${requestId}` // URL para consultar estado
+      requestId: processingRequestId, // Enviar el ID de procesamiento
+      statusUrl: `/api/form/status/${processingRequestId}` // URL para consultar estado
     });
+    console.log(`[${processingRequestId}] Respuesta 202 enviada a ${req.ip}.`); // LOG NUEVO
 
     // Disparar el procesamiento en segundo plano (sin await)
-    // Usamos setImmediate para asegurar que la respuesta se envíe antes de empezar el trabajo pesado
+    console.log(`[${processingRequestId}] Programando processFormDataInBackground con setImmediate...`); // LOG NUEVO
     setImmediate(() => {
+        // ----> LOG AL INICIO DE LA EJECUCIÓN ASÍNCRONA <----
+        console.log(`[${processingRequestId}] setImmediate ejecutado: Iniciando processFormDataInBackground.`);
+        // Llamar a la función de procesamiento y capturar cualquier error que lance
         processFormDataInBackground(requestData).catch(error => {
-            // Este catch maneja errores no capturados dentro de processFormDataInBackground
-            console.error(`[${requestId}] Error CATASTRÓFICO no manejado en processFormDataInBackground:`, error);
-            // Asegurarse de actualizar el estado a fallido incluso en este caso extremo
-             if (requestsStore.pending.has(requestId)) {
-                 requestData.status = 'failed';
-                 requestData.message = `Error interno inesperado durante el procesamiento: ${error.message}`;
-                 requestData.error = error.message;
-                 requestData.failedAt = new Date().toISOString();
-                 requestsStore.failed.set(requestId, requestData);
-                 requestsStore.pending.delete(requestId);
+            console.error(`[${processingRequestId}] Error CAPTURADO en CATCH de setImmediate para processFormDataInBackground:`, error.message);
+            // Loguear el stack si está disponible
+             if (error.stack) {
+                 console.error(error.stack);
+             }
+             // Asegurarse de actualizar estado a fallido aquí también si es necesario
+             // (Aunque processFormDataInBackground ya debería hacerlo en su propio catch)
+             if (requestsStore.pending.has(processingRequestId)) {
+                 const failedData = requestsStore.pending.get(processingRequestId);
+                 failedData.status = 'failed';
+                 failedData.message = `Error interno (catch setImmediate): ${error.message || 'Error desconocido'}`;
+                 failedData.error = error.message || 'Error desconocido';
+                 failedData.failedAt = new Date().toISOString();
+                 requestsStore.failed.set(processingRequestId, failedData);
+                 requestsStore.pending.delete(processingRequestId);
                  statistics.processingErrors++; // Contar como error de procesamiento
+                 console.log(`[${processingRequestId}] Estado actualizado a 'failed' desde CATCH de setImmediate.`);
              }
         });
     });
+    console.log(`[${processingRequestId}] processFormDataInBackground programado. Fin de processForm.`); // LOG NUEVO
 
   } catch (error) {
-    // Capturar errores síncronos en el propio controlador (validación, etc.)
-    console.error(`[${req.requestId || 'N/A'}] Error SÍNCRONO en processForm:`, error);
+    // Capturar errores síncronos en el propio controlador
+    console.error(`[${controllerRequestId}] Error SÍNCRONO CAPTURADO en processForm:`, error);
     // Pasar al manejador de errores global definido en server.js
     next(error);
   }
@@ -140,8 +166,10 @@ exports.processForm = async (req, res, next) => { // Añadir next para pasar err
  */
 exports.checkStatus = (req, res) => {
   const { requestId } = req.params;
+    const controllerRequestId = req.requestId || requestId; // Usar ID de log si existe
 
   if (!requestId) {
+     console.warn(`[${controllerRequestId}] Status Check rechazado (400): Falta requestId.`);
     return res.status(400).json({ success: false, message: "Falta el ID de la solicitud." });
   }
 
@@ -152,7 +180,7 @@ exports.checkStatus = (req, res) => {
     requestsStore.failed.get(requestId);
 
   if (!requestData) {
-    console.warn(`[Status Check] Solicitud no encontrada: ${requestId}`);
+    console.warn(`[${controllerRequestId}] Status Check (404): Solicitud ${requestId} no encontrada.`);
     return res.status(404).json({
       success: false,
       message: "Solicitud no encontrada o ya ha sido purgada."
@@ -160,7 +188,7 @@ exports.checkStatus = (req, res) => {
   }
 
   // Devolver estado actual (ofuscando datos sensibles)
-  console.log(`[Status Check] Consultando estado para ${requestId}: ${requestData.status}`);
+  console.log(`[${controllerRequestId}] Status Check para ${requestId}: ${requestData.status}`);
   res.status(200).json({
     success: true,
     requestId: requestData.id,
@@ -179,24 +207,35 @@ exports.checkStatus = (req, res) => {
  * @route GET /api/form/submissions
  */
 exports.getSubmissions = (req, res) => {
+    const controllerRequestId = req.requestId || 'admin-req';
   // !! AÑADIR AUTENTICACIÓN/AUTORIZACIÓN AQUÍ EN UN ENTORNO REAL !!
-  // Ejemplo básico: verificar una clave secreta en header o query param
   // const ADMIN_KEY = process.env.ADMIN_API_KEY;
   // if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) {
+  //    console.warn(`[${controllerRequestId}] Intento de acceso no autorizado a /submissions desde ${req.ip}`);
   //    return res.status(403).json({ success: false, message: "Acceso denegado" });
   // }
+   console.log(`[${controllerRequestId}] Acceso a /submissions permitido.`);
 
   try {
-      // Preparar resumen (mapeando y ofuscando datos)
+      // Función interna para mapear y ofuscar
       const mapRequestSummary = (item) => ({
           id: item.id,
           timestamp: item.timestamp,
           clientName: item.clientName,
-          email: item.email ? `${item.email.substring(0, 3)}***${item.email.substring(item.email.indexOf('@'))}` : 'N/A', // Ofuscar email
+          // Ofuscar email más seguro: a***@d***.com
+          email: item.email ? item.email.replace(/^(.).*?@(.*?\.).*?(\.[^.]+)$/, '$1***@$2***$3') : 'N/A',
           status: item.status,
           ...(item.status === 'failed' && { error: item.error }),
           ...(item.status === 'completed' && { completedAt: item.completedAt }),
+          ...(item.status === 'failed' && { failedAt: item.failedAt }),
       });
+
+      // Ordenar por timestamp más reciente (considerando completedAt/failedAt si existen)
+      const sortByRecent = (a, b) => {
+        const dateA = new Date(a.completedAt || a.failedAt || a.timestamp);
+        const dateB = new Date(b.completedAt || b.failedAt || b.timestamp);
+        return dateB - dateA; // Descendente
+      };
 
       const summary = {
           totals: {
@@ -207,22 +246,12 @@ exports.getSubmissions = (req, res) => {
           },
           statistics: {
             ...statistics,
-             // Calcular tiempo promedio si hay datos
-             // avgProcessingTime: calcularTiempoPromedio(), // Implementar si es necesario
+             lastSubmissionTimestamp: statistics.lastSubmissionTimestamp
           },
-          // Obtener una muestra de cada estado (más recientes primero)
-          recentPending: Array.from(requestsStore.pending.values())
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 10)
-            .map(mapRequestSummary),
-          recentCompleted: Array.from(requestsStore.completed.values())
-            .sort((a, b) => new Date(b.completedAt || b.timestamp) - new Date(a.completedAt || a.timestamp))
-            .slice(0, 10)
-            .map(mapRequestSummary),
-          recentFailed: Array.from(requestsStore.failed.values())
-            .sort((a, b) => new Date(b.failedAt || b.timestamp) - new Date(a.failedAt || a.timestamp))
-            .slice(0, 10)
-            .map(mapRequestSummary)
+          // Obtener una muestra (e.g., 20) de cada estado, ordenado
+          recentPending: Array.from(requestsStore.pending.values()).sort(sortByRecent).slice(0, 20).map(mapRequestSummary),
+          recentCompleted: Array.from(requestsStore.completed.values()).sort(sortByRecent).slice(0, 20).map(mapRequestSummary),
+          recentFailed: Array.from(requestsStore.failed.values()).sort(sortByRecent).slice(0, 20).map(mapRequestSummary)
       };
 
       res.status(200).json({
@@ -230,7 +259,7 @@ exports.getSubmissions = (req, res) => {
           data: summary
       });
   } catch (error) {
-      console.error("Error al obtener resumen de solicitudes:", error);
+      console.error(`[${controllerRequestId}] Error al obtener resumen de solicitudes:`, error);
       res.status(500).json({ success: false, message: "Error interno al obtener resumen." });
   }
 };
@@ -243,47 +272,63 @@ exports.getSubmissions = (req, res) => {
  * @param {object} requestData - El objeto que representa la solicitud pendiente.
  */
 async function processFormDataInBackground(requestData) {
+  // Extraer datos necesarios usando el ID guardado en requestData
   const { id: requestId, clientName, email, formData } = requestData;
+  // ----> LOG AL INICIO DE LA FUNCIÓN <----
+  console.log(`[${requestId}] DENTRO de processFormDataInBackground para ${clientName} (${email}).`);
 
   try {
-    console.log(`[${requestId}] Iniciando procesamiento para ${clientName}...`);
-    requestData.status = 'processing'; // Estado intermedio opcional
+    console.log(`[${requestId}] Paso 1: Formateando datos...`);
+    requestData.status = 'processing'; // Actualizar estado
     requestData.message = 'Formateando datos para IA...';
+    requestsStore.pending.set(requestId, requestData); // Actualizar en el store (opcional pero informativo)
 
-    // Convertir los datos del formulario al formato de objetos esperado por generateRoutine
     const routineInputData = formatFormDataToObjects(formData);
 
     if (!routineInputData || routineInputData.length === 0) {
-        throw new Error("No se pudieron formatear los datos del formulario para la IA.");
+        // Lanzar error si no hay datos formateados válidos
+        throw new Error("No se pudieron formatear datos válidos del formulario para la IA.");
+    }
+    console.log(`[${requestId}] Datos formateados (${routineInputData.length} items).`);
+
+    // --- Paso 2: Generar Rutina ---
+    console.log(`[${requestId}] Paso 2: Llamando a generateRoutine...`);
+    requestData.message = 'Generando rutina personalizada con IA...';
+    requestsStore.pending.set(requestId, requestData);
+
+    // La función generateRoutine ahora debería manejar su propio timeout interno
+    const routineHtml = await generateRoutine(routineInputData); // No necesitamos Promise.race aquí
+    console.log(`[${requestId}] Rutina HTML recibida de generateRoutine.`);
+
+    // --- Paso 3: Generar PDF ---
+    console.log(`[${requestId}] Paso 3: Creando PDF...`);
+    requestData.message = 'Rutina generada, creando documento PDF...';
+    requestsStore.pending.set(requestId, requestData);
+
+    const tempDir = process.env.TEMP_DIR || path.join(__dirname, '../temp');
+    // Asegurarse de que el directorio exista de forma síncrona antes de usarlo
+    try {
+      if (!fs.existsSync(tempDir)) {
+        console.log(`[${requestId}] Creando directorio temporal: ${tempDir}`);
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+    } catch (dirError) {
+        console.error(`[${requestId}] Error creando directorio temporal ${tempDir}:`, dirError);
+        throw new Error(`No se pudo crear el directorio temporal para el PDF: ${dirError.message}`);
     }
 
-    console.log(`[${requestId}] Datos formateados (${routineInputData.length} items). Generando rutina...`);
-    requestData.message = 'Generando rutina personalizada con IA...';
-
-    // Llamar a generateRoutine (que ahora maneja su propio timeout internamente)
-    // Pasar el array de objetos [{ question, answer, field }]
-    const routineHtml = await generateRoutine(routineInputData); // Ya no necesitamos Promise.race aquí
-
-    console.log(`[${requestId}] Rutina generada. Creando PDF...`);
-    requestData.message = 'Rutina generada, creando documento PDF...';
-
-    // --- Generación de PDF ---
-    // Crear directorio temporal si no existe
-    const tempDir = process.env.TEMP_DIR || path.join(__dirname, '../temp');
-     if (!fs.existsSync(tempDir)) {
-       console.log(`[${requestId}] Creando directorio temporal: ${tempDir}`);
-       fs.mkdirSync(tempDir, { recursive: true });
-     }
-
-    const pdfPath = await generatePDF(routineHtml, clientName, tempDir, requestId); // Pasar tempDir y requestId
+    const pdfPath = await generatePDF(routineHtml, clientName, tempDir, requestId);
     console.log(`[${requestId}] PDF generado en: ${pdfPath}`);
-    requestData.message = 'Documento PDF creado. Enviando email...';
 
-    // --- Envío de Email ---
-    await sendEmail(email, clientName, pdfPath, requestId); // Pasar clientName también puede ser útil
-    console.log(`[${requestId}] Email enviado a ${email}.`);
+    // --- Paso 4: Enviar Email ---
+    console.log(`[${requestId}] Paso 4: Enviando email a ${email}...`);
+    requestData.message = 'Documento PDF creado, enviando por email...';
+    requestsStore.pending.set(requestId, requestData);
 
-    // --- Finalización Exitosa ---
+    await sendEmail(email, clientName, pdfPath, requestId);
+    console.log(`[${requestId}] Email enviado exitosamente.`);
+
+    // --- Paso 5: Finalización Exitosa ---
     requestData.status = 'completed';
     requestData.message = '¡Rutina generada y enviada a tu correo!';
     requestData.completedAt = new Date().toISOString();
@@ -291,31 +336,55 @@ async function processFormDataInBackground(requestData) {
 
     // Mover de pending a completed
     requestsStore.completed.set(requestId, requestData);
-    requestsStore.pending.delete(requestId);
     console.log(`[${requestId}] Procesamiento completado exitosamente.`);
 
-    // Opcional: Limpiar el archivo PDF temporal después de un tiempo o si el envío fue exitoso
-    // setTimeout(() => { try { fs.unlinkSync(pdfPath); console.log(`[${requestId}] PDF temporal eliminado: ${pdfPath}`); } catch(e){ console.error(`Error eliminando PDF ${pdfPath}`, e)} }, 60000); // Borrar después de 1 min
+    // Limpieza del PDF temporal (con manejo de errores)
+     if (pdfPath) {
+         setTimeout(() => {
+             fs.unlink(pdfPath, (err) => {
+                 if (err) {
+                     console.error(`[${requestId}] Error eliminando PDF temporal ${pdfPath}:`, err);
+                 } else {
+                     console.log(`[${requestId}] PDF temporal eliminado: ${path.basename(pdfPath)}`);
+                 }
+             });
+         }, 60000); // Intentar borrar después de 1 minuto
+     }
+
 
   } catch (error) {
-    // --- Manejo de Errores Durante el Procesamiento ---
+    // --- Manejo Centralizado de Errores en Background ---
     console.error(`[${requestId}] ERROR durante el procesamiento para ${email}:`, error.message);
-    console.error(error.stack); // Loguear stacktrace para debug
+     if (error.stack) {
+         console.error(error.stack); // Loguear stacktrace completo para debug
+     }
 
     requestData.status = 'failed';
-    // Usar un mensaje de error más descriptivo si es posible
-    requestData.message = `Error al generar la rutina: ${error.message}`;
-    requestData.error = error.message; // Guardar mensaje de error
+    requestData.message = `Error al generar la rutina: ${error.message || 'Error desconocido'}`;
+    requestData.error = error.message || 'Error desconocido';
     requestData.failedAt = new Date().toISOString();
-    statistics.failedRoutines++;
+    statistics.failedRoutines++; // Incrementar fallos de rutina específicamente
+    statistics.processingErrors++; // También contar como error general de procesamiento
 
-    // Mover de pending a failed
-    requestsStore.failed.set(requestId, requestData);
-    requestsStore.pending.delete(requestId);
-    console.log(`[${requestId}] Procesamiento movido a estado 'failed'.`);
+    // Mover de pending a failed (asegurarse que no esté ya en failed por el catch de setImmediate)
+    if (requestsStore.pending.has(requestId)) {
+        requestsStore.failed.set(requestId, requestData);
+        requestsStore.pending.delete(requestId);
+        console.log(`[${requestId}] Procesamiento movido a estado 'failed' desde catch interno.`);
+    } else {
+         // Si ya no está en pending, quizás el catch externo ya lo movió, actualizarlo
+         if (requestsStore.failed.has(requestId)) {
+             requestsStore.failed.set(requestId, requestData); // Actualizar con detalles del error interno
+              console.log(`[${requestId}] Estado 'failed' actualizado con detalles del error interno.`);
+         } else {
+              console.error(`[${requestId}] Error: La solicitud no se encontró en pending ni failed después de un error interno.`);
+              // Guardarlo en failed igualmente para registro
+               requestsStore.failed.set(requestId, requestData);
+         }
+    }
 
-    // Opcional: Notificar al admin o intentar enviar un email de error al usuario?
-    // try { await sendErrorEmail(email, requestId, error.message); } catch (e) { console.error("Error enviando email de notificación de fallo:", e); }
+    // Importante: No relanzar el error aquí para que no lo capture el catch de setImmediate de nuevo.
+    // El estado ya está actualizado a 'failed'.
   }
 }
 
@@ -333,46 +402,50 @@ function formatFormDataToObjects(formData) {
         return [];
     }
 
-  // Mapeo entre campos del formulario (ids) y el texto de la pregunta
-  // Usamos el FORM_FIELD_QUESTIONS definido al inicio del archivo
+  // Usar el FORM_FIELD_QUESTIONS definido al inicio
   const questionMap = {};
   FORM_FIELD_QUESTIONS.forEach(q => {
-    questionMap[q.id] = q.text;
+      if (q.id && q.text) { // Asegurarse de que ambos existan
+        questionMap[q.id] = q.text;
+      }
   });
 
   const responses = [];
 
-  // Procesar cada campo del formulario recibido
   Object.entries(formData).forEach(([fieldName, value]) => {
     const questionText = questionMap[fieldName];
+    // Limpiar valor asegurándose de que sea string
     const trimmedValue = String(value || '').trim();
 
-    // Incluir solo si el campo tiene mapeo de pregunta y tiene un valor no vacío
     if (questionText && trimmedValue !== '') {
       responses.push({
         question: questionText,
         answer: trimmedValue,
-        field: fieldName // Incluir el ID del campo original puede ser útil
+        field: fieldName
       });
-    } else if (trimmedValue !== '' && !questionText) {
-        // Loguear campos recibidos que no tienen mapeo (podrían ser nuevos campos)
-        console.warn(`Campo no mapeado recibido en formData: '${fieldName}' con valor: '${trimmedValue}'`);
-        // Opcionalmente, incluirlos como "Información Adicional" genérica si se desea
-        // responses.push({ question: `Campo adicional (${fieldName})`, answer: trimmedValue, field: fieldName });
+    } else if (trimmedValue !== '' && fieldName !== 'nombre' && fieldName !== 'email') { // Ignorar nombre/email si no tienen mapeo
+        // Loguear campos desconocidos con valor
+        console.warn(`Campo no mapeado/desconocido con valor recibido: '${fieldName}' = '${trimmedValue}'`);
+        // Podrías decidir incluirlos o no. Por ahora los omitimos.
+        // responses.push({ question: `Campo (${fieldName})`, answer: trimmedValue, field: fieldName });
     }
   });
 
-  // Verificar si se obtuvieron suficientes datos
-  if (responses.length < 5) { // Umbral arbitrario, ajustar si es necesario
-    console.warn("formatFormDataToObjects: Pocas respuestas significativas (<5) formateadas para la IA.");
+  if (responses.length < 5) {
+    console.warn(`formatFormDataToObjects: Pocas respuestas significativas (<5) formateadas para la IA (${responses.length} encontradas).`);
   }
 
+  console.log(`[formatFormDataToObjects] Formateadas ${responses.length} respuestas.`);
   return responses;
 }
 
-
-// Exportar funciones públicas del controlador
-// (processFormData e formatFormDataToObjects son internas y no se exportan directamente)
-// Pero sí exportamos el almacén y estadísticas si queremos acceder desde tests u otros módulos (con precaución)
-exports.requestsStore = requestsStore;
-exports.statistics = statistics;
+// Exportar funciones públicas y opcionalmente el store/stats para admin/testing
+module.exports = {
+    processForm,
+    checkStatus,
+    getSubmissions,
+    // No exportar processFormDataInBackground ni formatFormDataToObjects ya que son internas
+    // Exportar store/stats solo si es estrictamente necesario para otros módulos (no recomendado para estado en memoria)
+    // requestsStore,
+    // statistics
+};
