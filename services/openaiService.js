@@ -904,32 +904,17 @@ Diseña la rutina SEMANAL completa AHORA.`;
 
   let timeoutId; // <<<--- Declarado con let fuera del try para que sea accesible en catch
   try {
-    // Establecer un timeout para la solicitud (e.g., 2-3 minutos)
-    const controller = new AbortController();
-    const timeoutDuration = 180000; // 3 minutos
-    // ---- INICIO DE MODIFICACIÓN ----
-    timeoutId = setTimeout(() => {  // <<<--- ASIGNACIÓN (declarado fuera con let)
-       console.warn(`Timeout: Abortando solicitud a OpenAI después de ${timeoutDuration / 1000}s`);
-       controller.abort();
-     }, timeoutDuration);
-    // ---- FIN DE MODIFICACIÓN ----
-
+    
     console.log("Enviando solicitud a OpenAI con prompt final...");
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini", // "gpt-4-turbo" o "gpt-4o" si necesitas más capacidad
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       messages: [
         { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas." },
         { role: "user", content: prompt }
       ],
-      temperature: 0.5, // Más determinista para seguir formato
-      signal: controller.signal
+      temperature: 0.5
     });
-
-    // ---- INICIO DE MODIFICACIÓN ----
-    clearTimeout(timeoutId); // Limpiar el timeout si la respuesta llega a tiempo
-    timeoutId = null; // <<<--- Añadida esta línea
-    // ---- FIN DE MODIFICACIÓN ----
-
+  
     const responseMessage = completion.choices[0]?.message?.content;
 
     if (!responseMessage) {
