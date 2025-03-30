@@ -148,7 +148,7 @@ function getWeightExcludingSession(responses, sessionTime) {
         let extractedWeight = weightMatch ? weightMatch[0].trim() : formatWeight(weightPatternResponse.answer); // Extraer o formatear
         extractedWeight = formatWeight(extractedWeight); // Re-formatear/normalizar
          if (!checkConflict(extractedWeight)) {
-             return extractedWeight;
+              return extractedWeight;
          }
     }
 
@@ -262,15 +262,15 @@ function getAnswer(questionKeyword, responses) {
        return responseByField.answer.trim();
    }
 
-   // 3. Buscar por coincidencia de keyword en el texto de la RESPUESTA (Fallback más arriesgado)
-   const responseByAnswer = responses.find(r =>
-    r && r.answer && r.answer.toLowerCase().includes(normalizedKeyword)
-  );
-  if (responseByAnswer?.answer?.trim()) {
+    // 3. Buscar por coincidencia de keyword en el texto de la RESPUESTA (Fallback más arriesgado)
+    const responseByAnswer = responses.find(r =>
+     r && r.answer && r.answer.toLowerCase().includes(normalizedKeyword)
+    );
+    if (responseByAnswer?.answer?.trim()) {
     // Considerar añadir un log aquí si se usa este método, ya que puede ser menos preciso
     // console.log(`Keyword '${normalizedKeyword}' encontrada en respuesta: '${responseByAnswer.answer}' (Pregunta: '${responseByAnswer.question}')`);
     return responseByAnswer.answer.trim();
-  }
+    }
 
   return ''; // No se encontró respuesta por ninguno de los métodos
 }
@@ -313,8 +313,8 @@ const generateRoutine = async (formData, options = {}) => {
       responses = formData.map(item => {
         if (item && item.question && typeof item.answer === 'string') { // Validar cada item
           if (!item.field) {
-              const fieldMapping = FORM_FIELD_QUESTIONS.find(q => q.text === item.question);
-              return {...item, field: fieldMapping ? fieldMapping.id : undefined };
+               const fieldMapping = FORM_FIELD_QUESTIONS.find(q => q.text === item.question);
+               return {...item, field: fieldMapping ? fieldMapping.id : undefined };
           }
           return item;
         }
@@ -344,22 +344,22 @@ const generateRoutine = async (formData, options = {}) => {
       throw new Error("Formato de datos no soportado o datos vacíos para generar rutina");
     }
 
-     // Asegurarse de que 'responses' sea siempre un array válido después del procesamiento
-     if (!Array.isArray(responses)) {
-        console.error("Error interno: 'responses' no es un array después del procesamiento inicial.");
-        responses = [];
-     }
+       // Asegurarse de que 'responses' sea siempre un array válido después del procesamiento
+       if (!Array.isArray(responses)) {
+          console.error("Error interno: 'responses' no es un array después del procesamiento inicial.");
+          responses = [];
+       }
 
     // Formatear respuestas para el prompt, excluyendo datos sensibles y respuestas vacías
     const formattedResponsesForPrompt = responses
       .filter(item =>
-          item && // Asegurar que el item exista
-          item.answer && String(item.answer).trim() !== '' && // Excluir respuestas vacías o nulas
-          item.field !== 'nombre' &&
-          item.field !== 'email' &&
-          item.question && // Asegurar que la pregunta exista
-          !item.question.toLowerCase().includes("cómo te llamas") &&
-          !item.question.toLowerCase().includes("dirección de correo electrónico")
+           item && // Asegurar que el item exista
+           item.answer && String(item.answer).trim() !== '' && // Excluir respuestas vacías o nulas
+           item.field !== 'nombre' &&
+           item.field !== 'email' &&
+           item.question && // Asegurar que la pregunta exista
+           !item.question.toLowerCase().includes("cómo te llamas") &&
+           !item.question.toLowerCase().includes("dirección de correo electrónico")
       )
       .map(item => `Pregunta: ${item.question}\nRespuesta: ${item.answer}`);
 
@@ -444,8 +444,8 @@ function processTextLines(textLines) {
     if (!Array.isArray(textLines)) return [];
 
   const cleanedLines = textLines
-        .map(line => (typeof line === 'string' ? line.trim() : ''))
-        .filter(line => line !== '');
+         .map(line => (typeof line === 'string' ? line.trim() : ''))
+         .filter(line => line !== '');
 
     if (cleanedLines.length === 0) return [];
 
@@ -469,37 +469,37 @@ function processTextLines(textLines) {
   let currentQuestion = null;
   let possibleNewLineFormat = false;
 
-    // Check for explicit newline format in any line
-    if (cleanedLines.some(line => line.includes('\n'))) {
-        possibleNewLineFormat = true;
-    }
+     // Check for explicit newline format in any line
+     if (cleanedLines.some(line => line.includes('\n'))) {
+          possibleNewLineFormat = true;
+     }
 
-    cleanedLines.forEach((line, index) => {
-        if (line.includes('\n')) {
-            const parts = line.split('\n');
-            if(parts[0] && parts[1]){ // Asegurar que hay pregunta y respuesta
-                 results.push({ question: parts[0].trim(), answer: parts[1].trim() });
-                 currentQuestion = null; // Reset state
-            } else if (parts[0]) { // Si solo hay pregunta, guardarla para la siguiente línea
-                currentQuestion = parts[0].trim();
-            }
-        } else if (index % 2 === 0 && !possibleNewLineFormat) { // Asumir Q si es línea par Y no detectamos \n antes
-            currentQuestion = line;
-        } else if (currentQuestion) { // Asumir R si teníamos Q pendiente
-            results.push({ question: currentQuestion, answer: line });
-            currentQuestion = null; // Reset
-        } else if (index === 0 && !possibleNewLineFormat) { // Si es la primera línea sin pareja (y sin \n detectado)
-             results.push({ question: "Información inicial", answer: line }); // O "Información adicional"
-        } else if (!possibleNewLineFormat) { // Línea impar sin pregunta pendiente (y sin \n detectado)
-             results.push({ question: "Información adicional", answer: line });
-        }
-        // Si possibleNewLineFormat es true pero esta línea no tiene \n, se ignora a menos que haya currentQuestion
-    });
+     cleanedLines.forEach((line, index) => {
+          if (line.includes('\n')) {
+               const parts = line.split('\n');
+               if(parts[0] && parts[1]){ // Asegurar que hay pregunta y respuesta
+                     results.push({ question: parts[0].trim(), answer: parts[1].trim() });
+                     currentQuestion = null; // Reset state
+               } else if (parts[0]) { // Si solo hay pregunta, guardarla para la siguiente línea
+                     currentQuestion = parts[0].trim();
+               }
+          } else if (index % 2 === 0 && !possibleNewLineFormat) { // Asumir Q si es línea par Y no detectamos \n antes
+                currentQuestion = line;
+          } else if (currentQuestion) { // Asumir R si teníamos Q pendiente
+                results.push({ question: currentQuestion, answer: line });
+                currentQuestion = null; // Reset
+          } else if (index === 0 && !possibleNewLineFormat) { // Si es la primera línea sin pareja (y sin \n detectado)
+                  results.push({ question: "Información inicial", answer: line }); // O "Información adicional"
+          } else if (!possibleNewLineFormat) { // Línea impar sin pregunta pendiente (y sin \n detectado)
+                  results.push({ question: "Información adicional", answer: line });
+          }
+          // Si possibleNewLineFormat es true pero esta línea no tiene \n, se ignora a menos que haya currentQuestion
+     });
 
-    // Si después del bucle queda una pregunta pendiente (última línea fue Q)
-    if (currentQuestion) {
-         results.push({ question: currentQuestion, answer: "" }); // Añadirla con respuesta vacía
-    }
+     // Si después del bucle queda una pregunta pendiente (última línea fue Q)
+     if (currentQuestion) {
+          results.push({ question: currentQuestion, answer: "" }); // Añadirla con respuesta vacía
+     }
 
 
   if (results.length > 0 && results.length >= cleanedLines.length / 2) {
@@ -525,13 +525,13 @@ function mapLinesToQuestions(lines) {
 
    const questionPatterns = FORM_FIELD_QUESTIONS.map(q => {
        const keywords = q.text
-           .toLowerCase()
-           .replace(/[¿?¡!,.]/g, '') // Quitar más puntuación
-           .split(/\s+/)
-           .filter(word => word.length >= 3 && !['cómo', 'cuál', 'cuánto', 'has', 'hay', 'con', 'para', 'que', 'por', 'tus', 'alguna', 'alguno', 'debes', 'puede', 'afectar', 'describirías', 'principal', 'soportado', 'soportada', 'del', 'con', 'las', 'los', 'una', 'uno', 'eres', 'tiene', 'tipo', 'sobre'].includes(word)); // Filtro más estricto
+            .toLowerCase()
+            .replace(/[¿?¡!,.]/g, '') // Quitar más puntuación
+            .split(/\s+/)
+            .filter(word => word.length >= 3 && !['cómo', 'cuál', 'cuánto', 'has', 'hay', 'con', 'para', 'que', 'por', 'tus', 'alguna', 'alguno', 'debes', 'puede', 'afectar', 'describirías', 'principal', 'soportado', 'soportada', 'del', 'con', 'las', 'los', 'una', 'uno', 'eres', 'tiene', 'tipo', 'sobre'].includes(word)); // Filtro más estricto
        return {
-           question: q.text,
-           patterns: keywords.map(kw => new RegExp(`\\b${kw}\\b`, 'i')) // Word boundary para evitar subcadenas
+            question: q.text,
+            patterns: keywords.map(kw => new RegExp(`\\b${kw}\\b`, 'i')) // Word boundary para evitar subcadenas
        };
    }).filter(qp => qp.patterns.length > 0); // Quitar preguntas sin keywords útiles
 
@@ -548,34 +548,34 @@ function mapLinesToQuestions(lines) {
   const assignedLines = new Set();
 
   questionPatterns.forEach(({ question, patterns }) => {
-      let bestMatch = { score: 0, line: null, index: -1 };
+       let bestMatch = { score: 0, line: null, index: -1 };
 
-      lines.forEach((line, index) => {
-          if (assignedLines.has(index)) return;
+       lines.forEach((line, index) => {
+            if (assignedLines.has(index)) return;
 
-          let currentScore = 0;
-          patterns.forEach(pattern => {
-              if (pattern.test(line)) {
-                  currentScore++;
-              }
-          });
+            let currentScore = 0;
+            patterns.forEach(pattern => {
+                 if (pattern.test(line)) {
+                      currentScore++;
+                 }
+            });
 
-          // Priorizar mayor número de coincidencias, y luego línea más corta (más específica)
-          if (currentScore > 0) {
-             if (currentScore > bestMatch.score || (currentScore === bestMatch.score && line.length < bestMatch.line?.length)) {
-                  bestMatch = { score: currentScore, line, index };
-              }
-          }
-      });
+            // Priorizar mayor número de coincidencias, y luego línea más corta (más específica)
+            if (currentScore > 0) {
+                 if (currentScore > bestMatch.score || (currentScore === bestMatch.score && line.length < bestMatch.line?.length)) {
+                      bestMatch = { score: currentScore, line, index };
+                 }
+            }
+       });
 
-      if (bestMatch.line !== null && !assignedLines.has(bestMatch.index)) {
-          // Evitar asignar la misma línea si otra pregunta tuvo un score igual o mayor
-          const existingAssignment = results.find(r => r.answer === bestMatch.line);
-          if (!existingAssignment) { // Solo asignar si no está ya en results
-                results.push({ question: question, answer: bestMatch.line });
-                assignedLines.add(bestMatch.index);
-          }
-      }
+       if (bestMatch.line !== null && !assignedLines.has(bestMatch.index)) {
+            // Evitar asignar la misma línea si otra pregunta tuvo un score igual o mayor
+            const existingAssignment = results.find(r => r.answer === bestMatch.line);
+            if (!existingAssignment) { // Solo asignar si no está ya en results
+                  results.push({ question: question, answer: bestMatch.line });
+                  assignedLines.add(bestMatch.index);
+            }
+       }
   });
 
   // Añadir líneas no asignadas a "Información adicional"
@@ -616,9 +616,9 @@ function buildClientDescription(data) {
 
   // EDAD
   if (data.age && /^\d+$/.test(String(data.age).trim().split(' ')[0])) { // Verifica si empieza con número
-      descriptionParts.push(`de ${String(data.age).trim().replace(/\s*años$/i, '')} años`); // Añade "años" y limpia si ya estaba
+       descriptionParts.push(`de ${String(data.age).trim().replace(/\s*años$/i, '')} años`); // Añade "años" y limpia si ya estaba
   } else if (data.age) { // Si no es numérico pero existe, añadirlo
-      descriptionParts.push(`cuya edad es ${String(data.age).trim()}`);
+       descriptionParts.push(`cuya edad es ${String(data.age).trim()}`);
   }
 
   // PESO Y ALTURA (si existen)
@@ -641,13 +641,13 @@ function buildClientDescription(data) {
   // NIVEL DE EXPERIENCIA Y CONDICIÓN FÍSICA (evitar redundancia)
   let experienceAdded = false;
   if (data.experienceLevel) {
-      descriptionParts.push(`con nivel de experiencia ${data.experienceLevel.toLowerCase()}`);
-      experienceAdded = true;
+       descriptionParts.push(`con nivel de experiencia ${data.experienceLevel.toLowerCase()}`);
+       experienceAdded = true;
   }
   if (data.fitnessLevel && (!experienceAdded || data.fitnessLevel.toLowerCase() !== data.experienceLevel?.toLowerCase())) {
-       if (!/experiencia|principiante|intermedio|avanzado/i.test(data.fitnessLevel)) { // Solo añadir si es descriptivo (activo, sedentario...)
-            descriptionParts.push(`y condición física ${data.fitnessLevel.toLowerCase()}`);
-       }
+        if (!/experiencia|principiante|intermedio|avanzado/i.test(data.fitnessLevel)) { // Solo añadir si es descriptivo (activo, sedentario...)
+             descriptionParts.push(`y condición física ${data.fitnessLevel.toLowerCase()}`);
+        }
   }
 
   // OBJETIVO
@@ -656,25 +656,25 @@ function buildClientDescription(data) {
   // LOGÍSTICA DE ENTRENAMIENTO
   if (data.trainingLocation) descriptionParts.push(`entrena habitualmente en ${data.trainingLocation.toLowerCase()}`);
   if (data.daysPerWeek) {
-      let daysText = String(data.daysPerWeek).toLowerCase();
-      const dayMap = { '1': 'un día', '2': 'dos días', '3': 'tres días', '4': 'cuatro días', '5': 'cinco días', '6': 'seis días', '7': 'siete días' };
-      daysText = dayMap[daysText] || daysText; // Convertir número a texto si es posible
-      descriptionParts.push(`dispone de ${daysText} a la semana`);
+       let daysText = String(data.daysPerWeek).toLowerCase();
+       const dayMap = { '1': 'un día', '2': 'dos días', '3': 'tres días', '4': 'cuatro días', '5': 'cinco días', '6': 'seis días', '7': 'siete días' };
+       daysText = dayMap[daysText] || daysText; // Convertir número a texto si es posible
+       descriptionParts.push(`dispone de ${daysText} a la semana`);
   }
   if (data.sessionTime) {
-      let timeText = String(data.sessionTime).toLowerCase();
-       if (/^\d+$/.test(timeText)) timeText += " min"; // Añadir unidad si falta
-      descriptionParts.push(`para sesiones de ${timeText}`);
+       let timeText = String(data.sessionTime).toLowerCase();
+        if (/^\d+$/.test(timeText)) timeText += " min"; // Añadir unidad si falta
+       descriptionParts.push(`para sesiones de ${timeText}`);
   }
 
   // CONTEXTO MÉDICO Y LIMITACIONES (agrupar y evitar duplicados)
   const healthContext = new Set();
   const addHealthInfo = (label, value) => {
-      const trimmedValue = String(value || '').trim();
-      if (trimmedValue && !/no$|nada|ningun[oa]/i.test(trimmedValue)) {
-          const cleanValue = trimmedValue.replace(/^Sí:\s*/i, '').trim();
-          healthContext.add(`${label}: ${cleanValue}`);
-      }
+       const trimmedValue = String(value || '').trim();
+       if (trimmedValue && !/no$|nada|ningun[oa]/i.test(trimmedValue)) {
+            const cleanValue = trimmedValue.replace(/^Sí:\s*/i, '').trim();
+            healthContext.add(`${label}: ${cleanValue}`);
+       }
   };
 
   addHealthInfo('Cirugía reciente', data.surgery);
@@ -686,31 +686,31 @@ function buildClientDescription(data) {
   addHealthInfo('Medicación', data.medication);
 
   if (healthContext.size > 0) {
-      descriptionParts.push(`Consideraciones médicas/físicas: ${Array.from(healthContext).join('; ')}`);
+       descriptionParts.push(`Consideraciones médicas/físicas: ${Array.from(healthContext).join('; ')}`);
   }
 
   // PREFERENCIAS Y EVITACIONES
   const preferences = new Set();
-   const addPreference = (label, value) => {
-       const trimmedValue = String(value || '').trim();
-       if (trimmedValue && !/no$|nada|ningun[oa]/i.test(trimmedValue)) {
-           preferences.add(`${label}: ${trimmedValue}`);
-       }
-   };
+    const addPreference = (label, value) => {
+        const trimmedValue = String(value || '').trim();
+        if (trimmedValue && !/no$|nada|ningun[oa]/i.test(trimmedValue)) {
+            preferences.add(`${label}: ${trimmedValue}`);
+        }
+    };
 
   addPreference('Le gustaría practicar', data.exercisePreference);
   addPreference('Prefiere evitar', data.exerciseAvoidance);
   addPreference('Preferencia de estructura', data.trainingPreference);
   addPreference('Material específico a usar', data.specificMaterial);
 
-   if (preferences.size > 0) {
-      descriptionParts.push(`Preferencias: ${Array.from(preferences).join('; ')}`);
+    if (preferences.size > 0) {
+       descriptionParts.push(`Preferencias: ${Array.from(preferences).join('; ')}`);
   }
 
   // INFORMACIÓN ADICIONAL
-   const additionalInfoTrimmed = String(data.additionalInfo || '').trim();
+    const additionalInfoTrimmed = String(data.additionalInfo || '').trim();
   if (additionalInfoTrimmed && !/no$|nada|ningun[oa]/i.test(additionalInfoTrimmed)) {
-      descriptionParts.push(`Información adicional: "${additionalInfoTrimmed}"`);
+       descriptionParts.push(`Información adicional: "${additionalInfoTrimmed}"`);
   }
 
   // Unir todas las partes con ". " para formar la descripción final
@@ -768,13 +768,13 @@ const createPromptAndGenerate = async (formattedResponsesForPrompt, allResponses
     const heightValue = heightMatch ? parseFloat(heightMatch[1].replace(',', '.')) : NaN;
 
     if (!isNaN(heightValue)) {
-        if (String(clientDataRaw.height).includes('m') && !String(clientDataRaw.height).includes('cm')) {
-            heightInMeters = heightValue;
-        } else if (heightValue > 3) {
-             heightInMeters = heightValue / 100;
-        } else {
+         if (String(clientDataRaw.height).includes('m') && !String(clientDataRaw.height).includes('cm')) {
              heightInMeters = heightValue;
-        }
+         } else if (heightValue > 3) {
+              heightInMeters = heightValue / 100;
+         } else {
+              heightInMeters = heightValue;
+         }
     }
 
     if (!isNaN(weightValue) && !isNaN(heightInMeters) && heightInMeters > 0) {
@@ -802,30 +802,30 @@ const createPromptAndGenerate = async (formattedResponsesForPrompt, allResponses
   let specificRecommendations = "";
   let healthContextForPrompt = []; // Para pasar al prompt
   try {
-      const knowledgeBasePath = './knowledge_base.json';
-      if (fs.existsSync(knowledgeBasePath)) {
-          const knowledgeBase = JSON.parse(fs.readFileSync(knowledgeBasePath, 'utf8'));
-          if (knowledgeBase && Array.isArray(knowledgeBase)) {
-             const relevantGuidelines = findRelevantGuidelines(cleanedData, knowledgeBase);
-             if (relevantGuidelines.length > 0) {
-                specificRecommendations = "\n\n**Directrices Clave Basadas en el Perfil:**\n";
-                // Limitar a las 5-7 más relevantes por score para no saturar el prompt
-                relevantGuidelines.slice(0, 7).forEach(guideline => {
-                    specificRecommendations += `- ${guideline.output}\n`;
-                    healthContextForPrompt.push(guideline.output); // Guardar para prompt
-                });
-                console.log(`Top ${relevantGuidelines.slice(0, 7).length} directrices específicas añadidas al prompt.`);
-             } else {
-                console.log("No se encontraron directrices relevantes en knowledge_base.json.");
-             }
-          } else {
-             console.warn("knowledge_base.json no es un array válido.");
-          }
-      } else {
-          console.warn("knowledge_base.json no encontrado en la ruta:", knowledgeBasePath);
-      }
+       const knowledgeBasePath = './knowledge_base.json';
+       if (fs.existsSync(knowledgeBasePath)) {
+           const knowledgeBase = JSON.parse(fs.readFileSync(knowledgeBasePath, 'utf8'));
+           if (knowledgeBase && Array.isArray(knowledgeBase)) {
+                const relevantGuidelines = findRelevantGuidelines(cleanedData, knowledgeBase);
+                if (relevantGuidelines.length > 0) {
+                    specificRecommendations = "\n\n**Directrices Clave Basadas en el Perfil:**\n";
+                    // Limitar a las 5-7 más relevantes por score para no saturar el prompt
+                    relevantGuidelines.slice(0, 7).forEach(guideline => {
+                        specificRecommendations += `- ${guideline.output}\n`;
+                        healthContextForPrompt.push(guideline.output); // Guardar para prompt
+                    });
+                    console.log(`Top ${relevantGuidelines.slice(0, 7).length} directrices específicas añadidas al prompt.`);
+                } else {
+                    console.log("No se encontraron directrices relevantes en knowledge_base.json.");
+                }
+           } else {
+                console.warn("knowledge_base.json no es un array válido.");
+           }
+       } else {
+           console.warn("knowledge_base.json no encontrado en la ruta:", knowledgeBasePath);
+       }
   } catch (kbError) {
-      console.error("Error al cargar o procesar knowledge_base.json:", kbError);
+       console.error("Error al cargar o procesar knowledge_base.json:", kbError);
   }
   // --- Fin Integración KB ---
 
@@ -902,15 +902,17 @@ ${specificRecommendations}
 
 Diseña la rutina SEMANAL completa AHORA.`;
 
-
+  let timeoutId; // <<<--- Declarado con let fuera del try para que sea accesible en catch
   try {
     // Establecer un timeout para la solicitud (e.g., 2-3 minutos)
     const controller = new AbortController();
     const timeoutDuration = 180000; // 3 minutos
-    const timeoutId = setTimeout(() => {
-        console.warn(`Timeout: Abortando solicitud a OpenAI después de ${timeoutDuration / 1000}s`);
-        controller.abort();
-    }, timeoutDuration);
+    // ---- INICIO DE MODIFICACIÓN ----
+    timeoutId = setTimeout(() => {  // <<<--- ASIGNACIÓN (declarado fuera con let)
+       console.warn(`Timeout: Abortando solicitud a OpenAI después de ${timeoutDuration / 1000}s`);
+       controller.abort();
+     }, timeoutDuration);
+    // ---- FIN DE MODIFICACIÓN ----
 
     console.log("Enviando solicitud a OpenAI con prompt final...");
     const completion = await openai.chat.completions.create({
@@ -920,11 +922,13 @@ Diseña la rutina SEMANAL completa AHORA.`;
         { role: "user", content: prompt }
       ],
       temperature: 0.5, // Más determinista para seguir formato
-      // max_tokens: 4096, // Ajustar si es necesario, depende del modelo y longitud
       signal: controller.signal
     });
 
+    // ---- INICIO DE MODIFICACIÓN ----
     clearTimeout(timeoutId); // Limpiar el timeout si la respuesta llega a tiempo
+    timeoutId = null; // <<<--- Añadida esta línea
+    // ---- FIN DE MODIFICACIÓN ----
 
     const responseMessage = completion.choices[0]?.message?.content;
 
@@ -936,24 +940,29 @@ Diseña la rutina SEMANAL completa AHORA.`;
     const cleanedHtmlResponse = responseMessage.replace(/```html|```/g, '').trim();
 
     console.log("Rutina generada exitosamente.");
-    // console.log("Respuesta HTML recibida (primeros 500 chars):\n", cleanedHtmlResponse.substring(0, 500)); // Log para debug
-
-    return cleanedHtmlResponse;
+    // Devolver la respuesta HTML limpia
+    return cleanedHtmlResponse; // <<<--- Asegurarse de devolver la rutina
 
   } catch (error) {
-     if (timeoutId) clearTimeout(timeoutId); // Asegurarse de limpiar el timeout en cualquier error
+    // ---- INICIO DE MODIFICACIÓN ----
+    // Verificar que timeoutId existe antes de intentar limpiarlo
+    if (typeof timeoutId !== 'undefined' && timeoutId !== null) {  // <<<--- Añadida esta verificación
+        clearTimeout(timeoutId);
+        timeoutId = null; // También asignar null aquí por seguridad
+    }
+    // ---- FIN DE MODIFICACIÓN ----
 
-    if (error.name === 'AbortError' || (error instanceof OpenAI.APIError && error.status === 408)) { // OpenAI puede devolver 408 por timeout
-       console.error("Error: La solicitud a OpenAI excedió el tiempo límite.");
-       throw new Error("La generación de la rutina tardó demasiado. Intenta de nuevo más tarde o revisa la complejidad del prompt.");
+    if (error.name === 'AbortError' || (error instanceof OpenAI.APIError && error.status === 408)) {
+        console.error("Error: La solicitud a OpenAI excedió el tiempo límite.");
+        throw new Error("La generación de la rutina tardó demasiado. Intenta de nuevo más tarde o revisa la complejidad del prompt.");
     }
 
     console.error("Error en la llamada a OpenAI API:", error);
      if (error instanceof OpenAI.RateLimitError) {
-       throw new Error("Límite de uso de la API de OpenAI alcanzado. Espera un momento y reintenta.");
+        throw new Error("Límite de uso de la API de OpenAI alcanzado. Espera un momento y reintenta.");
      } else if (error instanceof OpenAI.APIError && error.status >= 500) {
-       throw new Error("Problema temporal con el servicio de OpenAI. Intenta de nuevo más tarde.");
-     } else if (error instanceof OpenAI.BadRequestError) { // e.g., max_tokens excedido por el prompt
+        throw new Error("Problema temporal con el servicio de OpenAI. Intenta de nuevo más tarde.");
+     } else if (error instanceof OpenAI.BadRequestError) {
         console.error("BadRequestError details:", error.message);
         throw new Error(`Error de solicitud a OpenAI (BadRequest): Revisa la longitud/formato del prompt. ${error.message}`);
      } else {
@@ -989,10 +998,10 @@ function cleanClientData(clientDataRaw) {
         if (typeof cleanedData[key] === 'string') {
              // Aplicar limpieza general a casi todos los strings, excepto quizás weight/height/age/days/time que tienen formato específico
              if (!['weight', 'height', 'age', 'daysPerWeek', 'sessionTime', 'imc'].includes(key)) {
-                cleanedData[key] = cleanInput(cleanedData[key]);
+                 cleanedData[key] = cleanInput(cleanedData[key]);
              } else {
-                // Solo trim para los campos con formato específico
-                 cleanedData[key] = String(cleanedData[key] || '').trim();
+                 // Solo trim para los campos con formato específico
+                  cleanedData[key] = String(cleanedData[key] || '').trim();
              }
         }
     }
@@ -1035,20 +1044,20 @@ function cleanClientData(clientDataRaw) {
     if (cleanedData.height) {
          const heightMatch = cleanedData.height.match(/(\d+([.,]\d+)?)\s*(cm|m|metros|ft|pie|pies)?/i);
          if (heightMatch) {
-            const value = parseFloat(heightMatch[1].replace(',', '.'));
-            let unit = (heightMatch[3] || '').toLowerCase();
-            if (!unit) { // Si no hay unidad, inferir
-                if (value >= 1.4 && value <= 2.3) unit = 'm';
-                else if (value >= 140 && value <= 230) unit = 'cm';
-                else unit = 'cm'; // Default a cm
-            }
-            if (unit.startsWith('m')) cleanedData.height = `${value} m`;
-            else if (unit === 'cm') cleanedData.height = `${value} cm`;
-            else if (unit.startsWith('f') || unit.startsWith('p')) cleanedData.height = `${value} ft`; // Normalizar a ft
-            else cleanedData.height = `${value} cm`; // Fallback
+             const value = parseFloat(heightMatch[1].replace(',', '.'));
+             let unit = (heightMatch[3] || '').toLowerCase();
+             if (!unit) { // Si no hay unidad, inferir
+                 if (value >= 1.4 && value <= 2.3) unit = 'm';
+                 else if (value >= 140 && value <= 230) unit = 'cm';
+                 else unit = 'cm'; // Default a cm
+             }
+             if (unit.startsWith('m')) cleanedData.height = `${value} m`;
+             else if (unit === 'cm') cleanedData.height = `${value} cm`;
+             else if (unit.startsWith('f') || unit.startsWith('p')) cleanedData.height = `${value} ft`; // Normalizar a ft
+             else cleanedData.height = `${value} cm`; // Fallback
          } else {
-             console.log(`Limpiando altura no válida: ${cleanedData.height}`);
-             cleanedData.height = "";
+              console.log(`Limpiando altura no válida: ${cleanedData.height}`);
+              cleanedData.height = "";
          }
     }
 
@@ -1067,7 +1076,7 @@ function cleanClientData(clientDataRaw) {
 
     // DÍAS POR SEMANA
      if (cleanedData.daysPerWeek) {
-         const daysMatch = cleanedData.daysPerWeek.match(/(\d+)|(un[oa]?|dos|tres|cuatro|cinco|seis|siete)/i);
+          const daysMatch = cleanedData.daysPerWeek.match(/(\d+)|(un[oa]?|dos|tres|cuatro|cinco|seis|siete)/i);
         if (daysMatch) {
             const dayMap = { uno: '1', una: '1', dos: '2', tres: '3', cuatro: '4', cinco: '5', seis: '6', siete: '7' };
             cleanedData.daysPerWeek = daysMatch[1] || dayMap[daysMatch[2].toLowerCase()] || ''; // Obtener el número
@@ -1090,7 +1099,7 @@ function cleanClientData(clientDataRaw) {
         }
     }
 
-     // Redundancia NIVEL EXPERIENCIA / CONDICIÓN FÍSICA
+      // Redundancia NIVEL EXPERIENCIA / CONDICIÓN FÍSICA
     if (cleanedData.experienceLevel && cleanedData.fitnessLevel &&
         cleanedData.experienceLevel.toLowerCase() === cleanedData.fitnessLevel.toLowerCase()) {
          console.log(`Nivel y condición física redundantes. Usando experiencia: '${cleanedData.experienceLevel}'`);
@@ -1167,20 +1176,20 @@ function findRelevantGuidelines(clientData, knowledgeBase) {
   const relevantGuidelines = [];
   const addedInputs = new Set();
 
-   // 1. Normalize client data (asegurarse que son strings o null/number)
-   const safeLowerCase = (val) => String(val || '').toLowerCase().trim();
-   const clientConditionsInput = [
-       clientData.medicalCondition, clientData.surgery, clientData.muscleInjury,
-       clientData.tendinopathy, clientData.mobilityLimitation, clientData.posturalProblem
-   ].map(safeLowerCase).filter(c => c && !/^(no|ningun[ao])$/i.test(c)); // Filtrar negaciones simples
+    // 1. Normalize client data (asegurarse que son strings o null/number)
+    const safeLowerCase = (val) => String(val || '').toLowerCase().trim();
+    const clientConditionsInput = [
+        clientData.medicalCondition, clientData.surgery, clientData.muscleInjury,
+        clientData.tendinopathy, clientData.mobilityLimitation, clientData.posturalProblem
+    ].map(safeLowerCase).filter(c => c && !/^(no|ningun[ao])$/i.test(c)); // Filtrar negaciones simples
 
-   const clientGoal = safeLowerCase(clientData.trainingGoal);
-   const clientExperience = safeLowerCase(clientData.experienceLevel);
-   const clientAge = parseInt(clientData.age, 10) || null;
-   const clientGender = safeLowerCase(clientData.gender);
-   const clientImc = parseFloat(clientData.imc) || null;
+    const clientGoal = safeLowerCase(clientData.trainingGoal);
+    const clientExperience = safeLowerCase(clientData.experienceLevel);
+    const clientAge = parseInt(clientData.age, 10) || null;
+    const clientGender = safeLowerCase(clientData.gender);
+    const clientImc = parseFloat(clientData.imc) || null;
 
-   let clientConditionsMapped = [...clientConditionsInput]; // Start with user's own words
+    let clientConditionsMapped = [...clientConditionsInput]; // Start with user's own words
 
 
   // 2. Expanded Mappings
@@ -1194,11 +1203,11 @@ function findRelevantGuidelines(clientData, knowledgeBase) {
     "sobrepeso": "sobrepeso", "obesidad": "obesidad",
     "general": "adultos", "ninguna": "adultos"
    };
-   const goalMappings = { /* ... (keep mappings) ... */
+  const goalMappings = { /* ... (keep mappings) ... */
        "fuerza": ["fuerza"], "hipertrofia": ["fuerza", "musculación deportiva"], "ganar músculo": ["fuerza", "musculación deportiva"], "masa muscular": ["fuerza", "musculación deportiva"], "volumen": ["fuerza", "musculación deportiva"], "estética": ["fuerza", "musculación deportiva"], "resistencia": ["resistencia"], "cardio": ["resistencia"], "aguantar más": ["resistencia"], "perder peso": ["resistencia", "pérdida de peso"], "adelgazar": ["resistencia", "pérdida de peso"], "quemar grasa": ["resistencia", "pérdida de peso"], "potencia": ["fuerza", "fuerza rápida", "fuerza velocidad/potencia"], "velocidad": ["fuerza", "fuerza rápida"], "explosividad": ["fuerza", "fuerza rápida", "fuerza velocidad/potencia"], "técnica": ["técnica de ejecución"], "aprender": ["técnica de ejecución"], "adaptación": ["adaptación anatómica"], "acondicionamiento": ["adaptación anatómica", "resistencia"], "preparación física": ["adaptación anatómica", "resistencia", "fuerza"], "salud": ["adultos", "resistencia", "fuerza", "salud"]
-   };
+  };
   const experienceMappings = { /* ... (keep mappings) ... */
-      "principiante": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "nuevo": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "0": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "poco tiempo": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "intermedio": ["musculación deportiva", "fuerza", "resistencia"], "avanzado": ["fuerza máxima", "fuerza rápida", "potencia", "fuerza velocidad/potencia"], "experto": ["fuerza máxima", "fuerza rápida", "potencia", "fuerza velocidad/potencia"]
+     "principiante": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "nuevo": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "0": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "poco tiempo": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"], "intermedio": ["musculación deportiva", "fuerza", "resistencia"], "avanzado": ["fuerza máxima", "fuerza rápida", "potencia", "fuerza velocidad/potencia"], "experto": ["fuerza máxima", "fuerza rápida", "potencia", "fuerza velocidad/potencia"]
   };
 
     // Expand client conditions using mappings
@@ -1211,19 +1220,19 @@ function findRelevantGuidelines(clientData, knowledgeBase) {
         });
     });
      // Add IMC status to conditions
-    if (clientImc) {
-        if (clientImc >= 30) clientConditionsMapped.push("obesidad");
-        else if (clientImc >= 25) clientConditionsMapped.push("sobrepeso");
-    }
-    // Add general adult condition
-    clientConditionsMapped.push("adultos");
-    const uniqueClientConditions = [...new Set(clientConditionsMapped)]; // Final unique list
+     if (clientImc) {
+         if (clientImc >= 30) clientConditionsMapped.push("obesidad");
+         else if (clientImc >= 25) clientConditionsMapped.push("sobrepeso");
+     }
+     // Add general adult condition
+     clientConditionsMapped.push("adultos");
+     const uniqueClientConditions = [...new Set(clientConditionsMapped)]; // Final unique list
 
 
   // 3. Iterate through Knowledge Base
   if (!Array.isArray(knowledgeBase)) {
-      console.warn("Knowledge base no es un array válido.");
-      return []; // Devolver array vacío si KB no es válido
+       console.warn("Knowledge base no es un array válido.");
+       return []; // Devolver array vacío si KB no es válido
   }
 
   knowledgeBase.forEach(entry => {
@@ -1234,38 +1243,38 @@ function findRelevantGuidelines(clientData, knowledgeBase) {
 
     // a) Match by Condition
      if (parsedInput.condition) {
-        const kbConditionLower = parsedInput.condition.toLowerCase();
-        if (uniqueClientConditions.some(c => kbConditionLower === c || (c.length > 4 && kbConditionLower.includes(c)) || (kbConditionLower.length > 4 && c.includes(kbConditionLower)))) {
-            score += 3; // High score for direct condition match
-        }
-        // Check special populations (already included in uniqueClientConditions via mapping if relevant)
-         if (kbConditionLower.includes('personas mayores') && clientAge >= 65) score += 3;
-         if (kbConditionLower.includes('embarazo') && clientGender === 'femenino') score += 3;
-         // Add other specific population checks if needed
-         if (kbConditionLower === 'adultos') score += 1; // Baseline score for adult guidelines
-    }
+         const kbConditionLower = parsedInput.condition.toLowerCase();
+         if (uniqueClientConditions.some(c => kbConditionLower === c || (c.length > 4 && kbConditionLower.includes(c)) || (kbConditionLower.length > 4 && c.includes(kbConditionLower)))) {
+             score += 3; // High score for direct condition match
+         }
+         // Check special populations (already included in uniqueClientConditions via mapping if relevant)
+          if (kbConditionLower.includes('personas mayores') && clientAge >= 65) score += 3;
+          if (kbConditionLower.includes('embarazo') && clientGender === 'femenino') score += 3;
+          // Add other specific population checks if needed
+          if (kbConditionLower === 'adultos') score += 1; // Baseline score for adult guidelines
+     }
 
     // b) Match by Goal -> Objective/Capacity
      if (clientGoal && (parsedInput.objective || parsedInput.capacity)) {
-        let goalsToCheck = [clientGoal];
-        Object.keys(goalMappings).forEach(key => { if (clientGoal.includes(key)) goalsToCheck = goalsToCheck.concat(goalMappings[key]); });
-        goalsToCheck = [...new Set(goalsToCheck)];
+         let goalsToCheck = [clientGoal];
+         Object.keys(goalMappings).forEach(key => { if (clientGoal.includes(key)) goalsToCheck = goalsToCheck.concat(goalMappings[key]); });
+         goalsToCheck = [...new Set(goalsToCheck)];
 
-        if (goalsToCheck.some(g => (parsedInput.objective && parsedInput.objective.toLowerCase().includes(g)) || (parsedInput.capacity && parsedInput.capacity.toLowerCase().includes(g)))) {
-            score += 2;
-        }
-     }
+         if (goalsToCheck.some(g => (parsedInput.objective && parsedInput.objective.toLowerCase().includes(g)) || (parsedInput.capacity && parsedInput.capacity.toLowerCase().includes(g)))) {
+             score += 2;
+         }
+      }
 
     // c) Match by Experience -> Phase
      if (clientExperience && parsedInput.phase) {
-        let phasesToCheck = [clientExperience];
-         Object.keys(experienceMappings).forEach(key => { if (clientExperience.includes(key)) phasesToCheck = phasesToCheck.concat(experienceMappings[key]); });
-        phasesToCheck = [...new Set(phasesToCheck)];
+         let phasesToCheck = [clientExperience];
+          Object.keys(experienceMappings).forEach(key => { if (clientExperience.includes(key)) phasesToCheck = phasesToCheck.concat(experienceMappings[key]); });
+         phasesToCheck = [...new Set(phasesToCheck)];
 
-        if (phasesToCheck.some(p => parsedInput.phase.toLowerCase().includes(p))) {
-            score += 2;
-        }
-     }
+         if (phasesToCheck.some(p => parsedInput.phase.toLowerCase().includes(p))) {
+             score += 2;
+         }
+      }
 
     // Add guideline if relevant and not already added
     if (score > 0 && !addedInputs.has(entry.input)) {
