@@ -90,9 +90,13 @@ exports.processForm = async (req, res, next) => {
       if (typeof req.body !== 'object' || req.body === null) {
           throw new Error('El cuerpo de la solicitud (req.body) no es un objeto válido.');
       }
-      const { nombre, email: extractedEmail, ...extractedFormData } = req.body;
+      
+      // Desestructuración con validación adicional
+      const { nombre = "", email: extractedEmail = "", ...extractedFormData } = req.body;
+      
       email = extractedEmail;
       formData = extractedFormData;
+      
       console.log(`[${controllerRequestId}] Desestructuración preliminar EXITOSA.`);
       clientName = nombre || "Cliente";
 

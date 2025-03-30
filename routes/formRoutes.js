@@ -69,7 +69,7 @@ router.post('/debug/submit', (req, res) => {
 
 // Ruta principal para procesar el formulario
 // Activar la validación para ayudar a detectar problemas de formato
-router.post('/submit', apiLimiter, validateFormData, (req, res) => {
+router.post('/submit', apiLimiter, validateFormData, (req, res, next) => {
   try {
     console.log('------------------------------------');
     console.log('Ruta /api/form/submit accedida');
@@ -79,8 +79,26 @@ router.post('/submit', apiLimiter, validateFormData, (req, res) => {
     console.log('Timestamp:', new Date().toISOString());
     console.log('------------------------------------');
     
+    // Log adicional para debuggar problemas de formato del cuerpo
+    if (typeof req.body === 'object') {
+      console.log('Campos recibidos:', Object.keys(req.body).join(', '));
+      
+      // Verificar explícitamente los campos críticos
+      if (!req.body.email || !req.body.nombre) {
+        console.log('ADVERTENCIA: Campos requeridos faltantes en el cuerpo de la solicitud');
+        console.log('email presente:', !!req.body.email);
+        console.log('nombre presente:', !!req.body.nombre);
+        
+        return res.status(400).json({
+          success: false,
+          message: "Faltan campos obligatorios (email y/o nombre)",
+          requiredFields: ['email', 'nombre']
+        });
+      }
+    }
+    
     // Si llegamos aquí, los datos son válidos, pasarlos al controlador
-    return formController.processForm(req, res);
+    return formController.processForm(req, res, next);
   } catch (error) {
     console.error('Error en ruta /submit:', error);
     res.status(500).json({
