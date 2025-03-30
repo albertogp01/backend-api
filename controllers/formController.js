@@ -351,7 +351,6 @@ async function processFormDataInBackground(requestData) {
          }, 60000); // Intentar borrar después de 1 minuto
      }
 
-
   } catch (error) {
     // --- Manejo Centralizado de Errores en Background ---
     console.error(`[${requestId}] ERROR durante el procesamiento para ${email}:`, error.message);
