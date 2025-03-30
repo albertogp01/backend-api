@@ -1,0 +1,655 @@
+[
+  {
+    "input": "Condición: Arritmias, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 50-60% de 1 RM. Reps: 10-15. Series: 3-5. Descanso: 60-90 seg. Guía Ejercicios: Priorizar movimientos controlados, evitar Valsalva, monitorizar síntomas."
+  },
+  {
+    "input": "Condición: Arritmias, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Método: Trabajo en circuito preferible. Duración: 20-40 min/ses. Intensidad: 40-70% VO₂ máx, 40-80% FCM o Test Conversación. Descanso: 3-15 min entre series (recuperación activa). Guía Ejercicios: Actividades rítmicas de grandes grupos musculares."
+  },
+  {
+    "input": "Condición: Arritmias, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: Incluir en las sesiones. Duración: 30 seg/ejercicio. Guía Ejercicios: Estiramientos estáticos suaves de principales grupos musculares."
+  },
+  {
+    "input": "Condición: Cardiopatía Isquémica, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 1-2 ses/sem. Intensidad: 30-50% de 1 RM. Reps: 15-25. Series: 1-3. Descanso: 60 seg. Guía Ejercicios: Evitar isométricos intensos y Valsalva, cargas ligeras-moderadas, monitorización estricta."
+  },
+  {
+    "input": "Condición: Cardiopatía Isquémica, Capacidad: Resistencia, Carga Ergometría Negativa",
+    "output": "Frecuencia: 4-5 ses/sem. Intensidad: 75-85% FCM (o Escala Borg 20: 11-14). Duración: Adaptar progresivamente (ej. 20-40 min). Guía Ejercicios: Aeróbico continuo (caminar, bici)."
+  },
+  {
+    "input": "Condición: Cardiopatía Isquémica, Capacidad: Resistencia, Carga Ergometría Positiva",
+    "output": "Frecuencia: 4-5 ses/sem. Intensidad: < Umbral Isquemia (ej. 10-15 latidos por debajo), aprox. 40-60% FCM máx. Duración: Adaptar progresivamente, puede requerir intervalos. Guía Ejercicios: Aeróbico bajo supervisión, monitorizar síntomas."
+  },
+  {
+    "input": "Condición: Cardiopatía Isquémica, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Duración: 15-30 seg/ejercicio. Guía Ejercicios: Estiramientos suaves, evitar posiciones que comprometan flujo sanguíneo."
+  },
+  {
+    "input": "Condición: Hipertensión Arterial, Capacidad: Resistencia Aeróbica, Carga",
+    "output": "Frecuencia: 3-7 ses/sem (preferible diario). Duración: 20-60 min. Intensidad: 40-70% FCR (Borg: 8-14). Volumen: 700-2000 kcal/sem. Descanso: (Para intervalos si se usan) Recuperaciones largas y activas (3-15 min). Guía Ejercicios: Aeróbico continuo (caminar, nadar, bici)."
+  },
+  {
+    "input": "Condición: Hipertensión Arterial, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 30-50% de 1 RM para 10-15 reps o autocargas (Borg: 8-15). Series: 1-3. Descanso: 60-120 seg. Densidad T:D >=1:1. Velocidad: Controlada (ej. 1:1 o 2:2 conc/exc). Guía Ejercicios: Priorizar ejercicios dinámicos, EVITAR ISOMÉTRICOS INTENSOS y MANIOBRA DE VALSALVA. Énfasis en respiración continua."
+  },
+  {
+    "input": "Condición: Hipertensión Arterial, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Series: 2 por ejercicio. Duración: 30 seg/ejercicio. Guía Ejercicios: Estiramientos generales estáticos."
+  },
+  {
+    "input": "Condición: Insuficiencia Cardíaca, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2 ses/sem. Intensidad: 30-40% de 1 RM. Reps: 10-15. Series: 1-3. Descanso: 60 seg. Guía Ejercicios: Cargas muy ligeras, grandes grupos musculares, evitar Valsalva, monitorizar fatiga/disnea."
+  },
+  {
+    "input": "Condición: Insuficiencia Cardíaca, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Duración: 10-40 min (progresar, puede usar intervalos 2-4 min trabajo / 1 min descanso). Intensidad: 60-80% FCM, Test Conversación, Borg 20: 11-14. Guía Ejercicios: Aeróbico de bajo impacto (caminar, bici estática)."
+  },
+  {
+    "input": "Condición: Insuficiencia Cardíaca, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Duración: 15-30 seg/ejercicio. Guía Ejercicios: Estiramientos suaves, priorizar movilidad torácica y de miembros inferiores."
+  },
+  {
+    "input": "Condición: Insuficiencia Venosa, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 40-70% de 1 RM. Reps: 10-20. Series: 2-3. Guía Ejercicios: Énfasis en musculatura de pantorrillas (bombeo venoso), evitar Valsalva, considerar ejercicios con piernas elevadas si es posible."
+  },
+  {
+    "input": "Condición: Insuficiencia Venosa, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 5-7 ses/sem. Duración: 30-90 min. Intensidad: 40-70% FCM o Test Conversación. Guía Ejercicios: Caminar, nadar, bicicleta (actividades que activen bomba muscular de pantorrilla)."
+  },
+  {
+    "input": "Condición: Insuficiencia Venosa, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Duración: 30 seg/ejercicio. Guía Ejercicios: Estiramientos de miembros inferiores, especialmente tobillo y pantorrilla."
+  },
+  {
+    "input": "Condición: Enfermedad Arterial Periférica (EAP), Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 50-70% de 1RM. Reps: 10-15. Series: 2-3. Descanso: 30-90 seg. Guía Ejercicios: Fortalecimiento general, con énfasis en miembros inferiores."
+  },
+  {
+    "input": "Condición: Enfermedad Arterial Periférica (EAP), Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: 20-40 min ejercicio intermitente (caminar hasta claudicación nivel 3-4/5, descansar, repetir). Intensidad: 40-70% VO2 máx (FCR), Umbral claudicación, Borg 20: 11-14. Guía Ejercicios: Caminar es el ejercicio principal."
+  },
+  {
+    "input": "Condición: Enfermedad Arterial Periférica (EAP), Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: Puede incluirse en las sesiones. Duración: 5-15 min totales. Guía Ejercicios: Estiramientos suaves de miembros inferiores."
+  },
+  {
+    "input": "Condición: Miocardiopatías, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 40-60% de 1 RM. Reps: 10-15. Series: 1-3. Descanso: 60 seg. Guía Ejercicios: Cargas ligeras-moderadas, evitar Valsalva, supervisión médica recomendada."
+  },
+  {
+    "input": "Condición: Miocardiopatías, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: 30-60 min. Intensidad: <60% FCM, Borg 20: 10-15, Test Conversación. Guía Ejercicios: Aeróbico de baja a moderada intensidad."
+  },
+  {
+    "input": "Condición: Miocardiopatías, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Duración: 30 seg/ejercicio. Guía Ejercicios: Estiramientos generales suaves."
+  },
+  {
+    "input": "Condición: Portadores de Marcapasos, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 30-50% de 1 RM. Reps: 15-20+. Series: 1-3. Descanso: 30-60 seg. Guía Ejercicios: Evitar presión directa/impacto sobre el dispositivo, precaución con movimientos extremos del brazo/hombro del lado del marcapasos (especialmente al inicio)."
+  },
+  {
+    "input": "Condición: Portadores de Marcapasos, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Duración: 20-60 min/ses. Intensidad: 40-70% VO2 máx (FCR), 40-80% FCM, Borg 20: 11-14 o Test Conversación. Guía Ejercicios: Aeróbico general, respetar límites de FC si los hay programados en el marcapasos."
+  },
+  {
+    "input": "Condición: Portadores de Marcapasos, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Duración: 30 seg/ejercicio. Guía Ejercicios: Estiramientos generales, precaución con estiramientos extremos del brazo/hombro del lado del marcapasos."
+  },
+  {
+    "input": "Condición: Valvulopatías, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 30-50% de 1 RM. Reps: 12-20. Series: 1-3. Descanso: 30-60 seg. Guía Ejercicios: Depende de la severidad y tipo. Generalmente evitar cargas altas y Valsalva. Consultar cardiología."
+  },
+  {
+    "input": "Condición: Valvulopatías, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: Adaptar a tolerancia. Intensidad: 40-70% VO2 máx (40-80% FCM, Borg 20: 11-14 o Test Conversación). Guía Ejercicios: Aeróbico de bajo a moderado impacto. Evitar alta intensidad si hay estenosis aórtica severa."
+  },
+  {
+    "input": "Condición: Valvulopatías, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En todas las sesiones. Duración: 30 seg/ejercicio. Guía Ejercicios: Estiramientos generales suaves."
+  },
+  {
+    "input": "Condición: Amputaciones, Capacidad: Fuerza, Carga Fuerza General",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 60-80% de 1 RM. Reps: 8-12. Series: 2-3. Guía Ejercicios: Fortalecimiento global, énfasis en core y musculatura residual y compensatoria."
+  },
+  {
+    "input": "Condición: Amputaciones, Capacidad: Fuerza, Carga Fuerza Máxima",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 70-100% de 1 RM. Reps: 1-8 (Aclaración: 1-3 reps para 90-100%, 4-8 reps para 70-85%). Series: 2-3. Guía Ejercicios: Adaptar ejercicios según tipo de amputación, usar máquinas/adaptaciones si es necesario."
+  },
+  {
+    "input": "Condición: Amputaciones, Capacidad: Fuerza, Carga Fuerza Rápida",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 40-60% de 1 RM. Reps: 8-12. Velocidad: Máxima Intencional. Series: 2-3 (o por tiempo 10-20 seg). Guía Ejercicios: Movimientos adaptados para potencia (lanzamientos, empujes rápidos)."
+  },
+  {
+    "input": "Condición: Amputaciones, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 5-7 ses/sem. Duración: > 30 min. Intensidad: 40-60% FCM. Guía Ejercicios: Adaptar modalidad (handbike, remo, natación, caminar con prótesis)."
+  },
+  {
+    "input": "Condición: Amputaciones, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: A diario. Movilización: 15-20 reps. Estiramientos estáticos: 45-60 seg. Guía Ejercicios: Enfocar en articulaciones cercanas a amputación y compensatorias (cadera, espalda)."
+  },
+  {
+    "input": "Condición: Artritis Idiopática Juvenil, Capacidad: Fuerza, Carga Fase Interbrote",
+    "output": "Frecuencia: 3 ses/sem. Intensidad: 30-60% de 1 RM. Reps: 10-15. Series: 2-3 (asumido). Nº Ejercicios: 4-10. Descanso: 40-60 seg. Guía Ejercicios: Bajo impacto, ROM completo sin dolor, acuáticos beneficiosos."
+  },
+  {
+    "input": "Condición: Artritis Idiopática Juvenil, Capacidad: Fuerza, Carga Fase de Brote (dolor)",
+    "output": "Método: Isométricos suaves, ejercicios acuáticos. Guía Ejercicios: Mantener movilidad sin cargar articulación inflamada."
+  },
+  {
+    "input": "Condición: Artritis Idiopática Juvenil, Capacidad: Resistencia, Carga Fase Interbrote",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: 30-45 min/ses. Intensidad: 60-75% FCM (Test Conversación). Guía Ejercicios: Bajo impacto (natación, bici)."
+  },
+  {
+    "input": "Condición: Artritis Idiopática Juvenil, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Duración: 15-20 min/ses. Guía Ejercicios: Movilidad articular suave, estiramientos mantenidos sin dolor."
+  },
+  {
+    "input": "Condición: Artrosis y Artritis, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-4 ses/sem. Intensidad: 20-50% de 1 RM (iniciar bajo). Reps: 10-20. Series: 2-4. Descanso: Adecuado (ej. 60s). Guía Ejercicios: Priorizar bajo impacto, cadena cerrada, ROM sin dolor. Acuáticos recomendados."
+  },
+  {
+    "input": "Condición: Artrosis y Artritis, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-7 ses/sem. Duración: 20-60 min (tolerancia). Intensidad: 40-85% FCM (Borg 20: 12-16). Guía Ejercicios: Bajo impacto (caminar, bici, elíptica, acuático)."
+  },
+  {
+    "input": "Condición: Artrosis y Artritis, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-7 ses/sem. Duración: 15-40 min/ses. Mantenimiento: 60 seg/ejercicio. Series: 1-3. Descanso: 60 seg. Guía Ejercicios: Movilidad articular en rango sin dolor, estiramientos estáticos suaves."
+  },
+  {
+    "input": "Condición: Cervicalgia, Capacidad: Fuerza, Carga Cervical",
+    "output": "Frecuencia: 3 ses/sem. Método: Isométricos suaves, concéntricos controlados. Nº Ejercicios: 2-4 específicos. Reps: 10-15. Series: 2-3. Descanso: 30-40 seg. Guía Ejercicios: Fortalecimiento músculos profundos cuello, retracción cervical."
+  },
+  {
+    "input": "Condición: Cervicalgia, Capacidad: Fuerza, Carga Dorsal Lumbar Abdominal",
+    "output": "Frecuencia: 3 ses/sem. Método: Concéntricos y excéntricos controlados. Nº Ejercicios: 3-5 (core y espalda alta). Reps: 10-15. Series: 2-3. Descanso: 30-40 seg. Guía Ejercicios: Estabilidad core, fortalecimiento cintura escapular (ej. remos)."
+  },
+  {
+    "input": "Condición: Cervicalgia, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Duración: 20-30 min. Intensidad: 65-85% FCM. Guía Ejercicios: Aeróbico que no tensione cuello (caminar erguido, elíptica)."
+  },
+  {
+    "input": "Condición: Cervicalgia, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: A diario. Nº Ejercicios: 3-6 (cuello, hombros, espalda alta). Reps: 2-3 por ejercicio. Mantenimiento: 15-20 seg. Guía Ejercicios: Movilidad activa suave, estiramientos estáticos mantenidos sin dolor."
+  },
+  {
+    "input": "Condición: Escoliosis, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 3 ses/sem. Nº Ejercicios: 6-10 (core, paravertebrales). Intensidad: 40-60% 1RM (o autocargas). Reps: 10-15. Series: 2/ejercicio. Descanso: 30 seg. Duración: 15-20 min/ses. Guía Ejercicios: Asimétricos si indicado, control postural, método Schroth si aplica."
+  },
+  {
+    "input": "Condición: Escoliosis, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Duración: 30 min. Intensidad: 50-70% VO2 máx (60-70% FCM o Test Conversación). Guía Ejercicios: Actividades simétricas (natación espalda/crol, caminar, elíptica)."
+  },
+  {
+    "input": "Condición: Escoliosis, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 3 ses/sem. Nº Ejercicios: 6-8 (lado cóncavo, movilidad general). Reps: 2-3/ejercicio. Mantenimiento: 30 seg (analíticos), 60-120 seg (globales). Duración: 15-20 min/ses. Guía Ejercicios: Estiramientos específicos según curva, supervisión recomendada."
+  },
+  {
+    "input": "Condición: Hombro doloroso, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Intensidad: 40-70% 1RM (iniciar bajo). Reps: 8-15. Series: 2-3. Descanso: 60 seg. Duración: 15-20 min/ses. Guía Ejercicios: Fortalecimiento manguito rotador, estabilizadores escápula, ROM sin dolor, isométricos si agudo."
+  },
+  {
+    "input": "Condición: Hombro doloroso, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Duración: 20-30 min/ses. Intensidad: 40-75% FCM. Guía Ejercicios: Aeróbico sin implicación hombro doloroso (caminar, bici)."
+  },
+  {
+    "input": "Condición: Hombro doloroso, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Método: Ejercicios lentos, pendulares, movilidad activa asistida. Series: 2. Duración: 15-30 min/ses. Guía Ejercicios: Movilidad en ROM sin dolor, estiramientos capsulares si indicado."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos rodilla, Capacidad: Fuerza, Carga Isometría",
+    "output": "Frecuencia: 3+ ses/sem (fase inicial). Duración Contracción: 6-10 seg. Recuperación Inter-Rep: 6-10 seg. Series: 2-6. Guía Ejercicios: Isométricos cuádriceps/isquios en ángulos seguros."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos rodilla, Capacidad: Fuerza, Carga Fuerza Resistencia",
+    "output": "Frecuencia: 3 ses/sem. Intensidad: 20-50% 1RM. Reps: 10-20. Series: 2-6. Guía Ejercicios: Cadena cerrada preferible (prensa, sentadilla parcial), control excéntrico."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos rodilla, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Duración: 30 min total (ej. 3x10 min). Intensidad: 50-70% VO2 máx (60-70% FCM, Borg 20: ~13). Guía Ejercicios: Bajo impacto (bici, elíptica, piscina)."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos rodilla, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-7 ses/sem. Duración: 20-30 min/ses. Guía Ejercicios: Ganancia ROM progresiva, estiramiento isquios/cuádriceps/gemelos."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos tobillo, Capacidad: Fuerza, Carga Isometría",
+    "output": "Frecuencia: A diario (fase inicial). Duración Contracción: 6 seg. Recuperación Inter-Rep: 6 seg. Series: 2-6 (progresivo). Guía Ejercicios: Isométricos peroneos, tibial anterior/posterior, flex/ext."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos tobillo, Capacidad: Fuerza, Carga Repeticiones Dinámicas",
+    "output": "Intensidad: 20-50% 1RM (o bandas elásticas). Reps: 10-20. Series: 2-6. Guía Ejercicios: Movimientos controlados inv/ev/flex-ext."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos tobillo, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-7 ses/sem. Intensidad: 60-85% FCM o Test Conversación. Guía Ejercicios: Progresar caminar, bici, elíptica."
+  },
+  {
+    "input": "Condición: Lesiones ligamentos tobillo, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-7 ses/sem. Intensidad: Umbral dolor (Borg 10: 3-5). Guía Ejercicios: Movilidad activa/pasiva suave, estiramiento pantorrilla."
+  },
+  {
+    "input": "Condición: Tendinopatía, Capacidad: Fuerza, Carga Isometría (Analgesia)",
+    "output": "Frecuencia: Diario o según necesidad. Duración Contracción: 30-45 seg. Intensidad: Moderada (ej. 70% Contracción Voluntaria Máxima). Series: 3-5. Guía Ejercicios: Isométricos mantenidos en rango medio."
+  },
+  {
+    "input": "Condición: Tendinopatía, Capacidad: Fuerza, Carga Concéntrico/Excéntrico Lento (HSR)",
+    "output": "Frecuencia: 3 ses/sem. Intensidad: 70-85% 1RM (progresivo, puede ser pesado). Reps: 6-10. Series: 3-4. Velocidad: Lenta y controlada (ej. 3s CON, 3s ECC). Guía Ejercicios: Carga pesada y lenta del tendón."
+  },
+  {
+    "input": "Condición: Tendinopatía, Capacidad: Fuerza, Carga Excéntrico Específico (Ej. Alfredson)",
+    "output": "Frecuencia: 1-2 veces/día (según protocolo). Intensidad: Carga progresiva (hasta añadir peso). Reps: 15. Series: 3. Guía Ejercicios: Protocolos específicos (ej. Alfredson Aquiles: excéntrico puro)."
+  },
+  {
+    "input": "Condición: Tendinopatía, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: 10-30 min/ses. Intensidad: 50-60% VO2 máx. Guía Ejercicios: Aeróbico bajo impacto que no irrite tendón."
+  },
+  {
+    "input": "Condición: Tendinopatía, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 4-5 ses/sem. Series: 2/ses. Mantenimiento: 15-30 seg. Guía Ejercicios: Estiramiento suave músculo asociado, no directo sobre tendón doloroso."
+  },
+  {
+    "input": "Condición: Lumbalgia, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: Baja-Moderada (ej. autocargas, 50-60% 1RM si apropiado). Reps: 10-15. Series: 2-3. Guía Ejercicios: ESTABILIZACIÓN CORE (transverso, oblicuos, multífidos), control motor, disociación lumbopélvica. Ej: Puente glúteo, bird-dog, planchas mod."
+  },
+  {
+    "input": "Condición: Lumbalgia, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Duración: 45-60 min. Intensidad: 50-70% VO2 máx (60-70% FCM). Guía Ejercicios: Caminar, nadar, elíptica (buena postura)."
+  },
+  {
+    "input": "Condición: Lumbalgia, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 5-6 ses/sem. Series: 3-6. Mantenimiento: 10-20 seg/ejercicio. Duración: 15-30 min/ses. Guía Ejercicios: Movilidad cadera/columna torácica, estiramientos suaves (piramidal, psoas, isquios), evitar flexión lumbar extrema."
+  },
+  {
+    "input": "Condición: Lumbalgia, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Reps: 10/serie (controladas). Duración: 30 min/ses. Guía Ejercicios: Control motor, propiocepción, activación muscular (ej. transverso)."
+  },
+  {
+    "input": "Condición: Osteoporosis, Capacidad: Fuerza, Carga Fuerza Estructural/Resistencia",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 50-80% 1RM. Reps: 8-15. Series: 2-4. Velocidad: Media/Controlada. Guía Ejercicios: Carga axial/apendicular (sentadilla, peso muerto ligero, press, remos), técnica prioritaria. Evitar flexión/torsión espinal brusca."
+  },
+  {
+    "input": "Condición: Osteoporosis, Capacidad: Fuerza, Carga Fuerza Neural/Potencia",
+    "output": "Frecuencia: 1-2 ses/sem (complementario). Intensidad: 30-60% 1RM para potencia. Reps: 6-10. Series: 2-3. Velocidad: Alta (intencional y segura). Descanso: 2-3 min. Guía Ejercicios: Movimientos funcionales rápidos y controlados (si apropiado)."
+  },
+  {
+    "input": "Condición: Osteoporosis, Capacidad: Fuerza, Carga Impactos",
+    "output": "Frecuencia: 2-3+ ses/sem. Guía Ejercicios: Actividades con impacto controlado y progresivo (caminar rápido, subir escaleras, saltos suaves si tolerados)."
+  },
+  {
+    "input": "Condición: Osteoporosis, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-7 ses/sem. Duración: 30-60 min/ses. Intensidad: Moderada (ej. 50-85% FCM). Guía Ejercicios: Actividades CON CARGA (caminar), evitar riesgo caída."
+  },
+  {
+    "input": "Condición: Osteoporosis, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 5-7 ses/sem. Duración: 10-20 min/ses. Guía Ejercicios: Movilidad general, evitar flexión/torsión espinal forzada."
+  },
+  {
+    "input": "Condición: Prótesis rodilla/tobillo, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 20-70% 1RM (progresivo). Reps: 10-15. Series: 2-3. Descanso: 30-60 seg. Guía Ejercicios: Fortalecimiento periarticular (cuád, isquio, glút, pantorrilla), ROM progresivo."
+  },
+  {
+    "input": "Condición: Prótesis rodilla/tobillo, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: 30-40 min/ses. Intensidad: 60-70% FCM (Borg 20: 12-14). Guía Ejercicios: Bajo impacto (bici, elíptica, piscina)."
+  },
+  {
+    "input": "Condición: Prótesis rodilla/tobillo, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 5-7 ses/sem. Series: 2. Mantenimiento: 15-30 seg. Guía Ejercicios: Ganancia ROM según indicación, estiramiento músculos periarticulares."
+  },
+  {
+    "input": "Condición: Prótesis rodilla/tobillo, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Duración: 15-20 min. Guía Ejercicios: Equilibrio, propiocepción, control motor."
+  },
+  {
+    "input": "Condición: Prótesis cadera, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 3 ses/sem. Intensidad: 20-85% 1RM (progresivo). Reps: 8-15. Series: 1-3. Guía Ejercicios: Fortalecimiento glúteos (medio!), cuádriceps, isquios. RESPETAR PRECAUCIONES DE MOVIMIENTO según abordaje Qx."
+  },
+  {
+    "input": "Condición: Prótesis cadera, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 5 ses/sem. Duración: 20-30 min. Intensidad: 65-75% FCM. Guía Ejercicios: Caminar, bici (sillín alto), elíptica, piscina."
+  },
+  {
+    "input": "Condición: Prótesis cadera, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Series: 2. Mantenimiento: 15-30 seg. Guía Ejercicios: Estiramientos suaves, RESPETANDO PRECAUCIONES ROM."
+  },
+  {
+    "input": "Condición: Prótesis cadera, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Duración: 15-20 min. Guía Ejercicios: Equilibrio, propiocepción, reeducación marcha."
+  },
+  {
+    "input": "Condición: Alergia Alimentaria, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 30-85% 1RM. Reps: 5-25 (amplio rango, adaptar a energía). Series: 1-5. Descanso: 30-60 seg. Guía Ejercicios: General, ajustar según síntomas."
+  },
+  {
+    "input": "Condición: Alergia Alimentaria, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-5 ses/sem. Intensidad: 40-70% VO₂ max (FCR), 40-80% FCM o Test Conversación. Guía Ejercicios: General, monitorizar síntomas."
+  },
+  {
+    "input": "Condición: Alergia Alimentaria, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-7 ses/sem. Mantenimiento: 15-30 seg. Guía Ejercicios: Estiramientos generales."
+  },
+  {
+    "input": "Condición: Estreñimiento Crónico, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 50-60% 1RM. Reps: 10-15. Series: 1-3. Descanso: 2 min. Kegels: 6-8 contracciones lentas (1s descanso). Guía Ejercicios: Fortalecimiento general + suelo pélvico/core."
+  },
+  {
+    "input": "Condición: Estreñimiento Crónico, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-7 ses/sem. Duración: 30 min (o 150 min/sem). Intensidad: Moderada (70-80% VO2 max, Borg 20: 13-15, Test Conversación). Guía Ejercicios: Aeróbico regular (caminar, etc.)."
+  },
+  {
+    "input": "Condición: Estreñimiento Crónico, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Mantenimiento: 20-30 seg. Guía Ejercicios: Movilidad cadera, estiramientos abdominales suaves, torsiones."
+  },
+  {
+    "input": "Condición: Asma Bronquial, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Nº Ejercicios: 6-8. Intensidad: 50-70% 1RM. Reps: 8-12. Series: 2-3. Descanso: Recuperación casi completa. Guía Ejercicios: Evitar triggers (frío, alérgenos), calentamiento largo, medicación disponible."
+  },
+  {
+    "input": "Condición: Asma Bronquial, Capacidad: Potencia, Carga",
+    "output": "Frecuencia: 1-2 ses/sem. Duración Serie: 10-15 seg. Series: 3-8. Descanso: Recuperación casi completa. Guía Ejercicios: Corto e intenso mejor tolerado."
+  },
+  {
+    "input": "Condición: Asma Bronquial, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-7 ses/sem (150-300 min/sem). Duración: 45-60 min/ses. Intensidad: Umbral VT1 (~65% VO₂ max o Test Conversación). Calentamiento/Enfriamiento: 5-10 min. Guía Ejercicios: Aeróbico, natación indoor."
+  },
+  {
+    "input": "Condición: Asma Bronquial, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En cada sesión. Guía Ejercicios: Movilidad torácica."
+  },
+  {
+    "input": "Condición: Bronquiectasia, Capacidad: Fuerza, Carga Musculatura Periférica",
+    "output": "Frecuencia: 2-3 ses/sem (descanso 48h). Nº Ejercicios: 8-10 grupos. Intensidad: 40-60% 1RM. Reps: 10-15. Series: 1-3. Descanso: ~1 min. Guía Ejercicios: General."
+  },
+  {
+    "input": "Condición: Bronquiectasia, Capacidad: Fuerza, Carga Musculatura Respiratoria",
+    "output": "Frecuencia: 5 ses/sem. Intensidad: 30-60% PIM. Duración: 1 min/serie si tolera. Series: 3-5. Guía Ejercicios: Entrenamiento específico músculos inspiratorios."
+  },
+  {
+    "input": "Condición: Bronquiectasia, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Duración: 30 min/ses. Intensidad: Continuo (50-70% FCM) o HIIT (40-90% FCM, Borg 4-10). Guía Ejercicios: Aeróbico + técnicas drenaje."
+  },
+  {
+    "input": "Condición: Bronquiectasia, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: Después de cada entreno. Mantenimiento: 20-30 seg. Guía Ejercicios: Grupos trabajados, movilidad torácica."
+  },
+  {
+    "input": "Condición: Fibrosis Quística, Capacidad: Fuerza, Carga Fases Iniciales",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: ~60% 1RM. Reps: 15. Series: 1-2. Guía Ejercicios: General."
+  },
+  {
+    "input": "Condición: Fibrosis Quística, Capacidad: Fuerza, Carga Fases Avanzadas",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: ~80% 1RM. Reps: 8-12. Series: 3-5. Guía Ejercicios: Mayor énfasis fuerza/hipertrofia."
+  },
+  {
+    "input": "Condición: Fibrosis Quística, Capacidad: Resistencia, Carga Aeróbico Extensivo",
+    "output": "Frecuencia: 3-7 ses/sem. Duración: 30-60 min. Intensidad: 40-50% FCM. Series: 1-2 (largas). Guía Ejercicios: Baja intensidad."
+  },
+  {
+    "input": "Condición: Fibrosis Quística, Capacidad: Resistencia, Carga Aeróbico Intensivo (HIIT)",
+    "output": "Frecuencia: 3-7 ses/sem. Duración Estímulo: 30-40 seg. Intensidad: ~80% FCM. Series: 6-20 (intervalos). Descanso: Completo entre estímulos. Guía Ejercicios: HIIT."
+  },
+  {
+    "input": "Condición: Fibrosis Quística, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 3-7 ses/sem. Duración: 15 min/ses. Guía Ejercicios: Movilidad general/torácica."
+  },
+  {
+    "input": "Condición: EPOC, Capacidad: Fuerza, Carga Musculatura General",
+    "output": "Frecuencia: >= 2 ses/sem. Intensidad: 50-85% 1RM (progresivo). Reps: 8-15 (ajustado desde 10-20). Series: 1-3. Guía Ejercicios: Grandes grupos, monitorizar disnea."
+  },
+  {
+    "input": "Condición: EPOC, Capacidad: Fuerza, Carga Musculatura Respiratoria",
+    "output": "Frecuencia: 2-3 ses/día, 3-5 ses/sem. Guía Ejercicios: Específico músculos inspiratorios."
+  },
+  {
+    "input": "Condición: EPOC, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: Diario si posible. Duración: Progresar 10 -> 30 min+. Intensidad: 60-85% FCM (o basado en Disnea Borg 4-6/10). Guía Ejercicios: Caminar, bici. O2 suplementario si indicado."
+  },
+  {
+    "input": "Condición: EPOC, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: En todas las sesiones. Guía Ejercicios: Movilidad torácica, estiramiento accesorios respiración."
+  },
+  {
+    "input": "Condición: Incontinencia Urinaria, Capacidad: Fuerza, Carga Kegels",
+    "output": "Frecuencia: 1-3 ses/día. Contracción Lenta: 3-5s ON + 3-5s OFF, 10 reps. O Contracción Rápida/Sostenida: 1-3s ON rápido + 6-12s ON sostenido. Guía Ejercicios: Aislar suelo pélvico."
+  },
+  {
+    "input": "Condición: Incontinencia Urinaria, Capacidad: Fuerza, Carga Bolas Chinas",
+    "output": "Duración: 10-15 min/día."
+  },
+  {
+    "input": "Condición: Incontinencia Urinaria, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: >= 3 ses/sem. Duración: 30-60 min (o acumulado). Intensidad: Moderada (70-80% FCM). Guía Ejercicios: Aeróbico general, evitar alto impacto si empeora."
+  },
+  {
+    "input": "Condición: Incontinencia Urinaria, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Reps: 2-4/ejercicio. Mantenimiento: 10-30 seg. Guía Ejercicios: Movilidad pélvica/cadera."
+  },
+  {
+    "input": "Condición: Insuficiencia Renal Crónica, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem (descanso 48h). Nº Ejercicios: 8-10 poliarticulares. Intensidad: 50-70% 1RM (Borg 10: 2-7). Reps: 10-15. Series: 1 -> 2-4. Descanso: 1-2 min. Guía Ejercicios: General, precaución fístula."
+  },
+  {
+    "input": "Condición: Insuficiencia Renal Crónica, Capacidad: Fuerza, Carga Fístula",
+    "output": "Guía Ejercicios: Flex/ext codo, muñeca, dedos con cargas MUY LIGERAS brazo fístula."
+  },
+  {
+    "input": "Condición: Insuficiencia Renal Crónica, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 2-6 ses/sem. Duración: 20-30 min/ses (o fraccionado). Intensidad: 55-85% FCM (Test Conversación, Borg 20: 10-16). Guía Ejercicios: Aeróbico, posible durante diálisis."
+  },
+  {
+    "input": "Condición: Insuficiencia Renal Crónica, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Mantenimiento: 15-30 seg/estiramiento. Series: 2-4. Guía Ejercicios: Generales."
+  },
+  {
+    "input": "Condición: Adultos (General), Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: >= 2 ses/sem (no consecutivas). Nº Ejercicios: 6-8 (grandes grupos). Intensidad: 50-80% 1RM. Reps: 8-12. Series: 1-3. Descanso: 40-90 seg. Guía Ejercicios: Equilibrar empuje/tracción, sup/inf."
+  },
+  {
+    "input": "Condición: Adultos (General), Capacidad: Resistencia Aeróbica, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Volumen: 150-300 min/sem (mod) o 75-150 min/sem (vig). Duración: > 10 min bloques. Intensidad: Mod (Test Conversación) o Vig. Guía Ejercicios: Variado."
+  },
+  {
+    "input": "Condición: Adultos (General), Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: >= 2-3 ses/sem. Mantenimiento: 10-30 seg. Guía Ejercicios: Principales grupos musculares."
+  },
+  {
+    "input": "Condición: Adultos (General), Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Duración: 5-10 min/ses. Guía Ejercicios: Equilibrio, agilidad, coordinación."
+  },
+  {
+    "input": "Condición: Embarazo, Capacidad: Fuerza, Carga Fuerza General",
+    "output": "Frecuencia: 2 ses/sem. Nº Ejercicios: 5-10 (EEII, Core, Suelo Pélvico). Intensidad: Fatiga moderada (Borg 10: 2-4), ~30-70% 1RM. Reps: 10-15. Series: 1-3. Descanso: 1-3 min. Guía Ejercicios: Evitar Valsalva, supino prolongado (>T1), impacto/riesgo caída."
+  },
+  {
+    "input": "Condición: Embarazo, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-4 ses/sem. Volumen: 150 min/sem. Duración: 15 -> 30 min/ses. Intensidad: Moderada (Borg 20: 12-14, Test Conversación). Guía Ejercicios: Caminar, nadar, bici estática."
+  },
+  {
+    "input": "Condición: Embarazo, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Mantenimiento: 10-30 seg (tensión ligera). Reps: 2-4. Guía Ejercicios: Suaves, evitar sobreestiramiento."
+  },
+  {
+    "input": "Condición: Embarazo, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Series: 1-3. Reps: 6-12 (bajo esfuerzo). Guía Ejercicios: Suelo pélvico, equilibrio suave."
+  },
+  {
+    "input": "Condición: Posparto, Capacidad: Fuerza, Carga Fuerza General",
+    "output": "Frecuencia: >= 2 ses/sem. Nº Ejercicios: 5-10. Intensidad: 30-70% 1RM (progresivo). Reps: 8-12. Series: 1-3. Descanso: 1-3 min. Guía Ejercicios: Inicio gradual, atención diástasis/suelo pélvico."
+  },
+  {
+    "input": "Condición: Posparto, Capacidad: Fuerza, Carga Kegels",
+    "output": "Frecuencia: 2 ses/día. Contracción: 8-12 máx (6-8 seg) + 3-4 rápidas. Series: 2. Guía Ejercicios: Recuperación suelo pélvico."
+  },
+  {
+    "input": "Condición: Posparto, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 3-5 ses/sem. Volumen: 150 min/sem (mod/vig). Intensidad: Mod-Vig (65-95% FCM, Borg 12+, Test Conversación). Guía Ejercicios: Reintroducción gradual."
+  },
+  {
+    "input": "Condición: Posparto, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 3-7 ses/sem. Series: 1-3. Mantenimiento: 15-30 seg. Guía Ejercicios: Generales, atención postura."
+  },
+  {
+    "input": "Condición: Posparto, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: >= 2 ses/sem. Duración: Progresar (6-10s reps -> 60s total). Series: 1-3. Guía Ejercicios: Core profundo, suelo pélvico, equilibrio."
+  },
+  {
+    "input": "Condición: Menopausia, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Nº Ejercicios: 5-10. Intensidad: 50-70% 1RM. Reps: 8-12. Series: 1-3. Descanso: 1-3 min. Guía Ejercicios: Incluir carga/impacto para salud ósea."
+  },
+  {
+    "input": "Condición: Menopausia, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: >= 3 ses/sem. Duración: 30-60 min (continuo o fraccionado). Intensidad: Moderada (70-80% FCM). Guía Ejercicios: Actividades con carga ósea."
+  },
+  {
+    "input": "Condición: Menopausia, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Reps: 2-4. Mantenimiento: 15 seg. Guía Ejercicios: Generales."
+  },
+  {
+    "input": "Condición: Menopausia, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Guía Ejercicios: Equilibrio, agilidad (prevención caídas)."
+  },
+  {
+    "input": "Condición: Personas Mayores, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: >= 2-3 ses/sem (no consecutivas). Nº Ejercicios: 4-8 (grandes grupos). Intensidad: 60-80% 1RM (o Borg 5-6/10). Reps: 8-12. Series: 1-3. Descanso: 60-90 seg. Guía Ejercicios: Funcionales (AVD)."
+  },
+  {
+    "input": "Condición: Personas Mayores, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: >= 5 ses/sem (mod) o >= 3 ses/sem (vig). Volumen: 150-300 min/sem (mod) o 75-150 min/sem (vig). Duración: >= 10 min bloques. Intensidad: Mod (Borg 5-6/10) o Vig (Borg 7-8/10). Guía Ejercicios: Caminar, acuáticas, bici."
+  },
+  {
+    "input": "Condición: Personas Mayores, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: >= 2 ses/sem. Duración: 5-10 min/ses. Mantenimiento: 30-60 seg. Guía Ejercicios: Estáticos principales grupos."
+  },
+  {
+    "input": "Condición: Personas Mayores, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: >= 2-3 ses/sem. Duración: 10-15 min. Guía Ejercicios: Equilibrio (estático/dinámico), Tai Chi, coordinación."
+  },
+  {
+    "input": "Condición: Caídas (Prevención), Capacidad: Fuerza, Carga Fuerza",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 20-80% 1RM (progresivo). Reps: 8-12. Series: 3. Guía Ejercicios: Énfasis tren inferior y core."
+  },
+  {
+    "input": "Condición: Caídas (Prevención), Capacidad: Fuerza, Carga Potencia",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: 30-60% 1RM. Velocidad: Alta (intencional). Reps: 6-10. Series: 2-4/grupo muscular. Guía Ejercicios: Funcionales rápidos (levantarse silla, subir escalones)."
+  },
+  {
+    "input": "Condición: Caídas (Prevención), Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: >= 5 ses/sem (mod) o >= 3 ses/sem (vig). Volumen: 150-300 min/sem (mod) o 75-150 min/sem (vig). Guía Ejercicios: Caminar, actividades que desafíen equilibrio."
+  },
+  {
+    "input": "Condición: Caídas (Prevención), Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Duración: 10-15 min. Guía Ejercicios: Movilidad tobillo, cadera, columna torácica."
+  },
+  {
+    "input": "Condición: Caídas (Prevención), Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: Integrado en entrenamientos. Duración: 15 min. Guía Ejercicios: Equilibrio (tándem, monopedal), cambios dirección, obstáculos."
+  },
+  {
+    "input": "Condición: Sarcopenia, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Nº Ejercicios: 8-12 (poliarticulares). Intensidad: 30-85% 1RM (progresivo). Reps: 8-15. Series: 2-3. Descanso: Suficiente (60-90s). Guía Ejercicios: Grandes grupos, funcional."
+  },
+  {
+    "input": "Condición: Sarcopenia, Capacidad: Fuerza Velocidad/Potencia, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: Bajas (20-50% 1RM). Velocidad: Alta (intencional). Reps: 6-8. Series: 2-3. Guía Ejercicios: Funcionales (levantarse silla)."
+  },
+  {
+    "input": "Condición: Sarcopenia, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: >= 3 ses/sem. Duración: 10-30 min/ses (progresivo). Intensidad: 60-80% FCM. Guía Ejercicios: Caminar, bici."
+  },
+  {
+    "input": "Condición: Sarcopenia, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: >= 2-3 ses/sem (antes/después). Duración: 10-15 min/ses. Mantenimiento: 15-30 seg. Guía Ejercicios: Principales grupos."
+  },
+  {
+    "input": "Condición: Sarcopenia, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: Integrado en cada sesión. Duración: 10-15 min. Guía Ejercicios: Equilibrio, coordinación."
+  },
+  {
+    "input": "Condición: Fragilidad, Capacidad: Fuerza, Carga",
+    "output": "Frecuencia: >= 3 ses/sem. Nº Ejercicios: 6-8 (grandes grupos). Intensidad: 30-60% 1RM (empezar muy bajo). Reps: 8-12. Series: 1-3 (progresivo). Guía Ejercicios: Funcionales básicos, máquinas pueden ayudar."
+  },
+  {
+    "input": "Condición: Fragilidad, Capacidad: Fuerza Potencia, Carga",
+    "output": "Frecuencia: 2-3 ses/sem. Intensidad: Hasta 60% 1RM (si apropiado, empezar bajo). Velocidad: Máxima SEGURA. Guía Ejercicios: Adaptados, funcionales."
+  },
+  {
+    "input": "Condición: Fragilidad, Capacidad: Resistencia, Carga",
+    "output": "Frecuencia: 5-7 ses/sem. Volumen: 150-300 min (mod) o 75-150 min (vig). Duración: 5-30 min (progresivo, fraccionado). Intensidad: 40-60% VO2 max (60-80% FCM). Guía Ejercicios: Caminar (con ayuda si nec.), bici estática."
+  },
+  {
+    "input": "Condición: Fragilidad, Capacidad: Flexibilidad, Carga",
+    "output": "Frecuencia: >= 2-3 ses/sem. Duración: 10-15 min/ses. Mantenimiento: 15-30 seg. Guía Ejercicios: Movilidad suave, estáticos."
+  },
+  {
+    "input": "Condición: Fragilidad, Capacidad: Neuromuscular, Carga",
+    "output": "Frecuencia: >= 2-3 dias/sem (o en cada sesión). Duración: 15 min. Guía Ejercicios: Equilibrio MUY adaptado (apoyos), transferencias."
+  },
+
+  {
+    "input": "Fase: Entrenamiento de la Técnica de Ejecución",
+    "output": "Objetivo: Aprender ejecución correcta de ejercicios, familiarizarse con material/seguridad. Duración: 2-4 sem (jóvenes), 0-1 sem (exp.). Intensidad: 0-30% 1RM. Reps: 6-10. Series: 3-5. Descanso: 2-3 min (amplio para feedback). Ritmo: Moderado. Frecuencia: 2-3 ses/sem. Nº Ejercicios: Los de difícil ejecución. Observaciones Clave: Evitar fatiga, usar medios facilitadores (vídeo, ejercicios analíticos), facilitar imagen cinestésica."
+  },
+  {
+    "input": "Fase: Adaptación Anatómica",
+    "output": "Objetivo: Estabilidad articular, reforzar tendones/ligamentos, preparar para cargas altas (profiláctico/preventivo). Duración: 8-10 sem (jóvenes), 2-4 sem (exp.). Intensidad: 30-60% 1RM. Reps: 15-30. Series: 2-3. Descanso: 1-2 min. Ritmo: Moderado. Frecuencia: 2-3 ses/sem. Nº Ejercicios: 10-15. Observaciones Clave: Carácter de F. Resistencia General, gran amplitud (ROM), trabajo propioceptivo, contexto aeróbico (circuito)."
+  },
+  {
+    "input": "Objetivo: Musculación Deportiva (Hipertrofia Sarcomérica) - Cargas Medias",
+    "output": "Método: Submáximo Cargas Medias Concéntrico. Objetivo: Ganar masa muscular útil SIN perder potencia (base). Intensidad: 60-70% 1RM. Reps: 10-15. Series: 3-6. Descanso: 1-2 min. Velocidad: MÁXIMA POSIBLE concéntrica, moderada excéntrica. Frecuencia: 2-4 ses/sem. Nº Ejercicios: 10-15. Observaciones Clave: Priorizar Potencia (programar por Pot. Máx si posible), pausa 2-3s inter-rep, respiración explosiva, máxima ADM, rutina única."
+  },
+  {
+    "input": "Objetivo: Musculación Deportiva (Hipertrofia Sarcomérica) - Cargas Elevadas",
+    "output": "Método: Submáximo Cargas Elevadas Concéntrico. Objetivo: Ganar masa muscular útil SIN perder potencia (avanzado). Intensidad: +70-85% 1RM. Reps: 6-10. Series: 4-8. Descanso: 2-3 min. Velocidad: MÁXIMA POSIBLE concéntrica, moderada excéntrica. Frecuencia: 3-5 ses/sem. Nº Ejercicios: 8-12. Organización: Rutina única o dividida. Observaciones Clave: Ídem Cargas Medias, pero con mayor intensidad. Rutina dividida puede favorecer potencia."
+  },
+  {
+    "input": "Objetivo: Musculación Estética (Hipertrofia Sarcoplasmática / Culturismo)",
+    "output": "Método: Submáximo Cargas Elevadas Concéntrico + Principios Weider. Objetivo: Máxima hipertrofia visual. Intensidad: +70-85% 1RM. Reps: 6-10 (base, modificar según P. Weider). Series: >4. Descanso: < 1 min 30 s (corto). Velocidad: Lenta (énfasis tensión continua). Frecuencia: Alta. Organización: Rutina dividida siempre. Observaciones Clave: Aplicar Principios Weider (superseries, fallo, etc.). La potencia no es relevante."
+  },
+  {
+    "input": "Objetivo: Fuerza Máxima (Coordinación Intramuscular - CI)",
+    "output": "Método: Máximo Concéntrico. Objetivo: Mejora NEURAL. Duración Bloque: 3-4 sem (exp.). Intensidad: +85-100% 1RM. Reps: 1-5. Series: 4-8. Descanso: 3-5 min (COMPLETO). Velocidad: Máxima intencional que permita el peso. Frecuencia: 2-3 ses/sem. Nº Ejercicios: 3-5 (Principales). Observaciones Clave: NO para jóvenes/inexpertos, requiere dominio técnico, base AA/Musc, core fuerte, motivación. Mínima hipertrofia."
+  },
+  {
+    "input": "Objetivo: Fuerza Máxima (Énfasis Excéntrico)",
+    "output": "Método: Máximo Excéntrico. Objetivo: Ganancias de fuerza (superiores a concéntrico), prevención/rehab. Intensidad: 100-140% 1RM (concéntrico). Reps: 1-5. Series: 4-8. Descanso: 3-5 min. Velocidad: Lenta y controlada. Observaciones Clave: Alto estrés muscular, usar con precaución/experiencia, máquinas inerciales/electroestimulación recomendadas."
+  },
+  {
+    "input": "Objetivo: Fuerza Máxima (Énfasis Isométrico Intermitente)",
+    "output": "Método: Máximo Isométrico Intermitente. Objetivo: Fuerza en ángulos específicos. Intensidad: 80-100% 1RM (resistencia fija o parada). Volumen: 3-5 series x 5-10 reps (contracciones). Duración Contracción: 5-8 segundos. Descanso Inter-Rep: 5-10 segundos. Descanso Inter-Serie: 3-5 min. Observaciones Clave: Variar ángulos del ROM."
+  },
+  {
+    "input": "Objetivo: Fuerza Máxima (Isométrico hasta Fatiga)",
+    "output": "Método: Isométrico hasta Fatiga. Objetivo: Resistencia isométrica. Intensidad: <80% 1RM. Reps: 1. Duración Rep: Hasta agotamiento. Series: 3-6. Descanso: 3-5 min."
+  },
+  {
+    "input": "Objetivo: Fuerza Máxima (Combinado/Pletnev)",
+    "output": "Método: Combinado (Concéntrico/Excéntrico/Isométrico). Objetivo: Variar estímulo. Intensidad: Hasta 140% 1RM (depende fase). Reps: 1-5. Series: 4-8. Descanso: 3-5 min. Observaciones Clave: Permite combinar métodos en la misma serie/sesión, útil en ejercicios complementarios."
+  },
+  {
+    "input": "Objetivo: Fuerza Rápida (Fuerza Velocidad - Esfuerzos Dinámicos)",
+    "output": "Método: Submáximo - Esfuerzos Dinámicos. Objetivo: Mejorar potencia con cargas ligeras/medias. Intensidad: 20-50% 1RM. Reps: 8-12. Series: 3-5. Descanso: 1-3 min. Velocidad: MÁXIMA EXPLOSIVA. Observaciones Clave: Gran similitud al gesto técnico posible, ejercicios específicos."
+  },
+  {
+    "input": "Objetivo: Fuerza Rápida (Fuerza Velocidad - Máximo y Combinado)",
+    "output": "Método: Máximo y Combinado (Aplicado a Velocidad). Objetivo: Mejorar potencia con cargas altas. Intensidad: 70-100% 1RM. Reps: 3-5. Series: 3-5. Descanso: 3-5 min. Velocidad: MÁXIMA EXPLOSIVA. Observaciones Clave: Transición entre fuerza máx. y específica."
+  },
+  {
+    "input": "Objetivo: Fuerza Rápida (Resistencia a la Potencia)",
+    "output": "Método: Submáximo Cargas Medias/Bajas. Objetivo: Mantener potencia alta durante repeticiones. Intensidad: 50-70% 1RM. Reps: 6-12 (o hasta que Potencia caiga al 90% Pot. Máx.). Series: 3-5. Descanso: 1-3 min // 2-3 min (según tabla). Velocidad: MÁXIMA EXPLOSIVA. Observaciones Clave: No reducir ADM con fatiga, estirar antes."
+  },
+  {
+    "input": "Objetivo: Resistencia a la Velocidad (Corta Duración)",
+    "output": "Método: Submáximo Extensivo Cargas Ligeras. Objetivo: Simular exigencias energéticas y de fuerza (< 30s-1min aprox.). Intensidad: 20-40% 1RM (o sobrecarga ligera sobre competición). Reps: 15-30. Series: 3-6. Descanso: 30 seg - 1 min. Velocidad: Ritmo/Técnica de competición."
+  },
+  {
+    "input": "Objetivo: Resistencia a la Velocidad (Media Duración)",
+    "output": "Método: Submáximo Extensivo Cargas Ligeras. Objetivo: Simular exigencias energéticas y de fuerza (1-5 min aprox.). Intensidad: 20-30% 1RM. Reps: >30. Series: 3-6. Descanso: < 30 seg. Velocidad: Ritmo/Técnica de competición."
+  },
+  {
+    "input": "Objetivo: Resistencia a la Velocidad (Larga Duración)",
+    "output": "Método: Submáximo Extensivo Cargas Muy Ligeras. Objetivo: Simular exigencias energéticas y de fuerza (> 5-10 min aprox.). Intensidad: < 20% 1RM. Reps: Muy altas/Tiempo largo. Series: 1-3. Descanso: Variable. Velocidad: Ritmo/Técnica de competición. Observaciones Clave RV: Organizar en series repetidas o circuito (por reps o tiempo), carácter genérico o localizado."
+  }
+]

@@ -1,0 +1,1395 @@
+{
+    "aparatoLocomotor": [
+      {
+        "condicion": "Amputaciones",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Desarrollar la fuerza de la condición física general",
+              "Desarrollar la fuerza máxima",
+              "Desarrollar la fuerza rápida",
+              "Evitar la pérdida de funcionalidad",
+              "Evitar el dolor lumbar",
+              "Reducir las cargas y el dolor del muñón y de la cadera y rodilla contralaterales"
+            ],
+            "tipoTrabajo": [
+              "Bandas elásticas",
+              "Autocargas",
+              "Cargas externas",
+              "Potenciación del core",
+              "Ejercicios de movimientos locales"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "fuerzaGeneral": {
+                "repeticiones": "10 repeticiones (60-80% de 1 RM)",
+                "series": "2-3 series"
+              },
+              "fuerzaMaxima": {
+                "repeticiones": "1-14 repeticiones (70-100% de 1 RM)",
+                "tiempo": "3-8 segundos",
+                "series": "2-3 series"
+              },
+              "fuerzaRapida": {
+                "repeticiones": "8-12 repeticiones (40-60% de 1 RM) a máxima velocidad",
+                "series": "2-3 series de 10-20 segundos"
+              }
+            },
+            "consideracionesEspeciales": [
+              "Es necesario ajustar el ejercicio al nivel del usuario y al tipo de amputación",
+              "Deben evitarse ejercicios isométricos en usuarios con amputaciones vasculares",
+              "Es necesario implementar ejercicios de respuesta ante situaciones imprevistas del día a día"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Aumentar la capacidad aeróbica",
+              "Evitar el síndrome de descondicionamiento físico",
+              "Mejorar la circulación sanguínea",
+              "Mejorar el metabolismo de las grasas"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios continuos de baja intensidad con recuperación incompleta",
+              "Ejercicios de intensidad variable con recuperación incompleta"
+            ],
+            "carga": {
+              "frecuencia": "5-7 sesiones/semana",
+              "intensidad": "40-60% de la FCM",
+              "tiempo": "Sesiones de más de 30 minutos"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario ajustar los ejercicios a los condicionantes de cada usuario",
+              "En algunos casos se recomienda el uso de ergómetros adaptados (p. ej. brazos)"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la flexibilidad, manteniendo un equilibrio articular adecuado en la extremidad amputada",
+              "Mejorar y mantener la amplitud de movimiento articular"
+            ],
+            "tipoTrabajo": [
+              "Movilidad articular",
+              "Movilización de los grandes grupos musculares"
+            ],
+            "carga": {
+              "frecuencia": "A diario",
+              "repeticiones": "15-20 repeticiones en movilización",
+              "tiempo": "45-60 segundos en estiramientos estáticos"
+            },
+            "consideracionesEspeciales": [
+              "Debe integrarse en las sesiones de entrenamiento"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Desarrollar funcionalidades coordinadas incluyendo la zona amputada",
+              "Mejorar el equilibrio estático y dinámico y la propiocepción",
+              "Mejorar la agilidad y la economía del movimiento",
+              "Aumentar la capacidad de reacción del movimiento"
+            ],
+            "tipoTrabajo": [
+              "Coordinación oculomanual y oculopédica",
+              "Coordinación de la marcha",
+              "Apoyo con un solo pie y cambios de peso",
+              "Bipedestación y posiciones de tándem y semitándem",
+              "Ejercicios técnicos de progresiva dificultad",
+              "Actividades de diferentes ejercicios en distintos espacios",
+              "Propioceptivos",
+              "Ejercicios en situación de inestabilidad"
+            ],
+            "carga": {
+              "coordinacion": {
+                "frecuencia": "A diario"
+              },
+              "equilibrio": {
+                "frecuencia": "3-4 sesiones/semana",
+                "tiempo": "30 segundos"
+              },
+              "agilidad": {
+                "frecuencia": "A diario"
+              }
+            },
+            "consideracionesEspeciales": [
+              "Debe integrarse en las sesiones de entrenamiento",
+              "Se incluye en situaciones en las que el usuario no presente una fatiga excesiva",
+              "Es necesario poner especial atención a los usuarios que presenten amputación desde hace poco tiempo"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "Programa de 12 semanas, que es necesario mantener de forma indefinida. Sesiones de 45 a 90 minutos de 4-6 sesiones/semana (en usuarios no entrenados)",
+          "recomendaciones": [
+            "Es necesario incorporar pruebas específicas de valoración física antes de iniciar el programa",
+            "Es preciso adaptar el programa de ejercicio físico en función del motivo de la amputación",
+            "En caso de amputación unilateral, debe procurarse adaptar los ejercicios para hacerlos de manera bilateral",
+            "Si es posible, es necesario incluir ejercicios que impliquen la utilización de todos los segmentos corporales",
+            "El usuario puede indicar las limitaciones del desarrollo de los ejercicios en caso de que tenga una amputación desde hace mucho tiempo"
+          ],
+          "observaciones": [
+            "En caso de amputaciones recientes, es necesario contar con los criterios del responsable médico",
+            "Es necesario valorar si la medicación del usuario influye en la práctica de ejercicio físico"
+          ]
+        }
+      },
+      {
+        "condicion": "Artrosis y artritis",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Reducir el dolor y la fatiga muscular y articular",
+              "Aumentar la fuerza general"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios isométricos con la amplitud de movimiento articular tolerado",
+              "Ejercicios dinámicos progresivos en el tiempo",
+              "Trabajo de fuerza resistencia",
+              "Bandas elásticas, si no se tolera la carga de trabajo"
+            ],
+            "carga": {
+              "frecuencia": "2-4 sesiones/semana",
+              "repeticiones": "10-20 repeticiones (20-50% de 1 RM)",
+              "series": "2-4 series",
+              "descanso": "Descanso entre series"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario seleccionar los ejercicios",
+              "La carga debe ir de acuerdo con la tolerancia individual",
+              "Es preciso modificar la intensidad o duración del ejercicio si existe dolor o inflamación",
+              "Es necesario evitar el impacto y la excesiva carga en la zona afectada",
+              "Es preciso trabajar sin dolor articular"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la resistencia cardiorrespiratoria general",
+              "Disminuir los factores de riesgo cardiovascular",
+              "Evitar el incremento de peso por la inactividad",
+              "Mejorar la autoestima y las relaciones sociales"
+            ],
+            "tipoTrabajo": [
+              "Trabajo aeróbico con el menor impacto posible, como bicicleta ergométrica, bicicleta elíptica o trabajo en el medio acuático"
+            ],
+            "carga": {
+              "frecuencia": "3-7 sesiones/semana",
+              "intensidad": "40-85% de la FCM",
+              "duracion": "20-60 minutos según tolerancia (escala de Borg 20: 12-16)"
+            },
+            "consideracionesEspeciales": [
+              "Para mejorar la tolerancia al esfuerzo y la movilidad, es necesario incrementar progresivamente el tiempo de trabajo (5-30 minutos/día)",
+              "Es necesario intentar conseguir, de forma regular, 150 minutos/semana de ejercicio moderado"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar las AVD",
+              "Mejorar la movilidad articular",
+              "Prevenir la pérdida de espacio articular",
+              "Favorecer la circulación de fluidos en la zona afectada",
+              "Reducir el dolor para disminuir la ingesta de fármacos"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios asistidos, pasivos y activos de las articulaciones afectadas y de la movilidad general",
+              "Trabajo respiratorio y de relajación"
+            ],
+            "carga": {
+              "frecuencia": "2-7 sesiones/semana",
+              "tiempo": "15-40 minutos por sesión",
+              "duracion": "60 segundos por ejercicio",
+              "descanso": "Descansos de 60 segundos",
+              "series": "1-3 series"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario combinar la sesión de flexibilidad y movilidad con otras terapias relajantes",
+              "Es preciso evitar posiciones forzadas o coaptaciones de la articulación afectada",
+              "Es necesario ejecutar los ejercicios con la mejor técnica posible"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Mejorar la coordinación neuromuscular para aplicarlo en las AVD",
+              "Prevenir deformidades y actitudes viciosas"
+            ],
+            "tipoTrabajo": [
+              "Trabajo con dos pies o con un solo pie, sin dolor",
+              "Trabajos acuáticos"
+            ],
+            "carga": {
+              "frecuencia": "2 sesiones/semana",
+              "repeticiones": "10-15 repeticiones sin sobrecarga",
+              "series": "2-3 series"
+            },
+            "consideracionesEspeciales": [
+              "Debe incorporarse el trabajo de fuerza",
+              "Es necesario evitar sobrecargas articulares",
+              "Es preciso poner especial atención a la técnica de los ejercicios"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "Es necesario lograr hábitos de AF saludable a largo plazo",
+          "recomendaciones": [
+            "Es necesario establecer el principio de progresión para todas las capacidades para adecuar las cargas de las articulaciones",
+            "El dolor, la inflamación o la fatiga local son síntomas que hay que evitar ajustando correctamente la carga de trabajo",
+            "En fases agudas es necesario el uso de ejercicios pasivos y técnicas de relajación",
+            "Es preciso acomodar la amplitud de movimiento articular a la tolerancia de dolor individual",
+            "Es necesario evitar el ejercicio en el caso de aumento de dolor o inflamación articular"
+          ],
+          "adaptacionesPoblacionesEspeciales": {
+            "personasMayores": [
+              "Si es posible, es necesario priorizar el trabajo en el medio acuático, especialmente cuando no puede lograrse el trabajo prescrito en el medio terrestre",
+              "Si el paciente usa algún tipo de bastón para andar, debe intentarse que disponga de un punto de apoyo cuando realice el programa de EF"
+            ]
+          },
+          "observaciones": [
+            "Es necesario personalizar al máximo los programas y adecuarlos a las características individuales",
+            "Debe aprenderse a diferenciar los dolores musculares o tendinosos propios del entrenamiento de los dolores articulares agudos",
+            "Es preciso ayudar a la articulación con otras terapias suaves y relajantes",
+            "Es necesario consultar en caso de dolor continuado de más de una hora después del ejercicio",
+            "Si se ha practicado una infiltración articular, se recomienda que durante 48-72 horas se suspenda el programa de actividad física"
+          ]
+        }
+      },
+      {
+        "condicion": "Cervicalgia",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mejorar la tonicidad y los niveles de fuerza de toda la musculatura cervical, paravertebral, dorsal, lumbar y abdominal",
+              "Mejorar la funcionalidad de las AVD"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de refuerzo de toda la musculatura de la zona cervical y paravertebral con trabajo compensatorio dorsal, lumbar y abdominal",
+              "Inicialmente ejercicios isométricos"
+            ],
+            "carga": {
+              "cervical": {
+                "frecuencia": "3 sesiones/semana",
+                "tipo": "Ejercicios isométricos y concéntricos",
+                "ejercicios": "2-4 ejercicios/sesión",
+                "repeticiones": "10-15 repeticiones",
+                "series": "2-3 series",
+                "descanso": "30-40 segundos de descanso entre series"
+              },
+              "dorsalLumbarAbdominal": {
+                "frecuencia": "3 sesiones/semana",
+                "tipo": "Ejercicios concéntricos y excéntricos",
+                "ejercicios": "3-5 ejercicios/sesión",
+                "repeticiones": "10-15 repeticiones",
+                "series": "2-3 series",
+                "descanso": "30-40 segundos de descanso entre series"
+              }
+            },
+            "consideracionesEspeciales": [
+              "Es necesario trabajar toda la espalda como un bloque",
+              "Es preciso adoptar una buena postura en la realización de los ejercicios (debe vigilarse la hiperlordosis o la rotación cervical)",
+              "Es necesario incrementar progresivamente las cargas de trabajo",
+              "Pueden incorporarse técnicas de relajación, como yoga, taichí o chi kung"
+            ]
+          },
+          "resistencia": {
+          "objetivos": [
+            "Mantener la funcionalidad de las AVD",
+            "Mantener un peso corporal correcto",
+            "Favorecer la reducción de la ansiedad, la relajación y la sensación de bienestar"
+          ],
+          "tipoTrabajo": [
+            "Actividades de trabajo cardiovascular en las que participan grandes grupos musculares",
+            "Trabajo continuo y/o interválico",
+            "Actividades acuáticas (aquagym, natación, etc.)"
+          ],
+          "carga": {
+            "frecuencia": "2-5 sesiones/semana",
+            "intensidad": "65-85% de la FCM",
+            "tiempo": "20-30 minutos"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario evitar actividades de impacto",
+            "Deben evitarse deportes en caso de hiperlordosis cervical (p. ej. ciclismo de carretera)",
+            "Es necesario evitar deportes que provoquen tensión y/o sobrecarga cervical",
+            "Es necesario incrementar progresivamente las cargas de trabajo"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Mantener o mejorar la amplitud de movimiento articular y la flexibilidad",
+            "Descargar la zona cervical de tensiones"
+          ],
+          "tipoTrabajo": [
+            "Estiramientos generales",
+            "Estiramientos estáticos y dinámicos sin rebote",
+            "Movilidad articular"
+          ],
+          "carga": {
+            "frecuencia": "A diario",
+            "ejercicios": "3-6 ejercicios/sesión",
+            "repeticiones": "2-3 repeticiones",
+            "tiempo": "15-20 segundos cada estiramiento"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario incidir en estiramientos de toda la cadena posterior",
+            "El ambiente de trabajo debe ser relajado y cálido",
+            "La respiración debe ser lenta y pausada"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Mejorar la precisión, la eficacia, la economía y la harmonía en las AVD",
+            "Mejorar la propiocepción"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios de reeducación postural y coordinación"
+          ],
+          "carga": {
+            "ejercicios": "2-3 ejercicios",
+            "frecuencia": "2-3 sesiones por semana",
+            "tiempo": "15 minutos por sesión"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario controlar la higiene postural durante la ejecución de los ejercicios"
+           ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "8-12 semanas",
+        "recomendaciones": [
+          "Se recomienda iniciar el trabajo con un peso que permita realizar todas las repeticiones sin movimientos compensatorios. Es necesario asesorar al paciente para que tenga una correcta ergonomía laboral y una buena ejecución en las AVD (mobiliario e higiene postural)",
+          "En el caso de trabajos sedentarios (p. ej. pantallas de ordenador), es preciso programar pequeños 'descansos' activos con pequeñas 'píndolas' de ejercicio de movilización cervical",
+          "Se recomienda mantener siempre un trabajo de refuerzo muscular para evitar las recaídas",
+          "Es necesario trabajar siempre sin dolor",
+          "En caso de realizar un trabajo en el agua, es necesario buscar ejercicios de movilidad y refuerzo aprovechando los beneficios del trabajo acuático (es preciso evitar los estilos braza y mariposa)"
+        ],
+        "observaciones": [
+          "Para eliminar tensiones, es necesario insistir en el trabajo diario de relajación y respiración"
+        ]
+    }
+  },
+  {
+    "condicion": "Escoliosis",
+    "capacidades": {
+      "fuerza": {
+        "objetivos": [
+          "Fortalecimiento de la musculatura, sobre todo la situada en la convexidad",
+          "Prevenir la atrofia muscular, especialmente de los paravertebrales y el core"
+        ],
+        "tipoTrabajo": [
+          "Alternar ejercicios sin gravedad (p. ej. cuadrupedia) con ejercicios de pie o sentados",
+          "Ejercicios por cadenas musculares, que favorezcan la actividad excéntrica de las fibras tónicas y concéntrica de las fibras fásicas"
+        ],
+        "carga": {
+          "frecuencia": "3 sesiones/semana",
+          "ejercicios": "6-10 ejercicios",
+          "repeticiones": "10-15 repeticiones (40-60% de 1 RM)",
+          "series": "2 series por ejercicio",
+          "descanso": "30 segundos de descanso entre series",
+          "tiempo": "15-20 minutos por sesión"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario evitar los ejercicios de fuerza máxima sobre todo en bipedestación",
+          "Es necesario respirar al ritmo de los movimientos y evitar las apneas (maniobra de Valsalva)"
+        ]
+      },
+      "resistencia": {
+        "objetivos": [
+          "Mejorar la resistencia cardiorrespiratoria",
+          "Estimular la práctica de actividades aeróbicas"
+        ],
+        "tipoTrabajo": [
+          "Ejercicios aeróbicos en los que participan grandes grupos musculares (caminar, ir en bicicleta)",
+          "Cualquier tipo de deporte, especialmente aquellos que favorezcan la flexoextensión del raquis"
+        ],
+        "carga": {
+          "frecuencia": "2-5 sesiones/semana",
+          "tiempo": "30 minutos",
+          "intensidad": "50-70% del VO2 máx. (60-70% de la FCM o test de conversación)"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario aumentar progresivamente el tiempo de trabajo",
+          "Es preciso ajustar la respiración a cada movimiento",
+          "Debe establecerse un período de adaptación antes de plantear objetivos",
+          "Es necesario controlar la FC"
+        ]
+      },
+      "flexibilidad": {
+        "objetivos": [
+          "Evitar rigideces articulares",
+          "Flexibilizar la musculatura, sobre todo la que está situada a la concavidad",
+          "Mejorar la propiocepción articular (sobre todo en casos de hiperlaxitud)",
+          "Mejorar la movilidad global"
+        ],
+        "tipoTrabajo": [
+          "Movimientos articulares de la columna vertebral en todas direcciones",
+          "Estiramientos analíticos de los músculos acortados",
+          "Estiramientos globales de reeducación de la postura"
+        ],
+        "carga": {
+          "frecuencia": "3 sesiones por semana",
+          "ejercicios": "6-8 ejercicios por sesión",
+          "repeticiones": "2-3 repeticiones",
+          "tiempo": "15-20 minutos por sesión",
+          "mantenimiento": "Es necesario mantener 30 segundos los estiramientos analíticos y 60-120 segundos los globales"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario coordinar los ejercicios con la respiración"
+        ]
+      },
+      "neuromuscular": {
+        "objetivos": [
+          "Integrar el trabajo postural en las AVD",
+          "Mejorar el equilibrio y la coordinación"
+        ],
+        "tipoTrabajo": [
+          "Reeducación postural, con especial atención al trabajo de respiración"
+        ],
+        "carga": {
+          "frecuencia": "A diario",
+          "ejercicios": "2-3 ejercicios",
+          "tiempo": "15-20 minutos/sesión"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario tener presentes los principios básicos de la higiene postural"
+        ]
+      }
+    },
+    "condicionamientosGenerales": {
+      "tiempoTrabajo": "A largo plazo",
+      "recomendaciones": [
+        "Lo más importante es tener una musculatura fuerte",
+        "Debe trabajarse en función del tipo de curvatura",
+        "Es necesario trabajar el esquema corporal modificando posturas incorrectas de las AVD, laborales, etc.",
+        "Es preciso realizar ejercicios de mejora de la capacidad respiratoria y de expansión torácica para integrarlos en la vida diaria"
+      ],
+      "adaptacionesPoblacionesEspeciales": {
+        "niños": [
+          "Al estar en edad de crecimiento, los huesos son más maleables, y es importante una corrección y fortalecimiento relacionado con el tipo de curvatura"
+        ],
+        "personasMayores": [
+          "El envejecimiento va acompañado de una disminución de la masa muscular y es más necesario realizar un fortalecimiento de la musculatura para evitar un aumento de las curvaturas"
+        ],
+        "conCirugia": [
+          "Es necesario evitar los deportes de contacto"
+        ],
+        "conCorse": [
+          "Es necesario ir con cuidado con los impactos para no romperlo o producir lesiones, o retirarlo mientras se practique deporte"
+        ]
+      },
+      "observaciones": [
+        "Cuando la curvatura es significativa se aconseja un corsé",
+        "Es necesario complementar la sesión con ejercicios de respiración y relajación",
+        "Es preciso el cuidado de la higiene postural en las AVD",
+        "Es necesario procurar disponer de unas condiciones ergonómicas adecuadas que faciliten el desarrollo de las AVD y/o del entorno laboral",
+        "Si la persona está siguiendo algún tipo de tratamiento específico (médico, ortopédico, fisioterapéutico, etc.), cal incorporarlo al programa"
+      ]
+    }
+  },
+  {
+    "condicion": "Hombro doloroso",
+    "capacidades": {
+      "fuerza": {
+        "objetivos": [
+          "Potenciar la musculatura del hombro, como el manguito de los rotadores, especialmente los rotatorios externos",
+          "Mejorar la fuerza de la musculatura escapular"
+        ],
+        "tipoTrabajo": {
+          "pocaMovilidadArticular": [
+            "Ejercicios pasivos, pendulares de Codman",
+            "Ejercicios asistidos, isométricos", 
+            "Ejercicios activos, isotónicos concéntricos y excéntricos"
+          ],
+          "buenaMovilidadArticular": [
+            "Ejercicios pendulares",
+            "Ejercicios de rotatorios externos",
+            "Ejercicios de rotatorios internos",
+            "Ejercicios de abductores y aductores",
+            "Ejercicios de circunducción",
+            "Ejercicios excéntricos",
+            "Ejercicios posturales",
+            "Ejercicios de potenciación de la musculatura escapulotorácica"
+          ]
+        },
+        "carga": {
+          "frecuencia": "5 sesiones/semana",
+          "repeticiones": "8-12 repeticiones (40-70% de 1 RM)",
+          "series": "2 series",
+          "tiempo": "15-20 minutos/sesión"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario evitar movimientos compensatorios de tronco"
+        ]
+      },
+      "resistencia": {
+        "objetivos": [
+          "Mejorar la resistencia general"
+        ],
+        "tipoTrabajo": [
+          "Ejercicios de hombro en el medio acuático",
+          "Ejercicio en el que participan grandes grupos musculares"
+        ],
+        "carga": {
+          "frecuencia": "2-3 sesiones/semana",
+          "intensidad": "40-75% de la FCM",
+          "tiempo": "20-30 minutos/sesión"
+        },
+        "consideracionesEspeciales": [
+          "El volumen diario puede fraccionarse en distintas sesiones según la condición física del usuario"
+        ]
+      },
+      "flexibilidad": {
+        "objetivos": [
+          "Mejorar la movilidad articular",
+          "Reducir la tensión de la cápsula posterior del hombro",
+          "Mantener la funcionalidad de las AVD"
+        ],
+        "tipoTrabajo": [
+          "Estiramientos de los principales grupos musculares"
+        ],
+        "carga": {
+          "frecuencia": "3-5 sesiones/semana",
+          "tipo": "Ejercicios lentos",
+          "series": "2 series",
+          "tiempo": "15-30 minutos/sesión"
+        },
+        "consideracionesEspeciales": [
+          "En caso de inestabilidad, debe evitarse una gran amplitud de movimiento"
+        ]
+      },
+      "neuromuscular": {
+        "objetivos": [
+          "Mejorar la sincronización del trabajo del hombro y la escápula",
+          "Mejorar la propiocepción de la musculatura del hombro",
+          "Reducir el dolor"
+        ],
+        "tipoTrabajo": [
+          "Trabajo escapular",
+          "Trabajo propioceptivo en bipedestación y en cuadrupedia, principalmente en cadena cinética cerrada"
+        ],
+        "carga": {
+          "frecuencia": "2-3 sesiones/semana",
+          "tiempo": "30 segundos por ejercicio"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario comenzar en ángulos articulares pequeños e ir aumentando progresivamente"
+        ]
+      }
+    },
+    "condicionamientosGenerales": {
+      "tiempoTrabajo": "3-6 meses",
+      "recomendaciones": [
+        "Con inestabilidades del hombro, es necesario trabajar más la fuerza, comenzando con ejercicios isométricos y pocos grados de movilidad",
+        "Con problemas en el manguito de los rotadores, no pueden superarse los 80º y es necesario priorizar el trabajo de los rotatorios externos",
+        "En el gimnasio, es necesario tener cuidado en la correcta ejecución de los ejercicios de hombro (p. ej. en el levantamiento de banca)",
+        "El ejercicio puede provocar un ligero aumento del dolor que debería haber desaparecido a las 12 horas. Se recomienda la aplicación de unos 10 minutos de gel (frío) después de cada entrenamiento",
+        "Deben evitarse: Los deportes de contacto, los deportes de lanzamiento, la abducción con rotación externa, la abducción con rotación interna, los ejercicios en el plano frontal"
+        ],
+        "adaptacionesPoblacionesEspeciales": {
+          "niños": [
+            "Es necesario realizar un programa de fortalecimiento a largo plazo para evitar recidivas en niños y adolescentes"
+          ]
+        },
+        "observaciones": [
+          "Para minimizar el riesgo de una recaída de la lesión de hombro, es muy importante la correcta realización de pautas progresivas de readaptación funcional"
+        ]
+      }
+    },
+    {
+      "condicion": "Lesiones de los ligamentos de la rodilla",
+      "capacidades": {
+        "fuerza": {
+          "objetivos": [
+            "Mejorar los niveles de fuerza de los diferentes grupos musculares de las extremidades inferiores",
+            "Potenciar la fuerza máxima, la fuerza explosiva (profesionales) y la fuerza resistencia (amateurs)"
+          ],
+          "tipoTrabajo": {
+            "faseInicial": [
+              "Ejercicios isométricos"
+            ],
+            "fasePotenciacion": [
+              "Ejercicios isométricos",
+              "Ejercicios dinámicos concéntricos e introducción progresiva del trabajo dinámico excéntrico",
+              "Trabajo en cadena cinética cerrada"
+            ],
+            "faseFinal": [
+              "Potenciación muscular"
+            ]
+          },
+          "carga": {
+            "isometria": {
+              "frecuencia": "3 sesiones/semana",
+              "trabajo": "6-10 segundos de trabajo con 6-10 segundos de recuperación",
+              "series": "2-6 series"
+            },
+            "fuerzaResistencia": {
+              "frecuencia": "3 sesiones/semana",
+              "repeticiones": "10-20 repeticiones (20-50% de 1 RM)",
+              "series": "2-6 series"
+            }
+          },
+          "consideracionesEspeciales": [
+            "Es necesario respetar el tiempo de cicatrización de las estructuras ligamentosas",
+            "Debe reevaluarse 1 RM de forma periódica, puesto que mejora rápidamente la extremidad lesionada",
+            "Es preciso evitar que se desencadene dolor"
+          ]
+        },
+        "resistencia": {
+          "objetivos": [
+            "Conseguir realizar un mínimo de 30 minutos continuos de actividad"
+          ],
+          "tipoTrabajo": [
+            "Trabajo aeróbico en el que participan grandes grupos musculares",
+            "Se inicia con actividades de bajo impacto y progresa: bicicleta, natación, remo, caminar, correr, etc."
+          ],
+          "carga": {
+            "frecuencia": "2-5 sesiones/semana",
+            "intensidad": "50-70% del VO2 máx. (60-70% de la FCM, escala de Borg 20: 13)",
+            "tiempo": "30 minutos en total (p. ej. 3 × 10 minutos)"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario respetar los tiempos de cicatrización",
+            "Es preciso usar el test de conversación para medir la intensidad"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Recuperar la movilidad articular de la rodilla"
+          ],
+          "tipoTrabajo": [
+            "En fase inicial: estiramientos pasivos asistidos",
+            "Estiramientos pasivos y activos (cuádriceps, isquiotibiales y tríceps surales)"
+          ],
+          "carga": {
+            "frecuencia": "2-7 sesiones/semana",
+            "tiempo": "20-30 minutos/sesión"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario prestar especial atención a la amplitud de movimiento articular",
+            "Es preciso evitar que se desencadene dolor"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Mantener o mejorar la velocidad gestual y de desplazamiento",
+            "Mejorar el control propioceptivo de la rodilla",
+            "Mejorar la funcionalidad de las AVD y facilitar la reincorporación de la práctica deportiva",
+            "Mejorar el control de los cambios de posición del cuerpo de forma eficiente"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios propioceptivos de extremidades inferiores",
+            "Ejercicios multidireccionales",
+            "Circuitos donde se integren habilidades de movimiento aisladas mediante el trabajo multicomponente"
+          ],
+          "carga": {
+            "frecuencia": "2-3 sesiones/semana",
+            "tiempo": "20-30 minutos/sesión"
+          },
+          "consideracionesEspeciales": [
+            "Debe introducirse en las sesiones de entrenamiento",
+            "Debe introducirse una vez la musculatura que rodea la rodilla ha conseguido los objetivos de fuerza y amplitud de movimiento",
+            "Es necesario prestar especial atención en los ejercicios explosivos",
+            "Es preciso evitar ejercicios dolorosos"
+          ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "6-9 meses",
+        "recomendaciones": [
+          "Fase inicial (6-8 semanas): movilización y carga precoz de la extremidad",
+          "Fase de potenciación (9-12 semanas): trabajo moderado de fuerza y propiocepción",
+          "Fase final (>12 semanas): potenciación muscular y propiocepción, con reeducación de los gestos deportivos",
+          "Es necesario evitar ejercicios de alto impacto articular y movimientos agresivos",
+          "Es preciso controlar el dolor articular y la amplitud de movimiento",
+          "Si hi ha inflamación o agudización del dolor, deben disminuirse las cargas, aumentar el descanso o no continuar con el ejercicio físico hasta obtener nuevo informe médico"
+        ],
+        "adaptacionesPoblacionesEspeciales": {
+          "deportistas": [
+            "Es necesario establecer un programa de mantenimiento de la condición física y de readaptación al gesto deportivo"
+          ],
+          "niños": [
+            "Es preciso prestar atención al crecimiento biológico"
+          ],
+          "personasMayores": [
+            "Es necesario prestar atención al riesgo de caídas"
+          ]
+        },
+        "observaciones": [
+          "Es necesario poner especial atención a las ejecuciones técnicas",
+          "Es necesario aconsejar la aplicación de gel en la zona afectada al finalizar las sesiones de entrenamiento"
+        ]
+      }
+    },
+    {
+      "condicion": "Lesiones de los ligamentos del tobillo",
+      "capacidades": {
+        "fuerza": {
+          "objetivos": [
+            "Mejorar niveles de fuerza de los músculos de la cama (peroneales, tríceps sural, tibiales)"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios isométricos",
+            "Ejercicios dinámicos concéntricos y excéntricos (peroneales, tríceps sural, tibiales y musculatura intrínseca del pie), con trabajo de fuerza máxima, explosiva (deportistas) y fuerza resistencia",
+            "Trabajo con bandas elásticas"
+          ],
+          "carga": {
+            "frecuencia": "A diario",
+            "isometria": "segundos de contracción isométrica con 6 segundos de relajación",
+            "repeticiones": "10-20 repeticiones (20-50% de 1 RM)",
+            "series": "2-6 series"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario respetar los tiempos de cicatrización de los ligamentos",
+            "Es preciso incrementar progresivamente las cargas de trabajo",
+            "Es necesario prestar especial atención a la fuerza durante la eversión del pie y la flexión plantar"
+          ]
+        },
+        "resistencia": {
+          "objetivos": [
+            "Lograr 150 minutos de entrenamiento aeróbico de moderada a alta intensidad semanalmente"
+          ],
+          "tipoTrabajo": [
+            "Trabajo aeróbico (caminar, bicicleta, remo, natación, etc.)"
+          ],
+          "carga": {
+            "frecuencia": "2-7 sesiones/semana",
+            "intensidad": "60-85% de la FCM o test de conversación"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario aumentar progresivamente el tiempo de trabajo y la intensidad según el dolor",
+            "Es preciso ajustar la respiración a cada movimiento"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Recuperar la movilidad articular",
+            "Mejorar la propiocepción y la estabilidad del tobillo",
+            "Mejorar la flexibilidad de los diferentes grupos musculares"
+          ],
+          "tipoTrabajo": [
+            "Movilización del tobillo en todas las direcciones",
+            "Con el pie apoyado en el suelo, movilidad lateral de la rodilla",
+            "Estiramientos estáticos o dinámicos activos de tríceps sural, peroneales y tibiales",
+            "Ejercicios con toalla"
+          ],
+          "carga": {
+            "frecuencia": "2-7 sesiones/semana",
+            "intensidad": "Escala de Borg 10: 3-5. Umbral del dolor"
+          },
+          "consideracionesEspeciales": [
+            "Deben explorarse la movilidad sin llegar a sentir un dolor intenso"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Reeducar los patrones fundamentales de movimiento",
+            "Controlar el dolor, el derrame y el edema"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios de propiocepción, de alineación, de equilibrio, de control y de reeducación del tobillo",
+            "Ejercicios con plato (con ambos pies, con un solo pie)",
+            "Ejercicios con pelota",
+            "Ejercicios de marcha",
+            "Secuencias de movimiento de marcha a carrera a pie, que acaban en la fase final con cambios de dirección y recepciones"
+          ],
+          "carga": {
+            "frecuencia": "A diario",
+            "progresion": [
+              "Es necesario progresar de menos a más complejo",
+              "Es preciso progresar de superficies estables a inestables"
+            ]
+          },
+          "consideracionesEspeciales": [
+            "Es necesario evitar referencias visuales",
+            "Es preciso garantizar la seguridad en los ejercicios de inestabilidad"
+          ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "3-6 semanas",
+        "recomendaciones": [
+          "Es necesario realizar siempre un buen calentamiento",
+          "Es preciso comenzar los ejercicios lentamente y utilizar el dolor como guía",
+          "Se aconseja aplicar gel (frío) en la zona afectada al finalizar las sesiones",
+          "Es necesario evitar que se desencadene dolor en todos los ejercicios",
+          "Los ejercicios de estiramientos deben realizarse antes y después de las actividades deportivas",
+          "Es preciso utilizar un calzado, materiales y entorno adecuados",
+          "Es necesario reducir el ritmo o evitar el ejercicio físico en situaciones de cansancio muscular",
+          "Debe mejorarse la técnica del ejercicio específico y evitar deportes no habituales",
+          "Inicialmente, deben escogerse superficies planas y estables para caminar o correr"
+        ],
+        "observaciones": [
+          "Para evitar los riesgos lesionales, es necesario practicar ejercicios adecuados a la edad y la condición física individual",
+          "Es preciso cumplir los programas de rehabilitación y readaptación funcional",
+          "En función de criterios médicos, es necesario valorar la utilización de ortesis (tobilleras) estabilizadores del tobillo"
+        ]
+    }
+  },
+  {
+    "condicion": "Lesiones tendinosas",
+    "capacidades": {
+      "fuerza": {
+        "objetivos": [
+          "Mejorar la fuerza de la musculatura de la zona afectada",
+          "Evitar desequilibrios musculares",
+          "Conseguir un refuerzo del tejido tendinoso"
+        ],
+        "tipoTrabajo": [
+          "Inicialmente, isométricos",
+          "Trabajo dinámico concéntrico",
+          "Trabajo excéntrico, en fases más avanzadas"
+        ],
+        "carga": {
+          "frecuencia": "3 sesiones/semana",
+          "isometria": "6 segundos de contracción y 6 segundos de relajación",
+          "repeticiones": "8-12 repeticiones (30-50% de 1 RM)",
+          "series": "2-3 series"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario trabajar sin dolor la amplitud de movimiento articular"
+        ]
+      },
+      "resistencia": {
+        "objetivos": [
+          "Mejorar la condición física general"
+        ],
+        "tipoTrabajo": [
+          "Trabajo de grandes grupos musculares con actividades que no sobrecarguen las articulaciones"
+        ],
+        "carga": {
+          "frecuencia": "3-5 sesiones/semana",
+          "intensidad": "50-60% del VO2 máx",
+          "tiempo": "10-30 minutos/sesión"
+        },
+        "consideracionesEspeciales": [
+          "Es necesario aumentar progresivamente de 10 a 30 minutos"
+        ]
+      },
+      "flexibilidad": {
+        "objetivos": [
+          "Mejorar la amplitud de movimiento articular",
+          "Mejorar la flexibilidad muscular",
+          "Eliminar o disminuir el dolor"
+        ],
+        "tipoTrabajo": [
+          "Movimientos lentos con la máxima amplitud de movimiento articular",
+          "Ejercicios de tracción axial para descomprimir la articulación, sobre todo en el hombro",
+          "Ejercicios de estiramientos pasivos"
+        ],
+        "carga": {
+            "frecuencia": "4-5 sesiones/semana",
+            "tiempo": "15-30 segundos",
+            "series": "2 series/sesión"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario trabajar sin dolor la amplitud de movimiento articular"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Mejorar las posturas de las AVD",
+            "Mejorar el control propioceptivo de la estructura afectada"
+          ],
+          "tipoTrabajo": [
+            "Trabajo ergonómico",
+            "Trabajar la sincronización hombro-escapular",
+            "Ejercicios de desequilibrio y propioceptivos"
+          ],
+          "carga": {
+            "progresion": "Es necesario progresar de superficies estables a más inestables"
+          }
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "2-6 meses",
+        "recomendaciones": [
+          "Para la recuperación, es fundamental la correcta programación de las cargas y la progresión para evitar la reaparición de la lesión tendinosa",
+          "No deben trabajarse los arcos articulares que provocan dolor",
+          "No debe iniciarse el trabajo excéntrico mientras la fuerza de la unidad musculotendinosa sea inferior a un 50% de la contralateral",
+          "Es necesario utilizar crioterapia después del entrenamiento",
+          "Deben gestionarse las cargas de los trabajos con el descanso",
+          "Es necesario evitar o minimizar el reposo absoluto del tendón"
+        ],
+        "adaptacionesPoblacionesEspeciales": {
+          "niños": [
+            "Las lesiones suelen ser leves, de buen pronóstico y suelen mejorar con un reposo relativo"
+          ],
+          "personasMayores": [
+            "Es necesario realizar los movimientos más lentos y los estiramientos más largos",
+            "Si las tendinopatías son de las extremidades inferiores, es necesario trabajar más el equilibrio para evitar caídas"
+          ]
+        },
+        "observaciones": [
+          "Debe remarcarse la importancia de la prevención, e intervenir en los factores modificables: intrínsecos y extrínsecos",
+          "Si las tendinopatías son de las extremidades inferiores, es necesario valorar el calzado y la posibilidad de plantillas",
+          "Si las tendinopatías son del hombro, no debe trabajarse a más de 80º de flexión y abducción",
+          "En caso de rotura del tendón, es necesario considerar la opción quirúrgica"
+        ]
+      }
+    },
+    {
+      "condicion": "Lumbalgia",
+      "capacidades": {
+        "fuerza": {
+          "objetivos": [
+            "Aumentar la fuerza en la musculatura del tronco y de la cintura pélvica",
+            "Mejorar la capacidad funcional de la musculatura estabilizadora del raquis (core)"
+          ],
+          "tipoTrabajo": [
+            "Inicialmente, isométricos",
+            "Es necesario progresar a trabajo concéntrico"
+          ],
+          "carga": {
+            "frecuencia": "2-3 sesiones/semana",
+            "repeticiones": "8-12 repeticiones (50-60% de 1 RM)",
+            "series": "2-3 series"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario realizar los ejercicios con una correcta ejecución técnica"
+          ]
+        },
+        "resistencia": {
+          "objetivos": [
+            "Mantener la funcionalidad de las AVD",
+            "Aumentar el tiempo de práctica de actividad física continuada",
+            "Mantener un peso corporal adecuado"
+          ],
+          "tipoTrabajo": [
+            "Actividades aeróbicas que impliquen la participación de grandes grupos musculares"
+          ],
+          "carga": {
+            "frecuencia": "2-5 sesiones/semana",
+            "intensidad": "50-70% del VO2 máx. (60-70% de la FCM)",
+            "tiempo": "45-60 minutos"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario iniciar el trabajo con sesiones adaptadas y aumentar progresivamente el tiempo hasta llegar a las recomendaciones"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Mejorar la flexibilidad de los músculos implicados en la flexoextensión, inclinación y rotación del tronco y la pelvis",
+            "Aumentar la amplitud de movimiento de la columna vertebral y de la cintura pélvica"
+          ],
+          "tipoTrabajo": [
+            "Estiramientos activos",
+            "Estiramientos pasivos",
+            "Estiramientos de cadenas musculares"
+          ],
+          "carga": {
+            "frecuencia": "5-6 sesiones/semana",
+            "tiempo": "10-20 segundos por ejercicio",
+            "series": "3-6 series",
+            "duracion": "15-30 minutos por sesión"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario realizar los estiramientos con una correcta ejecución técnica",
+            "Es preciso ejecutar los estiramientos de forma controlada, sin hacer rebotes y sin dolor"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Mejorar el trabajo sinérgico de los distintos grupos musculares implicados en la estabilización del tronco",
+            "Mejorar la capacidad de control del complejo lumbopélvico",
+            "Conseguir la activación de la musculatura implicada en la estabilización del tronco y la cintura pélvica",
+            "Mejorar la propiocepción",
+            "Mejorar la inestabilidad raquídea"
+          ],
+          "tipoTrabajo": [
+            "Trabajo de control motor",
+            "Con inestabilidad (superficie o desequilibrio externo)",
+            "Con privación del sentido de la vista",
+            "Pilates"
+          ],
+          "carga": {
+            "frecuencia": "2-3 sesiones/semana",
+            "repeticiones": "10 repeticiones/serie",
+            "tiempo": "30 minutos/sesión"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario iniciar el trabajo de control motor con ejercicios estáticos y progresar hasta ejercicios dinámicos",
+            "Es preciso conseguir primero el trabajo individual de la musculatura implicada y posteriormente trabajar activando distintos grupos musculares de forma coordinada",
+            "Es necesario ejecutar los ejercicios activando la musculatura estabilizadora del tronco y la cintura pélvica"
+          ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "12 semanas",
+        "recomendaciones": [
+          "Solo se recomienda el reposo absoluto en las primeras 48 horas de la patología aguda grave",
+          "Es necesario priorizar los ejercicios de tonificación de core, control motor (equilibrio, coordinación) y estiramientos de cadena anterior",
+          "Es preciso respetar una correcta higiene postural durante la ejecución",
+          "Es necesario combinar los distintos tipos de trabajo expuestos",
+          "Es preciso prestar especial atención en la adquisición de un patrón respiratorio correcto y eficiente",
+          "Es necesario realizar una programación del condicionamiento físico con una progresión que avance desde el trabajo de condición física más básico, añadiendo trabajos más complejos, hasta llegar a integrar las mejoras y aprendizajes conseguidos en las AVD, la actividad laboral y la actividad deportiva"
+        ],
+        "observaciones": [
+          "Es necesario integrar los hábitos de higiene postural en el estilo de vida",
+          "Es preciso mantener un estilo de vida activo y saludable",
+          "Es necesario mantener la condición física para que los beneficios continúen presentes",
+          "El uso de ortesis o fajas ortopédicas puede ser útil en momentos puntuales, cuando debe realizarse un sobreesfuerzo que implique la zona lumbar",
+          "Es preciso vigilar síntomas de complicaciones neurológicas como hormigueo o debilidad en las piernas, incontinencia de esfínteres o dolor que empeora durante el reposo y por las noches"
+        ]
+      }
+    },
+    {
+      "condicion": "Osteoporosis",
+      "capacidades": {
+        "fuerza": {
+          "objetivos": [
+            "Aumentar la fuerza general",
+            "Incrementar la densidad mineral ósea",
+            "Mejorar la resistencia mecánica del hueso",
+            "Tolerar los impactos",
+            "Reducir el riesgo de caídas y de fracturas",
+            "Aliviar el dolor"
+          ],
+          "tipoTrabajo": {
+            "valorTMenor35": ["Fuerza estructural"],
+            "valorTEntre25y35": ["Fuerza neural"],
+            "valorTMayor3": ["Impactos, saltos", "Con el propio peso", "Con plataformas"]
+          },
+          "carga": {
+            "fuerzaEstructural": {
+              "frecuencia": "2-3 sesiones/semana",
+              "velocidad": "Velocidad de ejecución media",
+              "repeticiones": "6-20 repeticiones (50-80% de 1 RM)",
+              "series": "6-10 series"
+            },
+            "fuerzaNeural": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": "1-5 repeticiones (85-100% de 1 RM)",
+              "velocidad": "Velocidad de ejecución alta",
+              "series": "3-5 series",
+              "descanso": "3-5 minutos descanso/serie"
+            },
+            "impactos": {
+              "frecuencia": "2-3 sesiones/semana",
+              "progresion": "Es necesario progresar desde saltos con ambos pies sobre el suelo a saltar desde un cajón"
+            }
+          },
+          "consideracionesEspeciales": [
+            "Es necesario tener cuidado con la técnica, especialmente con compresiones vertebrales",
+            "Es preciso evitar los impactos con artrosis o dolores articulares",
+            "Es necesario asegurarse de que el usuario tiene las habilidades motoras suficientes para realizar los ejercicios con seguridad"
+          ]
+        },
+        "resistencia": {
+          "objetivos": [
+            "Mejorar la condición física",
+            "Mejorar la tolerancia al esfuerzo",
+            "Aliviar el dolor",
+            "Modificar la composición corporal",
+            "Mejorar la morbimortalidad"
+          ],
+          "tipoTrabajo": {
+            "valorTMenor35": [
+              "Trabajo aeróbico de bajo impacto como trabajo complementario (p. ej. actividades acuáticas)"
+            ],
+            "valorTEntre25y35": [
+              "Trabajo aeróbico con impacto controlado (p. ej. caminar, correr, bailar)"
+            ]
+          },
+          "carga": {
+            "frecuencia": "3-7 sesiones/semana",
+            "intensidad": "50-85% de la FCM",
+            "tiempo": "10-60 minutos/sesión",
+            "relacion": "Es necesario relacionar intensidades altas con sesiones cortas e intensidades bajas con sesiones largas"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario aumentar progresivamente el tiempo y la intensidad de trabajo",
+            "Es preciso ajustar la respiración a cada movimiento",
+            "Es necesario tener cuidado en actividades con riesgo de caídas (p. ej. bici, patinaje, etc.)"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Mejorar la estructura y la postura corporal",
+            "Mejorar la movilidad articular",
+            "Prevenir el exceso de compresión articular en columna dorsal y lumbar"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios de movilidad de hombro, del tórax, de cadera y de tobillo",
+            "Reeducación postural en las AVD",
+            "Trabajo respiratorio y de movilidad costal"
+          ],
+          "carga": {
+            "frecuencia": "5-7 sesiones/semana",
+            "tiempo": "20-40 minutos/sesión",
+            "recomendacion": "Es necesario trabajar todas las cadenas musculares"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario vigilar movilidades pasivas, siempre sin dolor",
+            "Es preciso priorizar la movilidad activa"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Mejorar el equilibrio dinámico",
+            "Mejorar la coordinación",
+            "Reducir el riesgo de caídas"
+          ],
+          "tipoTrabajo": [
+            "Es necesario aumentar la complexidad de los ejercicios en el entrenamiento de fuerza",
+            "Circuitos de coordinación",
+            "Ascensos y descensos",
+            "Técnica de marcha"
+          ],
+          "carga": {},
+          "consideracionesEspeciales": [
+            "Debe encontrarse el trabajo óptimo entre el estímulo adecuado y la seguridad"
+          ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "A largo plazo",
+        "recomendaciones": [
+          "Es necesario evitar la inactividad física y el sedentarismo",
+          "Es necesario planificar la progresión del programa en función de la funcionalidad de cada persona y de la tolerancia al esfuerzo"
+        ],
+        "adaptacionesPoblacionesEspeciales": {
+          "jovenes": [
+            "Actividades antigravitatorias (correr, fútbol, baloncesto, tenis, voleibol, etc.)"
+          ],
+          "adultos": [
+            "Ejercicios de carga y de impacto como subir escaleras o deportes como el tenis, pádel, fútbol, baloncesto, voleibol, etc.); pero también resulta útil ir en bici y la bicicleta elíptica"
+          ],
+          "personasMayores": [
+            "Ejercicios isométricos de resistencia",
+            "Es necesario evitar los ejercicios de alto impacto, como saltar"
+          ]
+        },
+        "observaciones": [
+          "Puede tenerse en cuenta el trabajo en piscina y caminar para aumentar el tiempo de actividad y aumentar el gasto energético, pero nunca como estímulo osteógeno",
+          "Las vibraciones mecánicas pueden resultar un buen estímulo osteógeno supervisado por profesionales que controlen el tipo, el tiempo, la frecuencia y amplitud de las vibraciones",
+          "Es necesario recomendar el uso de bastones en las personas con falta de estabilidad",
+          "Debe recordarse que hay que evitar las esterillas o las alfombras, causas habituales de caídas en las personas mayores"
+        ]
+      }
+    },
+    {
+      "condicion": "Prótesis de rodilla y de tobillo",
+      "capacidades": {
+        "fuerza": {
+          "objetivos": [
+            "Recuperar la fuerza muscular",
+            "Favorecer el aumento de la densidad ósea",
+            "Reducir el dolor"
+          ],
+          "tipoTrabajo": [
+            "Contracciones isométricas en distintas amplitudes articulares",
+            "Contracciones dinámicas de los músculos periarticulares"
+          ],
+          "carga": {
+            "frecuencia": "2-3 sesiones/semana",
+            "repeticiones": "10-12 repeticiones (20-70% de 1 RM)",
+            "series": "2-3 series",
+            "descanso": "30 segundos de descanso entre series"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario evitar cargas excesivas"
+          ]
+        },
+        "resistencia": {
+          "objetivos": [
+            "Aumentar la resistencia",
+            "Mejorar la sensación de bienestar"
+          ],
+          "tipoTrabajo": [
+            "Actividades de bajo impacto como senderismo, ciclismo, nadar, natación"
+          ],
+          "carga": {
+            "frecuencia": "3-5 sesiones/semana",
+            "intensidad": "60-70% de la FCM (escala de Borg 20: 12-14)",
+            "tiempo": "30-40 minutos/sesión"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario evitar actividadesde alto impacto"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Mejorar la funcionalidad articular (movilidad)"
+          ],
+          "tipoTrabajo": [
+            "Movilidad activa buscando la máxima amplitud de movimiento articular",
+            "Estiramientos pasivos de los músculos"
+          ],
+          "carga": {
+            "frecuencia": "5-7 sesiones/semana",
+            "tiempo": "15-30 segundos",
+            "series": "2 series"
+          },
+          "consideracionesEspeciales": [
+            "Debe buscarse el punto de tensión, que va disminuyendo a medida que pasan los segundos"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Aumentar el control propioceptivo, el equilibrio y la coordinación",
+            "Mejorar la funcionalidad de las AVD"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios de marcha",
+            "Cambios de peso",
+            "Pasos cruzados",
+            "Equilibrio con un solo pie"
+          ],
+          "carga": {
+            "frecuencia": "2-3 sesiones/semana",
+            "tiempo": "15-20 minutos"
+          },
+          "consideracionesEspeciales": [
+            "Deben realizarse ejercicios funcionales que hagan participar las extremidades superiores"
+          ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "6 meses",
+        "recomendaciones": [
+          "Es necesario evitar la práctica de actividades deportivas de alto impacto: correr, baloncesto, fútbol, escalada, gimnasia, balonmano, hockey, squash, tenis individual, esquí alpino, voleibol",
+          "Se puede minimizar su impacto con el uso de accesorios deportivos como bastones de marcha nórdica, altura del sillín en una bici estática, la resistencia del pedaleo, etc.",
+          "Debe evitarse aumentar de peso para reducir la sobrecarga de la articulación"
+        ],
+        "adaptacionesPoblacionesEspeciales": {
+          "protesisRodilla": {
+            "pacientesActivos": [
+              "Los pacientes activos pueden realizar actividades intensas como bicicleta de competición, tenis, trabajo de pesas con aparatos, excursionismo, esquí de montaña, patinaje sobre hielo, canoa, remo, etc."
+            ],
+            "pocosActivos": [
+              "En pacientes poco activos se recomiendan actividades aeróbicas de bajo impacto como bicicleta estática, bailes de salón, bicicleta estática, bailar, nadar, bolos, golf, montar a caballo, crocket, caminar, tiro, caza, etc."
+            ]
+          },
+          "protesisTobillo": [
+            "Más habituales en gente joven",
+            "Se recomiendan deportes como natación, ciclismo, esquí nórdico, marcha nórdica, bicicleta de montaña, esquí alpino, excursionismo, golf, bailes de salón"
+          ],
+          "personasMayores": {
+            "debeEvitarse": [
+              "El gesto de aducción de cadera",
+              "Entrecruzar las piernas",
+              "Las sillas muy bajas",
+              "Arrodillarse"
+            ]
+          }
+        },
+        "observaciones": [
+          "En las artroplastias de rodilla se recomienda un impacto más bajo que las de cadera",
+          "Los tipos de ejercicio que pueden realizarse están directamente relacionados con los deportes que realizaba antes del implante de la prótesis, cuya técnica ya domina",
+          "No se recomienda aprender nuevos gestos técnicos complejos"
+        ]
+      }
+    },
+    {
+      "condicion": "Prótesis de cadera",
+      "capacidades": {
+        "fuerza": {
+          "objetivos": [
+            "Aumentar los niveles de fuerza muscular",
+            "Mejorar y mantener la autonomía de las AVD",
+            "Evitar el aumento de peso",
+            "Mejorar la estabilidad durante la marcha"
+          ],
+          "tipoTrabajo": [
+            "Inicialmente, con peso corporal y en el medio acuático; posteriormente, peso libre moderado",
+            "Ejercicios analíticos a velocidad lenta y controlada",
+            "Contracción isométrica y dinámica",
+            "Musculatura flexoextensora de cadera, abductores, aductores, glúteos, cuádriceps e isquiotibiales",
+            "Trabajo de core",
+            "Ejercicios funcionales",
+            "Circuito"
+          ],
+          "carga": {
+            "frecuencia": "3 sesiones/semana",
+            "repeticiones": "8-20 repeticiones (20-85% de 1 RM)",
+            "tiempo": "10-30 segundos por contracción",
+            "series": "1-3 series"
+          },
+          "consideracionesEspeciales": [
+            "Deben evitarse flexiones de cadera superiores a los 90º con rotaciones por riesgo de luxación de la prótesis",
+            "Puede realizarse un trabajo en el medio acuático siempre que la cicatrización lo permita"
+          ]
+        },
+        "resistencia": {
+          "objetivos": [
+            "Prevenir la pérdida de masa ósea",
+            "Aumentar la velocidad de la marcha",
+            "Mantener la funcionalidad de las AVD",
+            "Prevenir enfermedades relacionadas con el sedentarismo",
+            "Evitar el aumento de peso"
+          ],
+          "tipoTrabajo": [
+            "Caminar, bicicleta estática, ciclismo de carretera, natación, bailes, etc.",
+            "Aqua-gym",
+            "Las personas entrenadas y deportistas pueden incluir deportes"
+          ],
+          "carga": {
+            "frecuencia": "5 sesiones/semana",
+            "tiempo": "20-30 minutos",
+            "intensidad": "65-75% de la FCM"
+          },
+          "consideracionesEspeciales": [
+            "Debe pedalearse con el sillín alto para disminuir la flexión de cadera",
+            "Es necesario comenzar con cargas bajas; preferiblemente aumentando la frecuencia de pedaleo"
+          ]
+        },
+        "flexibilidad": {
+          "objetivos": [
+            "Mejorar la movilidad articular",
+            "Evitar la rigidez de las articulaciones"
+          ],
+          "tipoTrabajo": [
+            "Estiramientos pasivos y activos",
+            "Movilidad articular: tobillos, rodillas, cadera, cintura"
+          ],
+          "carga": {
+            "frecuencia": "En cada sesión de entrenamiento",
+            "tiempo": "15-30 segundos por estiramiento",
+            "series": "2 series"
+          },
+          "consideracionesEspeciales": [
+            "Debe evitarse las flexiones de cadera por encima de los 90º con rotación por el riesgo de luxación de la cadera"
+          ]
+        },
+        "neuromuscular": {
+          "objetivos": [
+            "Mejorar la calidad de vida",
+            "Prevenir las caídas",
+            "Mejorar la estabilidad durante la marcha"
+          ],
+          "tipoTrabajo": [
+            "Ejercicios de marcha",
+            "Cambios de peso, pasos cruzados, etc.",
+            "Equilibrio con un solo pie",
+            "Superficies diferentes y con inestabilidad progresiva"
+          ],
+          "carga": {
+            "frecuencia": "2-3 sesiones/semana",
+            "tiempo": "15-20 minutos"
+          },
+          "consideracionesEspeciales": [
+            "Es necesario buscar ejercicios funcionales en los que participan las extremidades superiores"
+          ]
+        }
+      },
+      "condicionamientosGenerales": {
+        "tiempoTrabajo": "Un mínimo de 6 meses",
+        "recomendaciones": [
+          "Deben evitarse actividades y ejercicios de alto impacto",
+          "Al realizar ejercicio físico, es necesario tener en cuenta de ponerse zapatillas adecuadas con una suela que no resbale, cerradas y que sujeten bien los pies",
+          "En casa, es necesario prestar atención a los objetos con los que se pueda tropezar: alfombras, objetos en el suelo, etc."
+        ],
+        "adaptacionesPoblacionesEspeciales": {
+          "personasMayores": [
+            "Deben evitarse las sillas muy bajas que provoquen una flexión de más de 90º",
+            "Es necesario utilizar alzas de inodoro para facilitar la posición de sentado",
+            "Es preciso evitar el gesto de aducción de cadera",
+            "Es necesario evitar entrecruzar las piernas",
+            "Deben evitarse ejercicios de rotación interna",
+            "Es necesario agarrarse siempre de la barandilla al subir y bajar escaleras",
+            "Debe aumentarse la seguridad en la ducha: alfombrillas antideslizantes, asideros, etc."
+          ]
+        },
+        "observaciones": [
+          "El tipo de ejercicio que debe realizar el paciente está directamente relacionado con los deportes que realizaba antes de la sustitución protésica, y cuya técnica ya domina; por lo tanto, no se recomienda aprender gestos técnicos dificultosos"
+        ]
+    }
+  }
+]
+}
+    

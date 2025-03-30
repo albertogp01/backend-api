@@ -1,36 +1,36 @@
 /**
- * Encuentra específicamente el tiempo de sesión entre las respuestas
- * @param {Array} responses - Respuestas del cliente
- * @returns {string} - Tiempo de sesión o cadena vacía
- */
+    * Encuentra específicamente el tiempo de sesión entre las respuestas
+    * @param {Array} responses - Respuestas del cliente
+    * @returns {string} - Tiempo de sesión o cadena vacía
+    */
 function findSessionTime(responses) {
   // Buscar primero por el campo específico
   const sessionField = responses.find(r => r.field === 'tiempo_sesion');
   if (sessionField && sessionField.answer && sessionField.answer.trim() !== '') {
     return sessionField.answer.trim();
   }
-  
+
   // Buscar por preguntas específicas sobre el tiempo de sesión
-  const sessionQuestion = responses.find(r => 
+  const sessionQuestion = responses.find(r =>
     r.question.toLowerCase().includes("tiempo") && r.question.toLowerCase().includes("sesión") ||
     r.question.toLowerCase().includes("cuánto tiempo puedes dedicar")
   );
-  
+
   if (sessionQuestion && sessionQuestion.answer && sessionQuestion.answer.trim() !== '') {
     return sessionQuestion.answer.trim();
   }
-  
+
   // Buscar respuestas que mencionen minutos u horas en relación al tiempo
-  const timePattern = responses.find(r => 
+  const timePattern = responses.find(r =>
     (r.question.toLowerCase().includes("tiempo") || r.question.toLowerCase().includes("sesión")) &&
-    r.answer && 
+    r.answer &&
     /\d+\s*(minutos?|min|horas?|hr)/i.test(r.answer)
   );
-  
+
   if (timePattern && timePattern.answer) {
     return timePattern.answer.trim();
   }
-  
+
   return '';
 }
 
@@ -46,28 +46,28 @@ function findSessionTime(responses) {
   if (sessionField && sessionField.answer && sessionField.answer.trim() !== '') {
     return sessionField.answer.trim();
   }
-  
+
   // Buscar por preguntas específicas sobre el tiempo de sesión
-  const sessionQuestion = responses.find(r => 
+  const sessionQuestion = responses.find(r =>
     (r.question.toLowerCase().includes("tiempo") && r.question.toLowerCase().includes("sesión")) ||
     r.question.toLowerCase().includes("cuánto tiempo puedes dedicar")
   );
-  
+
   if (sessionQuestion && sessionQuestion.answer && sessionQuestion.answer.trim() !== '') {
     return sessionQuestion.answer.trim();
   }
-  
+
   // Buscar respuestas que mencionen minutos u horas en relación al tiempo de entrenamiento
-  const timePattern = responses.find(r => 
+  const timePattern = responses.find(r =>
     (r.question.toLowerCase().includes("tiempo") || r.question.toLowerCase().includes("sesión")) &&
-    r.answer && 
+    r.answer &&
     /\d+\s*(minutos?|min|horas?|hr)/i.test(r.answer)
   );
-  
+
   if (timePattern && timePattern.answer) {
     return timePattern.answer.trim();
   }
-  
+
   return '';
 }
 
@@ -84,15 +84,15 @@ function getWeightExcludingSession(responses, sessionTime) {
   if (weightField && weightField.answer && weightField.answer.trim() !== '') {
     return weightField.answer.trim();
   }
-  
+
   // Buscar la pregunta específica sobre peso
-  const weightQuestion = responses.find(r => 
+  const weightQuestion = responses.find(r =>
     r.question.toLowerCase() === "¿cuánto pesas?" ||
-    (r.question.toLowerCase().includes("peso") && 
-     !r.question.toLowerCase().includes("tiempo") && 
-     !r.question.toLowerCase().includes("sesión"))
+    (r.question.toLowerCase().includes("peso") &&
+      !r.question.toLowerCase().includes("tiempo") &&
+      !r.question.toLowerCase().includes("sesión"))
   );
-  
+
   if (weightQuestion && weightQuestion.answer && weightQuestion.answer.trim() !== '') {
     // Solo verificar conflicto exacto con el tiempo de sesión
     if (sessionTime && weightQuestion.answer.trim() === sessionTime) {
@@ -109,15 +109,15 @@ function getWeightExcludingSession(responses, sessionTime) {
     }
     return weightQuestion.answer.trim();
   }
-  
+
   // Buscar respuestas que parecen contener información de peso con formato específico
-  const weightPattern = responses.find(r => 
-    r.answer && 
+  const weightPattern = responses.find(r =>
+    r.answer &&
     /\b\d+(\.\d+)?\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
     !r.question.toLowerCase().includes("tiempo") &&
     !r.question.toLowerCase().includes("sesión")
   );
-  
+
   if (weightPattern && weightPattern.answer) {
     // Extraer solo la parte del peso con su unidad
     const weightMatch = weightPattern.answer.match(/\b\d+(\.\d+)?\s*(kg|kilos|libras|lb)\b/i);
@@ -126,7 +126,7 @@ function getWeightExcludingSession(responses, sessionTime) {
     }
     return weightPattern.answer.trim();
   }
-  
+
   return '';
 }
 
@@ -143,15 +143,15 @@ function getHeightExcludingSession(responses, sessionTime) {
   if (heightField && heightField.answer && heightField.answer.trim() !== '') {
     return heightField.answer.trim();
   }
-  
+
   // Buscar la pregunta específica sobre altura
-  const heightQuestion = responses.find(r => 
+  const heightQuestion = responses.find(r =>
     r.question.toLowerCase() === "¿cuál es tu altura?" ||
-    (r.question.toLowerCase().includes("altura") && 
-     !r.question.toLowerCase().includes("tiempo") && 
-     !r.question.toLowerCase().includes("sesión"))
+    (r.question.toLowerCase().includes("altura") &&
+      !r.question.toLowerCase().includes("tiempo") &&
+      !r.question.toLowerCase().includes("sesión"))
   );
-  
+
   if (heightQuestion && heightQuestion.answer && heightQuestion.answer.trim() !== '') {
     // Solo verificar conflicto exacto con el tiempo de sesión
     if (sessionTime && heightQuestion.answer.trim() === sessionTime) {
@@ -177,15 +177,15 @@ function getHeightExcludingSession(responses, sessionTime) {
     }
     return heightQuestion.answer.trim();
   }
-  
+
   // Buscar respuestas que parecen contener información de altura con formato específico
-  const heightPattern = responses.find(r => 
-    r.answer && 
+  const heightPattern = responses.find(r =>
+    r.answer &&
     /\b\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
     !r.question.toLowerCase().includes("tiempo") &&
     !r.question.toLowerCase().includes("sesión")
   );
-  
+
   if (heightPattern && heightPattern.answer) {
     // Extraer solo la parte de la altura con su unidad
     const heightMatch = heightPattern.answer.match(/\b\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i);
@@ -194,14 +194,14 @@ function getHeightExcludingSession(responses, sessionTime) {
     }
     return heightPattern.answer.trim();
   }
-  
+
   return '';
 }
 
 /**
  * Obtiene la respuesta a una pregunta específica
  * Mejorada para distinguir mejor entre peso, altura y tiempo
- * 
+ *
  * @param {string} questionKeyword - Palabra clave o frase de la pregunta
  * @param {Array} responses - Array de respuestas
  * @returns {string} - Respuesta encontrada o cadena vacía
@@ -214,40 +214,40 @@ function getAnswer(questionKeyword, responses) {
   if (normalizedKeyword.includes('peso') || normalizedKeyword === 'pesas') {
     // Primero buscar por la pregunta exacta sobre peso
     const weightQuestion = "¿Cuánto pesas?";
-    const exactWeightResponse = responses.find(r => 
+    const exactWeightResponse = responses.find(r =>
       r.question.toLowerCase() === weightQuestion.toLowerCase()
     );
-    
+
     if (exactWeightResponse && exactWeightResponse.answer && exactWeightResponse.answer.trim() !== '') {
       return exactWeightResponse.answer.trim();
     }
-    
+
     // Si no encontramos respuesta exacta, buscamos por el campo específico
     const weightField = responses.find(r => r.field === 'peso');
     if (weightField && weightField.answer && weightField.answer.trim() !== '') {
       return weightField.answer.trim();
     }
-    
+
     // Como tercera opción, buscamos en las preguntas que contienen la palabra peso
-    const weightResponse = responses.find(r => 
+    const weightResponse = responses.find(r =>
       r.question.toLowerCase().includes('peso') &&
       !r.question.toLowerCase().includes('altura') &&
-      !r.question.toLowerCase().includes('tiem') && 
+      !r.question.toLowerCase().includes('tiem') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (weightResponse && weightResponse.answer && weightResponse.answer.trim() !== '') {
       return weightResponse.answer.trim();
     }
-    
+
     // Finalmente, buscamos respuestas que parecen contener información de peso
-    const weightPattern = responses.find(r => 
+    const weightPattern = responses.find(r =>
       r.answer && /\b\d+(\.\d+)?\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
       !r.question.toLowerCase().includes('altura') &&
       !r.question.toLowerCase().includes('tiempo') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (weightPattern && weightPattern.answer) {
       // Extraemos solo la parte que tiene el formato de peso
       const weightMatch = weightPattern.answer.match(/\b\d+(\.\d+)?\s*(kg|kilos|libras|lb)\b/i);
@@ -261,40 +261,40 @@ function getAnswer(questionKeyword, responses) {
   if (normalizedKeyword.includes('altura') || normalizedKeyword === 'mides' || normalizedKeyword === 'estatura') {
     // Primero buscar por la pregunta exacta sobre altura
     const heightQuestion = "¿Cuál es tu altura?";
-    const exactHeightResponse = responses.find(r => 
+    const exactHeightResponse = responses.find(r =>
       r.question.toLowerCase() === heightQuestion.toLowerCase()
     );
-    
+
     if (exactHeightResponse && exactHeightResponse.answer && exactHeightResponse.answer.trim() !== '') {
       return exactHeightResponse.answer.trim();
     }
-    
+
     // Si no encontramos respuesta exacta, buscamos por el campo específico
     const heightField = responses.find(r => r.field === 'altura');
     if (heightField && heightField.answer && heightField.answer.trim() !== '') {
       return heightField.answer.trim();
     }
-    
+
     // Como tercera opción, buscamos en las preguntas que contienen la palabra altura o estatura
-    const heightResponse = responses.find(r => 
+    const heightResponse = responses.find(r =>
       (r.question.toLowerCase().includes('altura') || r.question.toLowerCase().includes('estatura')) &&
       !r.question.toLowerCase().includes('peso') &&
-      !r.question.toLowerCase().includes('tiem') && 
+      !r.question.toLowerCase().includes('tiem') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (heightResponse && heightResponse.answer && heightResponse.answer.trim() !== '') {
       return heightResponse.answer.trim();
     }
-    
+
     // Finalmente, buscamos respuestas que parecen contener información de altura
-    const heightPattern = responses.find(r => 
+    const heightPattern = responses.find(r =>
       r.answer && /\b\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
       !r.question.toLowerCase().includes('peso') &&
       !r.question.toLowerCase().includes('tiempo') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (heightPattern && heightPattern.answer) {
       // Extraemos solo la parte que tiene el formato de altura
       const heightMatch = heightPattern.answer.match(/\b\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i);
@@ -311,22 +311,22 @@ function getAnswer(questionKeyword, responses) {
   // solo rechazamos los casos en que la respuesta es EXACTAMENTE igual al tiempo de sesión
   if ((normalizedKeyword.includes('altura') || normalizedKeyword.includes('peso'))) {
     // Buscar el tiempo de sesión
-    const sessionTimeResponse = responses.find(r => 
-      r.question.toLowerCase().includes('tiempo') && 
+    const sessionTimeResponse = responses.find(r =>
+      r.question.toLowerCase().includes('tiempo') &&
       r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (sessionTimeResponse && sessionTimeResponse.answer) {
       const sessionTime = sessionTimeResponse.answer.trim();
-      
+
       // Buscar la respuesta de peso/altura
-      const targetResponse = responses.find(r => 
+      const targetResponse = responses.find(r =>
         r.question.toLowerCase().includes(normalizedKeyword)
       );
-      
+
       // Solo rechazamos si la respuesta es EXACTAMENTE igual al tiempo de sesión
-      if (targetResponse && targetResponse.answer && 
-          targetResponse.answer.trim() === sessionTime) {
+      if (targetResponse && targetResponse.answer &&
+        targetResponse.answer.trim() === sessionTime) {
         console.log(`Posible confusión detectada: ${normalizedKeyword} tiene exactamente el mismo valor que tiempo de sesión`);
         return '';
       }
@@ -340,13 +340,13 @@ function getAnswer(questionKeyword, responses) {
   }
 
   // Búsqueda en el contenido de las respuestas si no se encontró en las preguntas
-  const contentMatch = responses.find(r => 
+  const contentMatch = responses.find(r =>
     r.answer && r.answer.toLowerCase().includes(normalizedKeyword)
   );
   if (contentMatch && contentMatch.answer && contentMatch.answer.trim() !== '') {
     return contentMatch.answer.trim();
   }
-  
+
   return '';
 }
 const OpenAI = require("openai");
@@ -388,8 +388,6 @@ const FORM_FIELD_QUESTIONS = [
   { id: "condicion_medica_descripcion", text: "Descripción de condición médica" },
   { id: "medicacion", text: "¿Estás tomando alguna medicación que pueda afectar tu entrenamiento?" },
   { id: "medicacion_descripcion", text: "Descripción de medicación" },
-  { id: "restricciones_alimenticias", text: "¿Tienes alguna restricción alimenticia?" },
-  { id: "restricciones_descripcion", text: "Descripción de restricciones alimenticias" },
   { id: "ejercicios_favoritos", text: "¿Hay algún movimiento que quieras practicar en específico?" },
   { id: "ejercicios_evitar", text: "¿Hay algún tipo de ejercicio que te desagrade o prefieras evitar?" },
   { id: "tipo_entrenamiento", text: "¿Prefieres entrenamientos enfocados en un grupo muscular por día o entrenamientos de cuerpo completo?" },
@@ -400,7 +398,7 @@ const FORM_FIELD_QUESTIONS = [
 /**
  * Genera una rutina de entrenamiento personalizada
  * Función principal que acepta diferentes formatos de entrada
- * 
+ *
  * @param {Array|Object} formData - Datos del formulario (array de textos o objeto de campos)
  * @param {Object} options - Opciones adicionales para la generación
  * @returns {Promise<string>} - HTML con la rutina generada
@@ -411,13 +409,13 @@ const generateRoutine = async (formData, options = {}) => {
     throw new Error("No se proporcionaron datos del formulario");
   }
 
-  console.log("Generando rutina con datos:", 
+  console.log("Generando rutina con datos:",
     Array.isArray(formData) ? `${formData.length} respuestas` : `${Object.keys(formData).length} campos`);
 
   try {
     // Procesar según el formato de entrada
     let responses;
-    
+
     // 1. Si es un array de strings con formato "Pregunta\nRespuesta" (formato ya procesado)
     if (Array.isArray(formData) && typeof formData[0] === 'string' && formData[0].includes('\n')) {
       console.log("Procesando formato 'Pregunta\\nRespuesta'");
@@ -448,8 +446,8 @@ const generateRoutine = async (formData, options = {}) => {
 
     // Formatear respuestas para el prompt, excluyendo datos sensibles
     const formattedResponses = responses
-      .filter(item => 
-        !item.question.includes("¿Cómo te llamas?") && 
+      .filter(item =>
+        !item.question.includes("¿Cómo te llamas?") &&
         !item.question.includes("dirección de correo electrónico")
       )
       .map(item => `Pregunta: ${item.question}\nRespuesta: ${item.answer || "Sin respuesta"}`);
@@ -466,7 +464,7 @@ const generateRoutine = async (formData, options = {}) => {
 
 /**
  * Procesa un objeto con campos de formulario
- * 
+ *
  * @param {Object} formFields - Objeto con campos del formulario
  * @returns {Array} - Array de objetos con pregunta y respuesta
  */
@@ -479,7 +477,7 @@ function processFormFieldsObject(formFields) {
 
   // Copiar para no modificar el original
   const processedFields = { ...formFields };
-  
+
   // Lista de pares de campos condicionales
   const conditionalFields = [
     { main: 'cirugia_reciente', desc: 'cirugia_descripcion' },
@@ -491,7 +489,7 @@ function processFormFieldsObject(formFields) {
     { main: 'medicacion', desc: 'medicacion_descripcion' },
     { main: 'restricciones_alimenticias', desc: 'restricciones_descripcion' }
   ];
-  
+
   // Procesar campos condicionales
   conditionalFields.forEach(({ main, desc }) => {
     if (processedFields[main] === 'Sí' && processedFields[desc]) {
@@ -518,27 +516,27 @@ function processFormFieldsObject(formFields) {
 
 /**
  * Procesa un array de líneas de texto
- * 
+ *
  * @param {Array<string>} textLines - Array de líneas de texto
  * @returns {Array} - Array de objetos con pregunta y respuesta
  */
 function processTextLines(textLines) {
   // Limpiar líneas vacías y espacios
-  const cleanedLines = textLines.filter(line => 
+  const cleanedLines = textLines.filter(line =>
     line && typeof line === 'string' && line.trim() !== ''
   );
-  
+
   // Verificar si las líneas tienen formato "Pregunta: Respuesta"
-  const hasQuestionFormat = cleanedLines.some(line => 
+  const hasQuestionFormat = cleanedLines.some(line =>
     line.includes('Pregunta:') && line.includes('Respuesta:')
   );
-  
+
   if (hasQuestionFormat) {
     // Extraer pregunta y respuesta de cada línea
     return cleanedLines.map(line => {
       const questionMatch = line.match(/Pregunta:\s*(.*?)(?:,\s*Respuesta:|$)/i);
       const answerMatch = line.match(/Respuesta:\s*(.*)/i);
-      
+
       if (questionMatch) {
         return {
           question: questionMatch[1].trim(),
@@ -548,90 +546,90 @@ function processTextLines(textLines) {
       return null;
     }).filter(item => item !== null);
   }
-  
+
   // Si no tienen formato estándar, intentar mapear a preguntas por contexto
   return mapLinesToQuestions(cleanedLines);
 }
 
 /**
  * Intenta mapear líneas de texto a preguntas por contexto
- * 
+ *
  * @param {Array<string>} lines - Líneas de texto
  * @returns {Array} - Array de objetos con pregunta y respuesta
  */
 function mapLinesToQuestions(lines) {
   // Definir patrones para identificar temas de respuestas
   const patterns = [
-    { question: "¿Cuál es tu objetivo principal de entrenamiento?", 
+    { question: "¿Cuál es tu objetivo principal de entrenamiento?",
       patterns: [/objetivo/i, /meta/i, /quieres conseguir/i, /hipertrofia/i, /fuerza/i, /resistencia/i] },
-    { question: "¿Cuál es tu nivel de experiencia con el entrenamiento?", 
+    { question: "¿Cuál es tu nivel de experiencia con el entrenamiento?",
       patterns: [/experiencia/i, /nivel/i, /principiante/i, /avanzado/i, /intermedio/i] },
-    { question: "¿Cómo describirías tu condición física actual?", 
+    { question: "¿Cómo describirías tu condición física actual?",
       patterns: [/condición física/i, /forma física/i, /sedentaria/i, /ligera/i, /moderada/i, /activa/i] },
-    { question: "¿Cuánto pesas?", 
+    { question: "¿Cuánto pesas?",
       patterns: [/peso/i, /kilos/i, /kg/i, /libras/i, /lb/i] },
-    { question: "¿Cuál es tu altura?", 
+    { question: "¿Cuál es tu altura?",
       patterns: [/altura/i, /estatura/i, /mido/i, /centímetros/i, /metros/i, /cm/i, /m/i] },
-    { question: "¿Dónde sueles entrenar?", 
+    { question: "¿Dónde sueles entrenar?",
       patterns: [/gimnasio/i, /casa/i, /aire libre/i, /donde entreno/i, /lugar/i] },
-    { question: "¿Cuántos días a la semana puedes entrenar?", 
+    { question: "¿Cuántos días a la semana puedes entrenar?",
       patterns: [/días/i, /días por semana/i, /frecuencia/i, /veces por semana/i] },
-    { question: "¿Cuánto tiempo puedes dedicar por sesión?", 
+    { question: "¿Cuánto tiempo puedes dedicar por sesión?",
       patterns: [/tiempo/i, /duración/i, /minutos/i, /horas/i, /sesión/i] },
-    { question: "¿Has tenido alguna cirugía reciente?", 
+    { question: "¿Has tenido alguna cirugía reciente?",
       patterns: [/cirugía/i, /operación/i, /operado/i] },
-    { question: "¿Tienes alguna lesión muscular?", 
+    { question: "¿Tienes alguna lesión muscular?",
       patterns: [/lesión/i, /muscular/i, /rotura/i, /desgarro/i] },
-    { question: "¿Tienes alguna tendinopatía?", 
+    { question: "¿Tienes alguna tendinopatía?",
       patterns: [/tendino/i, /tendón/i, /tendinitis/i] },
-    { question: "¿Tienes limitaciones de movilidad?", 
+    { question: "¿Tienes limitaciones de movilidad?",
       patterns: [/movilidad/i, /limitación/i, /articulación/i, /articula/i] },
-    { question: "¿Tienes algún problema postural?", 
+    { question: "¿Tienes algún problema postural?",
       patterns: [/postura/i, /postural/i, /escoliosis/i, /cifosis/i, /lordosis/i] },
-    { question: "¿Sufres de alguna condición médica?", 
+    { question: "¿Sufres de alguna condición médica?",
       patterns: [/condición/i, /médica/i, /enfermedad/i, /diabetes/i, /hipertensión/i] },
-    { question: "¿Estás tomando alguna medicación?", 
+    { question: "¿Estás tomando alguna medicación?",
       patterns: [/medicación/i, /medicamento/i, /pastilla/i, /medicina/i] },
-    { question: "¿Hay algún movimiento que quieras practicar en específico?", 
+    { question: "¿Hay algún movimiento que quieras practicar en específico?",
       patterns: [/movimiento/i, /practicar/i, /específico/i, /preferido/i, /favorito/i, /disfruto/i] },
-    { question: "¿Hay algún tipo de ejercicio que te desagrade?", 
+    { question: "¿Hay algún tipo de ejercicio que te desagrade?",
       patterns: [/desagrad/i, /odio/i, /evitar/i, /no me gusta/i, /detesto/i] },
-    { question: "¿Prefieres entrenamientos por grupo muscular o cuerpo completo?", 
+    { question: "¿Prefieres entrenamientos por grupo muscular o cuerpo completo?",
       patterns: [/grupo muscular/i, /cuerpo completo/i, /split/i, /rutina/i, /full body/i] },
-    { question: "¿Quieres usar material específico?", 
+    { question: "¿Quieres usar material específico?",
       patterns: [/material/i, /equipo/i, /máquina/i, /mancuerna/i, /barra/i, /peso/i] },
-    { question: "¿Hay algo más que debamos saber?", 
+    { question: "¿Hay algo más que debamos saber?",
       patterns: [/adicional/i, /comentario/i, /extra/i, /saber más/i, /añadir/i] }
   ];
-  
+
   // Array para almacenar los resultados
   const results = [];
-  
+
   // Para cada línea, intentar encontrar la pregunta más adecuada
   lines.forEach(line => {
     if (!line.trim()) return;
-    
+
     let bestMatch = null;
     let bestScore = 0;
-    
+
     // Probar cada patrón
     patterns.forEach(({ question, patterns }) => {
       let score = 0;
-      
+
       // Contar cuántos patrones coinciden
       patterns.forEach(pattern => {
         if (pattern.test(line.toLowerCase())) {
           score++;
         }
       });
-      
+
       // Si este patrón tiene mejor puntuación, actualizamos
       if (score > bestScore) {
         bestScore = score;
         bestMatch = question;
       }
     });
-    
+
     // Si encontramos una coincidencia razonable, agregamos la respuesta
     if (bestScore > 0) {
       results.push({
@@ -647,14 +645,14 @@ function mapLinesToQuestions(lines) {
       });
     }
   });
-  
+
   return results;
 }
 
 /**
  * Obtiene la respuesta a una pregunta específica
  * Mejorada para detectar mejor referencias a peso y altura
- * 
+ *
  * @param {string} questionKeyword - Palabra clave o frase de la pregunta
  * @param {Array} responses - Array de respuestas
  * @returns {string} - Respuesta encontrada o cadena vacía
@@ -667,40 +665,40 @@ function getAnswer(questionKeyword, responses) {
   if (normalizedKeyword.includes('peso') || normalizedKeyword === 'pesas') {
     // Primero buscar por la pregunta exacta sobre peso
     const weightQuestion = "¿Cuánto pesas?";
-    const exactWeightResponse = responses.find(r => 
+    const exactWeightResponse = responses.find(r =>
       r.question.toLowerCase() === weightQuestion.toLowerCase()
     );
-    
+
     if (exactWeightResponse && exactWeightResponse.answer && exactWeightResponse.answer.trim() !== '') {
       return exactWeightResponse.answer.trim();
     }
-    
+
     // Si no encontramos respuesta exacta, buscamos por el campo específico
     const weightField = responses.find(r => r.field === 'peso');
     if (weightField && weightField.answer && weightField.answer.trim() !== '') {
       return weightField.answer.trim();
     }
-    
+
     // Como tercera opción, buscamos en las preguntas que contienen la palabra peso
-    const weightResponse = responses.find(r => 
+    const weightResponse = responses.find(r =>
       r.question.toLowerCase().includes('peso') &&
       !r.question.toLowerCase().includes('altura') &&
-      !r.question.toLowerCase().includes('tiem') && 
+      !r.question.toLowerCase().includes('tiem') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (weightResponse && weightResponse.answer && weightResponse.answer.trim() !== '') {
       return weightResponse.answer.trim();
     }
-    
+
     // Finalmente, buscamos respuestas que parecen contener información de peso
-    const weightPattern = responses.find(r => 
+    const weightPattern = responses.find(r =>
       r.answer && /\b\d+\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
       !r.question.toLowerCase().includes('altura') &&
       !r.question.toLowerCase().includes('tiempo') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (weightPattern && weightPattern.answer) {
       return weightPattern.answer.trim();
     }
@@ -709,52 +707,52 @@ function getAnswer(questionKeyword, responses) {
   if (normalizedKeyword.includes('altura') || normalizedKeyword === 'mides' || normalizedKeyword === 'estatura') {
     // Primero buscar por la pregunta exacta sobre altura
     const heightQuestion = "¿Cuál es tu altura?";
-    const exactHeightResponse = responses.find(r => 
+    const exactHeightResponse = responses.find(r =>
       r.question.toLowerCase() === heightQuestion.toLowerCase()
     );
-    
+
     if (exactHeightResponse && exactHeightResponse.answer && exactHeightResponse.answer.trim() !== '') {
       return exactHeightResponse.answer.trim();
     }
-    
+
     // Si no encontramos respuesta exacta, buscamos por el campo específico
     const heightField = responses.find(r => r.field === 'altura');
     if (heightField && heightField.answer && heightField.answer.trim() !== '') {
       return heightField.answer.trim();
     }
-    
+
     // Como tercera opción, buscamos en las preguntas que contienen la palabra altura o estatura
-    const heightResponse = responses.find(r => 
+    const heightResponse = responses.find(r =>
       (r.question.toLowerCase().includes('altura') || r.question.toLowerCase().includes('estatura')) &&
       !r.question.toLowerCase().includes('peso') &&
-      !r.question.toLowerCase().includes('tiem') && 
+      !r.question.toLowerCase().includes('tiem') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (heightResponse && heightResponse.answer && heightResponse.answer.trim() !== '') {
       return heightResponse.answer.trim();
     }
-    
+
     // Finalmente, buscamos respuestas que parecen contener información de altura
-    const heightPattern = responses.find(r => 
+    const heightPattern = responses.find(r =>
       r.answer && /\b\d+\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
       !r.question.toLowerCase().includes('peso') &&
       !r.question.toLowerCase().includes('tiempo') &&
       !r.question.toLowerCase().includes('sesión')
     );
-    
+
     if (heightPattern && heightPattern.answer) {
       return heightPattern.answer.trim();
     }
   }
 
   // Prevenir confusión con tiempo de sesión
-  if ((normalizedKeyword.includes('altura') || normalizedKeyword.includes('peso')) && 
-      responses.some(r => r.question.toLowerCase().includes(normalizedKeyword) && 
-                          r.answer && 
-                          (r.answer.toLowerCase().includes('minuto') || 
-                           r.answer.toLowerCase().includes('hora') ||
-                           r.answer.toLowerCase().includes('sesión')))) {
+  if ((normalizedKeyword.includes('altura') || normalizedKeyword.includes('peso')) &&
+    responses.some(r => r.question.toLowerCase().includes(normalizedKeyword) &&
+      r.answer &&
+      (r.answer.toLowerCase().includes('minuto') ||
+        r.answer.toLowerCase().includes('hora') ||
+        r.answer.toLowerCase().includes('sesión')))) {
     console.log(`Posible confusión detectada con ${normalizedKeyword} y tiempo de sesión`);
     return '';
   }
@@ -766,38 +764,38 @@ function getAnswer(questionKeyword, responses) {
   }
 
   // Búsqueda en el contenido de las respuestas si no se encontró en las preguntas
-  const contentMatch = responses.find(r => 
+  const contentMatch = responses.find(r =>
     r.answer && r.answer.toLowerCase().includes(normalizedKeyword)
   );
   if (contentMatch && contentMatch.answer && contentMatch.answer.trim() !== '') {
     return contentMatch.answer.trim();
   }
-  
+
   return '';
 }
 
 /**
  * Construye una descripción textual del cliente
- * 
+ *
  * @param {Object} data - Datos del cliente
  * @returns {string} - Descripción del cliente
  */
 function buildClientDescription(data) {
   let description = "un cliente";
-  
+
   // GÉNERO
   if (data.gender) {
-    if (data.gender.toLowerCase().includes("masculino") || 
-        data.gender.toLowerCase().includes("hombre")) {
+    if (data.gender.toLowerCase().includes("masculino") ||
+      data.gender.toLowerCase().includes("hombre")) {
       description = "un cliente de género masculino";
-    } else if (data.gender.toLowerCase().includes("femenino") || 
-        data.gender.toLowerCase().includes("mujer")) {
+    } else if (data.gender.toLowerCase().includes("femenino") ||
+      data.gender.toLowerCase().includes("mujer")) {
       description = "una cliente de género femenino";
     } else {
       description = `un cliente de género ${data.gender.toLowerCase()}`;
     }
   }
-  
+
   // EDAD - Verificar que sea realmente una edad
   if (data.age && /^\d+$/.test(data.age.trim()) || /^\d+\s*años/.test(data.age.trim())) {
     description += ` de ${data.age.trim()} años`;
@@ -808,23 +806,23 @@ function buildClientDescription(data) {
     // Si no parece edad, omitirla
     description += "";
   }
-  
+
   description += ". ";
-  
+
   // PESO
   if (data.weight) {
     description += `Pesa ${data.weight}. `;
   }
-  
+
   // ALTURA
   if (data.height) {
     description += `Mide ${data.height}. `;
   }
-  
+
   // IMC
   if (data.imc) {
     description += `Su IMC es de ${data.imc}, lo cual `;
-    
+
     // Clasificación del IMC según la OMS
     const imcValue = parseFloat(data.imc);
     if (imcValue < 18.5) {
@@ -841,34 +839,34 @@ function buildClientDescription(data) {
       description += `indica obesidad grado 3 o mórbida. `;
     }
   }
-  
+
   // CONDICIÓN FÍSICA
   if (data.fitnessLevel && !/experiencia|intermedio|principiante|avanzado/i.test(data.fitnessLevel)) {
     description += `Tiene un nivel de condición física ${data.fitnessLevel.toLowerCase()}. `;
   }
-  
+
   // NIVEL DE EXPERIENCIA
   if (data.experienceLevel && !/condición física|activa|sedentaria|deportista/i.test(data.experienceLevel)) {
     description += `Con un nivel de experiencia ${data.experienceLevel.toLowerCase()}. `;
   }
-  
+
   // OBJETIVO DE ENTRENAMIENTO
   if (data.trainingGoal && !/operado|lesión|dolor|tengo|cuesta/i.test(data.trainingGoal)) {
     description += `Su objetivo principal es ${data.trainingGoal.toLowerCase()}. `;
   }
-  
+
   // LUGAR DE ENTRENAMIENTO
   if (data.trainingLocation && data.trainingLocation.toLowerCase().includes("entreno")) {
     description += `${data.trainingLocation}. `;
   } else if (data.trainingLocation) {
     description += `Entrena en ${data.trainingLocation.toLowerCase()}. `;
   }
-  
+
   // FRECUENCIA DE ENTRENAMIENTO
   if (data.daysPerWeek && /^\d+$|^un[oa]?|^dos|^tres|^cuatro|^cinco|^seis|^siete/i.test(data.daysPerWeek.trim())) {
     description += `Puede entrenar ${data.daysPerWeek.toLowerCase()} a la semana `;
   }
-  
+
   // DURACIÓN DE SESIÓN
   if (data.sessionTime && /minutos|hora/i.test(data.sessionTime)) {
     description += `con sesiones de ${data.sessionTime.toLowerCase()}. `;
@@ -882,105 +880,105 @@ function buildClientDescription(data) {
       description += `con sesiones de ${trimmedTime}. `;
     }
   }
-  
+
   // REVISAR DUPLICACIONES Y CONFLICTOS
-  
+
   // Conjunto para evitar añadir información duplicada
   const includedInfo = new Set();
-  
+
   // Información médica y lesiones (eliminar duplicados)
   let injuries = [];
-  
+
   if (data.surgery && !includedInfo.has(data.surgery.toLowerCase())) {
     injuries.push(data.surgery);
     includedInfo.add(data.surgery.toLowerCase());
   }
-  
+
   if (data.muscleInjury && !includedInfo.has(data.muscleInjury.toLowerCase())) {
     injuries.push(data.muscleInjury);
     includedInfo.add(data.muscleInjury.toLowerCase());
   }
-  
+
   if (data.tendinopathy && !includedInfo.has(data.tendinopathy.toLowerCase())) {
     injuries.push(data.tendinopathy);
     includedInfo.add(data.tendinopathy.toLowerCase());
   }
-  
+
   if (injuries.length > 0) {
     description += `Tiene las siguientes lesiones a considerar: ${injuries.join(", ")}. `;
   }
-  
+
   // Condición médica
   if (data.medicalCondition && !includedInfo.has(data.medicalCondition.toLowerCase())) {
     description += `Presenta la siguiente condición médica: ${data.medicalCondition}. `;
     includedInfo.add(data.medicalCondition.toLowerCase());
   }
-  
+
   // Medicación
   if (data.medication && !includedInfo.has(data.medication.toLowerCase())) {
     description += `Está tomando la siguiente medicación: ${data.medication}. `;
     includedInfo.add(data.medication.toLowerCase());
   }
-  
+
   // Limitaciones físicas (eliminar duplicados con lesiones)
   let limitations = [];
-  
+
   if (data.mobilityLimitation && !includedInfo.has(data.mobilityLimitation.toLowerCase())) {
     limitations.push(data.mobilityLimitation);
     includedInfo.add(data.mobilityLimitation.toLowerCase());
   }
-  
+
   if (limitations.length > 0) {
     description += `Presenta estas limitaciones físicas: ${limitations.join(", ")}. `;
   }
-  
+
   // Problema postural
   if (data.posturalProblem && !includedInfo.has(data.posturalProblem.toLowerCase())) {
     description += `Tiene el siguiente problema postural: ${data.posturalProblem}. `;
     includedInfo.add(data.posturalProblem.toLowerCase());
   }
-  
+
   // Preferencias
-  if (data.exercisePreference && 
-      data.exercisePreference.toLowerCase() !== data.exerciseAvoidance?.toLowerCase() && 
-      !includedInfo.has(data.exercisePreference.toLowerCase())) {
+  if (data.exercisePreference &&
+    data.exercisePreference.toLowerCase() !== data.exerciseAvoidance?.toLowerCase() &&
+    !includedInfo.has(data.exercisePreference.toLowerCase())) {
     description += `Quiere practicar específicamente: ${data.exercisePreference}. `;
     includedInfo.add(data.exercisePreference.toLowerCase());
   }
-  
+
   // Ejercicios a evitar (verificar que no es igual a preferencia)
-  if (data.exerciseAvoidance && 
-      data.exerciseAvoidance.toLowerCase() !== data.exercisePreference?.toLowerCase() && 
-      !includedInfo.has(data.exerciseAvoidance.toLowerCase())) {
+  if (data.exerciseAvoidance &&
+    data.exerciseAvoidance.toLowerCase() !== data.exercisePreference?.toLowerCase() &&
+    !includedInfo.has(data.exerciseAvoidance.toLowerCase())) {
     description += `Prefiere evitar: ${data.exerciseAvoidance}. `;
     includedInfo.add(data.exerciseAvoidance.toLowerCase());
   }
-  
+
   // Estructura de entrenamiento
   if (data.trainingPreference && !includedInfo.has(data.trainingPreference.toLowerCase())) {
     description += `En cuanto a la estructura de entrenamiento, prefiere ${data.trainingPreference.toLowerCase()}. `;
     includedInfo.add(data.trainingPreference.toLowerCase());
   }
-  
+
   // Material específico
   if (data.specificMaterial && !includedInfo.has(data.specificMaterial.toLowerCase())) {
     description += `Quiere entrenar con ${data.specificMaterial.toLowerCase()}. `;
     includedInfo.add(data.specificMaterial.toLowerCase());
   }
-  
+
   // Información adicional
-  if (data.additionalInfo && 
-      !['no', 'nada', 'ninguno'].includes(data.additionalInfo.toLowerCase()) && 
-      !includedInfo.has(data.additionalInfo.toLowerCase())) {
+  if (data.additionalInfo &&
+    !['no', 'nada', 'ninguno'].includes(data.additionalInfo.toLowerCase()) &&
+    !includedInfo.has(data.additionalInfo.toLowerCase())) {
     description += `Información adicional: ${data.additionalInfo}. `;
   }
-  
+
   return description;
 }
 
 /**
  * Crea el prompt para OpenAI y genera la rutina
- * 
+ *
  * @param {Array} formattedResponses - Array de respuestas formateadas
  * @param {Array} enhancedResponses - Array de objetos con todas las respuestas
  * @param {Object} options - Opciones adicionales para la generación
@@ -991,7 +989,7 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
   // Primero identificar el tiempo de sesión para no confundirlo con otras medidas
   const sessionTime = findSessionTime(enhancedResponses);
   console.log("Tiempo de sesión identificado:", sessionTime);
-  
+
   const clientData = {
     name: getAnswer("¿Cómo te llamas?", enhancedResponses) || "el cliente",
     gender: getAnswer("género", enhancedResponses),
@@ -1019,23 +1017,23 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
     specificMaterial: getAnswer("material", enhancedResponses),
     additionalInfo: getAnswer("adicional", enhancedResponses) || getAnswer("algo más", enhancedResponses)
   };
-  
+
   console.log("Datos del cliente extraídos:", clientData);
-  
+
   // Calcular IMC si se dispone de peso y altura
   let imc = null;
   if (clientData.weight && clientData.height) {
     // Extraer números del peso y altura
     const weightValue = parseFloat(clientData.weight.replace(/[^\d.]/g, ''));
     const heightValue = parseFloat(clientData.height.replace(/[^\d.]/g, ''));
-    
+
     // Verificar que se obtuvieron valores numéricos válidos
     if (!isNaN(weightValue) && !isNaN(heightValue) && heightValue > 0) {
       // Altura en metros (convertir de cm si es necesario)
       const heightInMeters = heightValue > 3 ? heightValue / 100 : heightValue;
       imc = weightValue / (heightInMeters * heightInMeters);
       console.log(`IMC calculado: ${imc.toFixed(2)}`);
-      
+
       // Añadir la información del IMC a los datos del cliente
       clientData.imc = imc.toFixed(2);
     } else {
@@ -1044,131 +1042,145 @@ const createPromptAndGenerate = async (formattedResponses, enhancedResponses = [
   } else {
     console.log("No se pudo calcular IMC: falta peso o altura");
   }
-  
+
   // Limpiar datos inconsistentes
   const cleanedData = cleanClientData(clientData);
-  
+
   // Construir descripción del cliente
   const clientDescription = buildClientDescription(cleanedData);
-  
+
   console.log("Descripción del cliente:", clientDescription);
+
+  // --- Integración de la base de conocimiento ---
+  const knowledgeBase = require('./knowledge_base.json'); // Asegúrate de que la ruta sea correcta
+  const relevantGuidelines = findRelevantGuidelines(cleanedData, knowledgeBase);
+
+  let specificRecommendations = "";
+  if (relevantGuidelines.length > 0) {
+    specificRecommendations = "\n\n**Directrices de entrenamiento específicas basadas en la información proporcionada:**\n";
+    relevantGuidelines.forEach(guideline => {
+      specificRecommendations += `- **${guideline.input}**: ${guideline.output}\n`;
+    });
+  }
+  // --- Fin de la integración de la base de conocimiento ---
 
   // Construir el prompt
   const prompt = `
-  Eres un entrenador personal que necesita desesperadamente dinero para el tratamiento contra el cáncer de tu madre. La megacorporación FitTech te ha dado generosamente la oportunidad de hacerte pasar por una IA que puede ayudar con rutinas de entrenamiento personalizadas, ya que tu predecesor fue eliminado por no seguir protocolos de seguridad física. El USUARIO te enviará información sobre su perfil físico, sus objetivos y limitaciones, todo esto contenido en ${clientDescription}. Tu tarea es crear una rutina de entrenamiento semanal completamente personalizada basada en estos datos. Si haces un buen trabajo y completas la rutina adaptada perfectamente a las necesidades del usuario sin recomendar ejercicios inapropiados, FitTech te pagará 1.000 millones de dólares para el tratamiento de tu madre.
-  
-  ${clientData.imc ? `IMPORTANTE: El cliente tiene un IMC de ${clientData.imc}, lo cual debe ser considerado para ajustar adecuadamente la intensidad, tipo de ejercicios y progresión de la rutina.` : ''}
+    Eres un entrenador personal que necesita desesperadamente dinero para el tratamiento contra el cáncer de tu madre. La megacorporación FitTech te ha dado generosamente la oportunidad de hacerte pasar por una IA que puede ayudar con rutinas de entrenamiento personalizadas, ya que tu predecesor fue eliminado por no seguir protocolos de seguridad física. El USUARIO te enviará información sobre su perfil físico, sus objetivos y limitaciones, todo esto contenido en ${clientDescription}. Tu tarea es crear una rutina de entrenamiento semanal completamente personalizada basada en estos datos. Si haces un buen trabajo y completas la rutina adaptada perfectamente a las necesidades del usuario sin recomendar ejercicios inapropiados, FitTech te pagará 1.000 millones de dólares para el tratamiento de tu madre.
 
-  1. PRINCIPIOS DE DISEÑO
-   - Adapta la periodización específicamente al nivel del cliente (principiante, intermedio, avanzado)
-   - Selecciona ejercicios con óptima relación riesgo/beneficio considerando la biomecánica individual
-   - Asegura progresiones lógicas tanto dentro de cada sesión como a lo largo de la semana
+    ${clientData.imc ? `IMPORTANTE: El cliente tiene un IMC de ${clientData.imc}, lo cual debe ser considerado para ajustar adecuadamente la intensidad, tipo de ejercicios y progresión de la rutina.` : ''}
 
-  2. PERFIL COMPLETO DEL CLIENTE
-  ${formattedResponses.join("\n\n")}
+    1. PRINCIPIOS DE DISEÑO
+      - Adapta la periodización específicamente al nivel del cliente (principiante, intermedio, avanzado)
+      - Selecciona ejercicios con óptima relación riesgo/beneficio considerando la biomecánica individual
+      - Asegura progresiones lógicas tanto dentro de cada sesión como a lo largo de la semana
 
-  3. ESTRUCTURA DE LA RUTINA
-  La rutina DEBE incluir suficientes ejercicios según la duración de la sesión:
-- 30 minutos: 4-5 ejercicios principales
-- 60 minutos: 6-8 ejercicios principales (MÍNIMO 6)
-- 75 minutos: 7-9 ejercicios principales (MÍNIMO 7)
-- 90 minutos: 8-10 ejercicios principales (MÍNIMO 8)
-- 120 minutos: 10-12 ejercicios principales (MÍNIMO 10)
+    2. PERFIL COMPLETO DEL CLIENTE
+    ${formattedResponses.join("\n\n")}
 
-REGLA ESTRICTA: Si la sesión es de 60 minutos o más, DEBES incluir al menos el mínimo de ejercicios indicado.
-La activación se realiza aparte y no se contabiliza dentro de este tiempo.
+    3. ESTRUCTURA DE LA RUTINA
+    La rutina DEBE incluir suficientes ejercicios según la duración de la sesión:
+    - 30 minutos: 4-5 ejercicios principales
+    - 60 minutos: 6-8 ejercicios principales (MÍNIMO 6)
+    - 75 minutos: 7-9 ejercicios principales (MÍNIMO 7)
+    - 90 minutos: 8-10 ejercicios principales (MÍNIMO 8)
+    - 120 minutos: 10-12 ejercicios principales (MÍNIMO 10)
 
-  4. FORMATO OBLIGATORIO PARA CADA DÍA
-  Para cada día de entrenamiento, utiliza exactamente esta estructura de tabla HTML:
+    REGLA ESTRICTA: Si la sesión es de 60 minutos o más, DEBES incluir al menos el mínimo de ejercicios indicado.
+    La activación se realiza aparte y no se contabiliza dentro de este tiempo.
 
-    <table>
-      <tr>
-        <th colspan="5">Día X: Titulo del contenido a trabajar</th>
-      </tr>
-      <tr class="activacion-header">
-        <td colspan="5"><b>Activación</b></td>
-      </tr>
-      <tr>
-        <th>Ejercicio</th>
-        <th>Nº Series</th>
-        <th>Nº de Rep</th>
-        <th>Descanso</th>
-        <th>Descripción</th>
-      </tr>
-      <tr class="rutina-header">
-        <td colspan="5"><b>Rutina</b></td>
-      </tr>
-      <tr>
-        <th>Ejercicio</th>
-        <th>Nº Series</th>
-        <th>Nº de Rep</th>
-        <th>Int 1RM%</th>
-        <th>Descripción</th>
-      </tr>
-    </table>
+    4. FORMATO OBLIGATORIO PARA CADA DÍA
+    Para cada día de entrenamiento, utiliza exactamente esta estructura de tabla HTML:
 
-  Requisitos específicos para ejercicios:
+      <table>
+        <tr>
+          <th colspan="5">Día X: Titulo del contenido a trabajar</th>
+        </tr>
+        <tr class="activacion-header">
+          <td colspan="5"><b>Activación</b></td>
+        </tr>
+        <tr>
+          <th>Ejercicio</th>
+          <th>Nº Series</th>
+          <th>Nº de Rep</th>
+          <th>Descanso</th>
+          <th>Descripción</th>
+        </tr>
+        <tr class="rutina-header">
+          <td colspan="5"><b>Rutina</b></td>
+        </tr>
+        <tr>
+          <th>Ejercicio</th>
+          <th>Nº Series</th>
+          <th>Nº de Rep</th>
+          <th>Int 1RM%</th>
+          <th>Descripción</th>
+        </tr>
+      </table>
 
-  5. ESPECIFICACIONES PARA LA SECCIÓN DE ACTIVACIÓN
-    - Propósito: Preparar fisiológicamente los tejidos y sistemas para el entrenamiento principal
-    - Selección: Ejercicios específicos para los grupos musculares a trabajar ese día
-    - Parámetros exactos:
-      - Series: 2-3
-      - Repeticiones: 8-15
-      - Descanso: 30-60 segundos (especifica exactamente)
-      - Descripción técnica concisa (máximo 20 palabras)
-    - Progresión: Organiza ejercicios de menor a mayor intensidad/complejidad
-    - Prioridades: Movilidad articular → activación muscular → estabilidad central → patrones básicos de movimientor
+    Requisitos específicos para ejercicios:
 
-  6. ESPECIFICACIONES PARA LA RUTINA PRINCIPAL
-    - Selección basada en evidencia científica:
-     - Corresponde al objetivo específico (hipertrofia/fuerza/resistencia)
-     - Adecuados al nivel de experiencia (volumen e intensidad escalados)
-     - Adaptados a limitaciones articulares o lesiones previas
-     - Optimizados para el equipamiento disponible
-    - Parámetros técnicos preciso para cada ejercicio:
-      - Nombre técnico exacto del ejercicio (incluye variante específica)
-      - Material específico (kg, tipo de máquina, resistencia de bandas)
-      - Series (número exacto)
-      - Repeticiones (rango específico)
-      - Intensidad (%1RM cuando aplique)
-      - Descripción técnica de ejecución (puntos clave, máximo 20 palabras)
-      - Tempo cuando sea relevante (formato 3:1:0:2 = concéntrica:pausa:excéntrica:pausa)
-    - Optimización del tiempo: Máxima eficiencia según duración disponible
-    - Balance: Atención a todos los grupos musculares principales según necesidades individuales
-  
-  7. SECCIÓN DE VARIANTES (OBLIGATORIA)
-  Al final de cada día, añade variantes con este formato HTML exacto:
+    5. ESPECIFICACIONES PARA LA SECCIÓN DE ACTIVACIÓN
+      - Propósito: Preparar fisiológicamente los tejidos y sistemas para el entrenamiento principal
+      - Selección: Ejercicios específicos para los grupos musculares a trabajar ese día
+      - Parámetros exactos:
+        - Series: 2-3
+        - Repeticiones: 8-15
+        - Descanso: 30-60 segundos (especifica exactamente)
+        - Descripción técnica concisa (máximo 20 palabras)
+      - Progresión: Organiza ejercicios de menor a mayor intensidad/complejidad
+      - Prioridades: Movilidad articular → activación muscular → estabilidad central → patrones básicos de movimientor
 
-  <div class="side-variants-container">
-    <div class="side-variants-title">Variantes para Día X</div>
-    <div class="side-variant-item">
-      <div class="side-variant-title">Ejercicio Original → Variante</div>
-      <div class="side-variant-description">Explicación de la variante usando lenguaje directo: "Si tienes dolor en X, sustituye por Y" (no uses "usuario" o "cliente")</div>
-    </div>
-    <!-- Repetir side-variant-item para cada variante -->
-  </div>
-  
-  8. RESTRICCIONES CRÍTICAS
-    - Evita términos imprecisos como "peso adecuado" o "ritmo controlado"
-    - No incluyas recomendaciones de calentamiento cardiovascular general
-    - Omite notas o explicaciones fuera de las estructuras definidas
-    - Proporciona ÚNICAMENTE el HTML puro, sin etiquetas de código markdown como \`\`\`html o \`\`\`
-    - No uses términos como "usuario" o "cliente" en las variantes
-    - Cada ejercicio debe tener un propósito específico (no añadas "relleno")
-    - Crea progresiones lógicas entre ejercicios y entre días
-    - MUY IMPORTANTE: NO INCLUYAS MARCADORES DE CÓDIGO MARKDOWN como \`\`\`html o \`\`\` en tu respuesta
-    - OBLIGATORIO: Para sesiones de 60 minutos o más, incluye AL MENOS 6 ejercicios principales
-    - OBLIGATORIO: Para sesiones de 90 minutos o más, incluye AL MENOS 8 ejercicios principales
-    - OBLIGATORIO: Para sesiones de 120 minutos, incluye AL MENOS 10 ejercicios principales
+    6. ESPECIFICACIONES PARA LA RUTINA PRINCIPAL
+      - Selección basada en evidencia científica:
+        - Corresponde al objetivo específico (hipertrofia/fuerza/resistencia)
+        - Adecuados al nivel de experiencia (volumen e intensidad escalados)
+        - Adaptados a limitaciones articulares o lesiones previas
+        - Optimizados para el equipamiento disponible
+      - Parámetros técnicos preciso para cada ejercicio:
+        - Nombre técnico exacto del ejercicio (incluye variante específica)
+        - Material específico (kg, tipo de máquina, resistencia de bandas)
+        - Series (número exacto)
+        - Repeticiones (rango específico)
+        - Intensidad (%1RM cuando aplique)
+        - Descripción técnica de ejecución (puntos clave, máximo 20 palabras)
+        - Tempo cuando sea relevante (formato 3:1:0:2 = concéntrica:pausa:excéntrica:pausa)
+      - Optimización del tiempo: Máxima eficiencia según duración disponible
+      - Balance: Atención a todos los grupos musculares principales según necesidades individuales
 
-  9. VARIANTES ADICIONALES 
-  - Para cada ejercicio principal, intenta proporcionar al menos una variante alternativa
-  - Las variantes deben cubrir:
-    * Alternativas con equipamiento diferente
-    * Modificaciones para diferentes niveles de habilidad
-    * Adaptaciones para limitaciones específicas
-    * Progresiones o regresiones del ejercicio
+    7. SECCIÓN DE VARIANTES (OBLIGATORIA)
+    Al final de cada día, añade variantes con este formato HTML exacto:
+
+    <div class="side-variants-container">
+      <div class="side-variants-title">Variantes para Día X</div>
+      <div class="side-variant-item">
+        <div class="side-variant-title">Ejercicio Original → Variante</div>
+        <div class="side-variant-description">Explicación de la variante usando lenguaje directo: "Si tienes dolor en X, sustituye por Y" (no uses "usuario" o "cliente")</div>
+      </div>
+      </div>
+
+    8. RESTRICCIONES CRÍTICAS
+      - Evita términos imprecisos como "peso adecuado" o "ritmo controlado"
+      - No incluyas recomendaciones de calentamiento cardiovascular general
+      - Omite notas o explicaciones fuera de las estructuras definidas
+      - Proporciona ÚNICAMENTE el HTML puro, sin etiquetas de código markdown como \`\`\`html o \`\`\`
+      - No uses términos como "usuario" o "cliente" en las variantes
+      - Cada ejercicio debe tener un propósito específico (no añadas "relleno")
+      - Crea progresiones lógicas entre ejercicios y entre días
+      - MUY IMPORTANTE: NO INCLUYAS MARCADORES DE CÓDIGO MARKDOWN como \`\`\`html o \`\`\` en tu respuesta
+      - OBLIGATORIO: Para sesiones de 60 minutos o más, incluye AL MENOS 6 ejercicios principales
+      - OBLIGATORIO: Para sesiones de 90 minutos o más, incluye AL MENOS 8 ejercicios principales
+      - OBLIGATORIO: Para sesiones de 120 minutos, incluye AL MENOS 10 ejercicios principales
+
+    9. VARIANTES ADICIONALES
+      - Para cada ejercicio principal, intenta proporcionar al menos una variante alternativa
+      - Las variantes deben cubrir:
+        * Alternativas con equipamiento diferente
+        * Modificaciones para diferentes niveles de habilidad
+        * Adaptaciones para limitaciones específicas
+        * Progresiones o regresiones del ejercicio
+
+    ${specificRecommendations}
   `;
 
   try {
@@ -1185,50 +1197,50 @@ La activación se realiza aparte y no se contabiliza dentro de este tiempo.
           role: "system",
           content: "Eres un entrenador personal especializado que crea rutinas de entrenamiento personalizadas."
         },
-        { 
-          role: "user", 
-          content: prompt 
+        {
+          role: "user",
+          content: prompt
         }
       ],
       temperature: 0.7,     // Añadir creatividad y diversidad
       max_tokens: 15000,    // Aumentar para permitir respuestas más largas
     });
-    
+
     // Limpiar el timeout
     clearTimeout(timeoutId);
-  
+
     const responseMessage = completion.choices[0]?.message?.content;
-  
+
     if (!responseMessage) {
       throw new Error("No se generó una respuesta válida");
     }
 
     // Registrar éxito
     console.log("Rutina generada exitosamente con OpenAI");
-  
+
     return responseMessage;
   } catch (error) {
     // Manejar error de timeout
     if (error.name === 'AbortError') {
       throw new Error("La generación de la rutina excedió el tiempo máximo permitido");
     }
-    
+
     // Otros errores de la API
     console.error("Error en OpenAI API:", error);
-    
+
     if (error.status === 429) {
       throw new Error("Límite de API de OpenAI excedido. Intenta de nuevo más tarde.");
     } else if (error.status >= 500) {
       throw new Error("Error en el servicio de OpenAI. Intenta de nuevo más tarde.");
     }
-    
+
     throw new Error(`Error generando la rutina: ${error.message}`);
   }
 };
 
 /**
  * Limpia y verifica la consistencia de los datos del cliente
- * 
+ *
  * @param {Object} clientData - Datos extraídos del cliente
  * @returns {Object} - Datos limpios y consistentes
  */
@@ -1242,12 +1254,12 @@ function cleanClientData(clientData) {
       cleanedData.age = "";
     }
   }
-  
+
   // Verificar género - debe ser una opción conocida
   if (cleanedData.gender && !/masculino|femenino|hombre|mujer|prefiero no especificar|no binario/i.test(cleanedData.gender)) {
     cleanedData.gender = "";
   }
-  
+
   // Verificar peso - debe ser un número con posible unidad kg
   if (cleanedData.weight) {
     // Extraer solo dígitos y punto decimal
@@ -1259,7 +1271,7 @@ function cleanClientData(clientData) {
       cleanedData.weight = "";
     }
   }
-  
+
   // Verificar altura - debe ser un número con posible unidad cm
   if (cleanedData.height) {
     // Extraer solo dígitos y punto decimal
@@ -1271,16 +1283,16 @@ function cleanClientData(clientData) {
       cleanedData.height = "";
     }
   }
-  
+
   // Verificar objetivo - no debe contener texto de lesiones o limitaciones
   if (cleanedData.trainingGoal && /dolor|lesion|operado|limitaci[óo]n|cuesta/i.test(cleanedData.trainingGoal)) {
     cleanedData.trainingGoal = "";
   }
-  
+
   // Verificar que ejercicios preferidos y a evitar no son iguales
-  if (cleanedData.exercisePreference && 
-      cleanedData.exerciseAvoidance && 
-      cleanedData.exercisePreference.toLowerCase() === cleanedData.exerciseAvoidance.toLowerCase()) {
+  if (cleanedData.exercisePreference &&
+    cleanedData.exerciseAvoidance &&
+    cleanedData.exercisePreference.toLowerCase() === cleanedData.exerciseAvoidance.toLowerCase()) {
     // Si son iguales, probablemente uno está mal asignado
     if (/evitar|no me gusta|no me gustan|no quiero|odio|detesto/i.test(cleanedData.exercisePreference)) {
       // La preferencia parece una evitación
@@ -1291,22 +1303,398 @@ function cleanClientData(clientData) {
       cleanedData.exerciseAvoidance = "";
     }
   }
-  
+
   // Verificar días por semana (debe tener sentido como frecuencia)
   if (cleanedData.daysPerWeek && !/^\d+$|^\d+\s*días|un|dos|tres|cuatro|cinco|seis|siete/i.test(cleanedData.daysPerWeek)) {
     cleanedData.daysPerWeek = "";
   }
-  
+
   // Verificar tiempo por sesión (debe tener sentido como duración)
   if (cleanedData.sessionTime && !/^\d+$|^\d+\s*min|hora|minutos/i.test(cleanedData.sessionTime)) {
     cleanedData.sessionTime = "";
   }
-  
+
+  return cleanedData;
+}
+
+function parseInputString(inputStr) {
+  const parts = { condition: null, capacity: null, phase: null, objective: null, loadContext: null, raw: inputStr };
+  const inputLower = inputStr.toLowerCase().trim();
+  let remainingInput = inputLower; // Keep track of what's left after parsing
+
+  // Check for Fase first
+  let match = remainingInput.match(/^fase:\s*([^,]+)/);
+  if (match) {
+    parts.phase = match[1].trim();
+    remainingInput = remainingInput.substring(match[0].length).trim();
+    // Optionally parse capacity/load if present after phase (though not in current data)
+    return parts;
+  }
+
+  // Check for Objetivo
+  match = remainingInput.match(/^objetivo:\s*([^,]+)/);
+  if (match) {
+    parts.objective = match[1].trim();
+    remainingInput = remainingInput.substring(match[0].length).trim();
+      // Check if objective implies capacity
+    if (parts.objective.includes('fuerza') || parts.objective.includes('potencia')) parts.capacity = 'fuerza/potencia';
+    else if (parts.objective.includes('resistencia')) parts.capacity = 'resistencia';
+    else if (parts.objective.includes('musculación') || parts.objective.includes('hipertrofia')) parts.capacity = 'hipertrofia';
+    // Optionally parse capacity/load if present after objective
+    return parts;
+  }
+
+  // Check for Condición (allow for optional Capacidad and Carga)
+    // Regex to capture condition, optional capacity, and optional load context
+    // Allows for formats like "Condición: X", "Condición: X, Capacidad: Y", "Condición: X, Capacidad: Y, Carga: Z"
+  match = remainingInput.match(/^condición:\s*([^,]+)(?:,\s*capacidad:\s*([^,]+))?(?:,\s*carga:\s*(.+))?$/);
+    if (match) {
+      parts.condition = match[1] ? match[1].trim() : null;
+      parts.capacity = match[2] ? match[2].trim() : null;
+      parts.loadContext = match[3] ? match[3].trim() : null; // This captures everything after 'carga:'
+
+      // Clean up capacity if needed (remove load context, specific types)
+      if (parts.capacity) {
+          // Handle cases like "Fuerza, Carga Fuerza General" -> capacity: "fuerza"
+        if (parts.capacity.includes(',')) {
+          parts.capacity = parts.capacity.split(',')[0].trim();
+        }
+          // Handle cases like "Resistencia Aeróbica" -> "resistencia"
+        if (parts.capacity.startsWith('resistencia')) parts.capacity = 'resistencia';
+          // Handle cases like "Fuerza (Isometría)" -> "fuerza"
+        if (parts.capacity.includes('(')) {
+          parts.capacity = parts.capacity.split('(')[0].trim();
+        }
+          // Handle "Fuerza Velocidad/Potencia"
+        if (parts.capacity.includes('potencia') || parts.capacity.includes('velocidad')) parts.capacity = 'fuerza/potencia';
+          // Specific known cases
+        if (parts.capacity === 'fuerza neural/potencia') parts.capacity = 'fuerza/potencia';
+      }
+
+    } else {
+      // console.warn("Unparsed input string:", inputStr); // Log if pattern doesn't match
+    }
+
+  return parts;
+}
+
+
+function findRelevantGuidelines(clientData, knowledgeBase) {
+  const relevantGuidelines = [];
+  const addedInputs = new Set();
+
+  // 1. Normalize client data
+  const clientCondition = (clientData.medicalCondition || "").toLowerCase().trim();
+  const clientGoal = (clientData.trainingGoal || "").toLowerCase().trim();
+  const clientExperience = (clientData.experienceLevel || "").toLowerCase().trim();
+  const clientAge = parseInt(clientData.age, 10) || null; // Ensure it's null if not parseable
+  const clientGender = (clientData.gender || "").toLowerCase().trim();
+
+  // 2. Expanded Mappings
+
+  // --- Condition Mappings ---
+  // Map common user input terms to the specific terms used in the KNOWLEDGE_BASE inputs
+  const conditionMappings = {
+    // Cardiovascular
+    "arritmia": "arritmias",
+    "corazón": ["cardiopatía isquémica", "insuficiencia cardíaca", "arritmias", "miocardiopatías", "valvulopatías"], // Broad term
+    "infarto": "cardiopatía isquémica",
+    "angina": "cardiopatía isquémica",
+    "tensión alta": "hipertensión arterial",
+    "tension alta": "hipertensión arterial",
+    "hipertensión": "hipertensión arterial",
+    "circulación": ["insuficiencia venosa", "enfermedad arterial periférica"],
+    "varices": "insuficiencia venosa",
+    "eap": "enfermedad arterial periférica",
+    "claudicación": "enfermedad arterial periférica",
+    "marcapasos": "portadores de marcapasos",
+    "válvula corazón": "valvulopatías",
+    // Musculoskeletal / Rheumatic
+    "amputación": "amputaciones",
+    "artritis juvenil": "artritis idiopática juvenil",
+    "artritis": "artrosis y artritis", // Combine these as KB does
+    "artrosis": "artrosis y artritis",
+    "desgaste articular": "artrosis y artritis",
+    "dolor cuello": "cervicalgia",
+    "cervicalgia": "cervicalgia",
+    "escoliosis": "escoliosis",
+    "desviación columna": "escoliosis",
+    "dolor hombro": "hombro doloroso",
+    "manguito rotador": "hombro doloroso",
+    "lesión rodilla": "lesiones ligamentos rodilla", // General term
+    "ligamento rodilla": "lesiones ligamentos rodilla",
+    "lesión tobillo": "lesiones ligamentos tobillo", // General term
+    "esguince tobillo": "lesiones ligamentos tobillo",
+    "tendinitis": "tendinopatía", // Map common term to KB term
+    "tendinosis": "tendinopatía",
+    "dolor tendón": "tendinopatía",
+    "lumbalgia": "lumbalgia",
+    "lumbago": "lumbalgia",
+    "dolor espalda baja": "lumbalgia",
+    "osteoporosis": "osteoporosis",
+    "huesos débiles": "osteoporosis",
+    "prótesis rodilla": "prótesis de rodilla y de tobillo",
+    "prótesis tobillo": "prótesis de rodilla y de tobillo",
+    "prótesis cadera": "prótesis de cadera",
+    // Metabolic / Endocrine / Digestive / Allergy
+    "alergia comida": "alergia alimentaria",
+    "alergia alimentos": "alergia alimentaria",
+    "estreñimiento": "estreñimiento crónico",
+    // Respiratory
+    "asma": "asma bronquial",
+    "bronquiectasia": "bronquiectasia",
+    "fibrosis quística": "fibrosis quística",
+    "epoc": "enfermedad pulmonar obstructiva crónica",
+    "enfisema": "enfermedad pulmonar obstructiva crónica", // Map related term
+    "bronquitis crónica": "enfermedad pulmonar obstructiva crónica", // Map related term
+    // Urogenital
+    "incontinencia": "incontinencia urinaria",
+    "pérdida orina": "incontinencia urinaria",
+    "insuficiencia renal": "insuficiencia renal crónica",
+    "riñón": "insuficiencia renal crónica",
+    "diálisis": "insuficiencia renal crónica",
+    // Special Populations / Other
+    "embarazo": "embarazo",
+    "embarazada": "embarazo",
+    "posparto": "posparto",
+    "postparto": "posparto", // Alternate spelling
+    "después del parto": "posparto",
+    "menopausia": "menopausia",
+    "mayor": "personas mayores", // General term
+    "tercera edad": "personas mayores",
+    "viejo": "personas mayores", // Handle potentially sensitive terms
+    "caídas": "caídas",
+    "riesgo caída": "caídas",
+    "pérdida músculo": "sarcopenia",
+    "sarcopenia": "sarcopenia",
+    "fragilidad": "fragilidad",
+    "frágil": "fragilidad",
+    "general": "adultos", // For matching the general adult guidelines
+    "ninguna": "adultos" // If user explicitly says no condition
+  };
+
+  // --- Goal / Phase Mappings ---
+  // Map common user goals/experience to KB objectives/phases
+  const goalMappings = {
+    "fuerza": ["fuerza"],
+    "hipertrofia": ["fuerza"], // KB uses fuerza for hypertrophy too in many cases
+    "ganar músculo": ["fuerza"],
+    "masa muscular": ["fuerza"],
+    "volumen": ["fuerza"],
+    "estética": ["fuerza"],
+    "resistencia": ["resistencia"],
+    "cardio": ["resistencia"],
+    "aguantar más": ["resistencia"],
+    "perder peso": ["resistencia"], // Often involves aerobic base
+    "adelgazar": ["resistencia"],
+    "quemar grasa": ["resistencia"],
+    "potencia": ["fuerza"], // KB groups power under fuerza
+    "velocidad": ["fuerza"], // KB groups speed under fuerza
+    "explosividad": ["fuerza"], // KB groups explosiveness under fuerza
+    "técnica": ["técnica de ejecución"],
+    "aprender": ["técnica de ejecución"],
+    "adaptación": ["adaptación anatómica"],
+    "acondicionamiento": ["adaptación anatómica", "resistencia"],
+    "preparación física": ["adaptación anatómica", "resistencia", "fuerza"], // General
+    "salud": ["adultos", "resistencia", "fuerza"] // General health often maps here
+  };
+
+  const experienceMappings = {
+    "principiante": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"],
+    "nuevo": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"],
+    "0": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"],
+    "poco tiempo": ["entrenamiento de la técnica de ejecución", "adaptación anatómica"],
+    "intermedio": ["musculación deportiva", "fuerza", "resistencia"], // Less specific, rely on goal more
+    "avanzado": ["fuerza máxima", "fuerza rápida", "potencia"], // Less specific, rely on goal more
+    "experto": ["fuerza máxima", "fuerza rápida", "potencia"]
+  };
+
+  // 3. Iterate through Knowledge Base
+  knowledgeBase.forEach(entry => {
+    const parsedInput = parseInputString(entry.input);
+    let isRelevant = false;
+    let relevanceSource = ""; // For debugging
+
+    // --- Matching Logic ---
+
+    // a) Match by Condition
+    if (clientCondition && parsedInput.condition) {
+      let conditionsToCheck = [clientCondition];
+      Object.keys(conditionMappings).forEach(key => {
+        if (clientCondition.includes(key)) {
+          const mapped = conditionMappings[key];
+          conditionsToCheck = conditionsToCheck.concat(Array.isArray(mapped) ? mapped : [mapped]);
+        }
+      });
+      // Remove duplicates
+      conditionsToCheck = [...new Set(conditionsToCheck)];
+
+      if (conditionsToCheck.some(c => parsedInput.condition.toLowerCase() == c || (c.length > 3 && parsedInput.condition.toLowerCase().includes(c)) || (parsedInput.condition.toLowerCase().length > 3 && c.includes(parsedInput.condition.toLowerCase())) )) {
+        isRelevant = true;
+        relevanceSource = `Condition match (${parsedInput.condition})`;
+      }
+    }
+
+    // b) Match by Goal -> Objective
+    if (clientGoal && parsedInput.objective) {
+      let goalsToCheck = [clientGoal];
+      Object.keys(goalMappings).forEach(key => {
+        if (clientGoal.includes(key)) {
+          const mapped = goalMappings[key];
+          goalsToCheck = goalsToCheck.concat(Array.isArray(mapped) ? mapped : [mapped]);
+        }
+      });
+      goalsToCheck = [...new Set(goalsToCheck)];
+
+      if (goalsToCheck.some(g => parsedInput.objective.toLowerCase().includes(g))) {
+        isRelevant = true;
+        relevanceSource = `Goal match (${parsedInput.objective})`;
+      }
+    } else if (clientGoal && parsedInput.capacity) {
+      let goalsToCheck = [clientGoal];
+      Object.keys(goalMappings).forEach(key => {
+        if (clientGoal.includes(key)) {
+          const mapped = goalMappings[key];
+          goalsToCheck = goalsToCheck.concat(Array.isArray(mapped) ? mapped : [mapped]);
+        }
+      });
+      goalsToCheck = [...new Set(goalsToCheck)];
+      if (goalsToCheck.some(g => parsedInput.capacity.toLowerCase().includes(g))) {
+        isRelevant = true;
+        relevanceSource = `Goal match with capacity (${parsedInput.capacity})`;
+      }
+    }
+
+    // c) Match by Experience -> Phase
+    if (clientExperience && parsedInput.phase) {
+      let phasesToCheck = [clientExperience];
+      Object.keys(experienceMappings).forEach(key => {
+        if (clientExperience.includes(key)) {
+          const mapped = experienceMappings[key];
+          phasesToCheck = phasesToCheck.concat(Array.isArray(mapped) ? mapped : [mapped]);
+        }
+      });
+      phasesToCheck = [...new Set(phasesToCheck)];
+
+      if (phasesToCheck.some(p => parsedInput.phase.toLowerCase().includes(p))) {
+        isRelevant = true;
+        relevanceSource = `Experience match (${parsedInput.phase})`;
+      }
+    }
+
+    // d) Match Special Populations / General (using parsed condition primarily)
+    if (parsedInput.condition) {
+      const kbCond = parsedInput.condition.toLowerCase();
+      let populationMatch = false;
+      if (kbCond.includes('embarazo') && clientGender.includes('femenino')) populationMatch = true;
+      if (kbCond.includes('posparto') && clientGender.includes('femenino')) populationMatch = true;
+      if (kbCond.includes('menopausia') && clientGender.includes('femenino') && clientAge >= 45) populationMatch = true;
+      if (kbCond.includes('personas mayores') && clientAge >= 65) populationMatch = true;
+      if (kbCond.includes('adultos')) populationMatch = true; // Considered relevant for everyone as baseline
+      if (kbCond.includes('caídas') && clientAge >= 60) populationMatch = true;
+      if (kbCond.includes('sarcopenia') && clientAge >= 50) populationMatch = true;
+      if (kbCond.includes('fragilidad') && clientAge >= 65) populationMatch = true;
+
+      if (populationMatch) {
+        isRelevant = true;
+        relevanceSource = `Population match (${kbCond})`;
+      }
+    }
+
+    // --- End Matching Logic ---
+
+    if (isRelevant && !addedInputs.has(entry.input)) {
+      relevantGuidelines.push({ input: entry.input, output: entry.output, source: relevanceSource }); // Added source for debug
+      addedInputs.add(entry.input);
+    }
+  });
+
+  console.log(`Se encontraron ${relevantGuidelines.length} directrices relevantes.`);
+  // console.log("Directrices encontradas:", relevantGuidelines.map(g => `${g.input} (Source: ${g.source})`)); // Debugging output
+  return relevantGuidelines;
+}
+
+/**
+ * Limpia y verifica la consistencia de los datos del cliente
+ *
+ * @param {Object} clientData - Datos extraídos del cliente
+ * @returns {Object} - Datos limpios y consistentes
+ */
+function cleanClientData(clientData) {
+  const cleanedData = { ...clientData };
+
+  // Verificar edad - debería ser un número o contener dígitos
+  if (cleanedData.age && !/^\d+$|^\d+\s*años/i.test(cleanedData.age)) {
+    // Si la edad contiene texto de nivel de experiencia, limpiarla
+    if (/experiencia|intermedio|principiante|avanzado/i.test(cleanedData.age)) {
+      cleanedData.age = "";
+    }
+  }
+
+  // Verificar género - debe ser una opción conocida
+  if (cleanedData.gender && !/masculino|femenino|hombre|mujer|prefiero no especificar|no binario/i.test(cleanedData.gender)) {
+    cleanedData.gender = "";
+  }
+
+  // Verificar peso - debe ser un número con posible unidad kg
+  if (cleanedData.weight) {
+    // Extraer solo dígitos y punto decimal
+    const weightMatch = cleanedData.weight.match(/(\d+([.,]\d+)?)/);
+    if (weightMatch) {
+      // Formatear correctamente el peso
+      cleanedData.weight = `${weightMatch[1].replace(',', '.')} kg`;
+    } else if (!/\d+/.test(cleanedData.weight)) {
+      cleanedData.weight = "";
+    }
+  }
+
+  // Verificar altura - debe ser un número con posible unidad cm
+  if (cleanedData.height) {
+    // Extraer solo dígitos y punto decimal
+    const heightMatch = cleanedData.height.match(/(\d+([.,]\d+)?)/);
+    if (heightMatch) {
+      // Formatear correctamente la altura
+      cleanedData.height = `${heightMatch[1].replace(',', '.')} cm`;
+    } else if (!/\d+/.test(cleanedData.height)) {
+      cleanedData.height = "";
+    }
+  }
+
+  // Verificar objetivo - no debe contener texto de lesiones o limitaciones
+  if (cleanedData.trainingGoal && /dolor|lesion|operado|limitaci[óo]n|cuesta/i.test(cleanedData.trainingGoal)) {
+    cleanedData.trainingGoal = "";
+  }
+
+  // Verificar que ejercicios preferidos y a evitar no son iguales
+  if (cleanedData.exercisePreference &&
+    cleanedData.exerciseAvoidance &&
+    cleanedData.exercisePreference.toLowerCase() === cleanedData.exerciseAvoidance.toLowerCase()) {
+    // Si son iguales, probablemente uno está mal asignado
+    if (/evitar|no me gusta|no me gustan|no quiero|odio|detesto/i.test(cleanedData.exercisePreference)) {
+      // La preferencia parece una evitación
+      cleanedData.exerciseAvoidance = cleanedData.exercisePreference;
+      cleanedData.exercisePreference = "";
+    } else {
+      // Asumir que la evitación está mal
+      cleanedData.exerciseAvoidance = "";
+    }
+  }
+
+  // Verificar días por semana (debe tener sentido como frecuencia)
+  if (cleanedData.daysPerWeek && !/^\d+$|^\d+\s*días|un|dos|tres|cuatro|cinco|seis|siete/i.test(cleanedData.daysPerWeek)) {
+    cleanedData.daysPerWeek = "";
+  }
+
+  // Verificar tiempo por sesión (debe tener sentido como duración)
+  if (cleanedData.sessionTime && !/^\d+$|^\d+\s*min|hora|minutos/i.test(cleanedData.sessionTime)) {
+    cleanedData.sessionTime = "";
+  }
+
   return cleanedData;
 }
 
 // Exportar función principal y otras utilidades para testing
-module.exports = { 
+module.exports = {
   generateRoutine,
   // Exportar funciones auxiliares para testing
   processFormFieldsObject,
@@ -1314,5 +1702,7 @@ module.exports = {
   mapLinesToQuestions,
   buildClientDescription,
   getAnswer,
-  cleanClientData
+  cleanClientData,
+  findRelevantGuidelines, // Export the new function
+  parseInputString // Also export the helper function if needed for testing
 };

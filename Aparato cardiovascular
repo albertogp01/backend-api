@@ -1,0 +1,926 @@
+{
+    "aparatoCardiovascular": [
+      {
+        "condicion": "Arritmias",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Aumentar la masa magra",
+              "Mejorar la fuerza de los grandes grupos musculares",
+              "Mejorar la composición corporal",
+              "Mantener la funcionalidad de las AVD"
+            ],
+            "tipoTrabajo": [
+              "Refuerzo muscular dinámico con sobrecarga o tobillera lastrada",
+              "Ejercicios poliarticulares",
+              "Contracción dinámica",
+              "Ejercicios globales en multiserie"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": "10-20 repeticiones (50-60% de 1 RM)",
+              "series": "3-5 series",
+              "descanso": "60-90 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario establecer un período de adaptación antes de plantear objetivos",
+              "Es necesario recomendar el trabajo con máquinas",
+              "Es necesario aumentar progresivamente las cargas de trabajo",
+              "Debe respetarse el suficiente tiempo de recuperación"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Aumentar la capacidad funcional",
+              "Aumentar la tolerancia al ejercicio físico",
+              "Favorecer un estilo de vida activo"
+            ],
+            "tipoTrabajo": [
+              "Trabajo aeróbico con la participación de grandes grupos musculares (caminar, ir en bicicleta, remo)",
+              "Ejercicio físico global, cíclico, continuo, repetido y variado (marcha nórdica, ciclismo)"
+            ],
+            "carga": {
+              "frecuencia": "2-5 sesiones/semana",
+              "tipo": "Trabajo en circuito",
+              "tiempo": "20-40 minutos/sesión",
+              "intensidad": [
+                "40-70% del VO2 máx.",
+                "40-80% de la FCM",
+                "escala de Borg 20: 11-14 o test de conversación"
+              ],
+              "descanso": "3-15 minutos entre series con recuperación activa"
+            },
+            "consideracionesEspeciales": [
+              "Debe establecerse un período de adaptación antes de plantear objetivos",
+              "Es necesario aumentar poco a poco el tiempo y la intensidad de trabajo",
+              "Es necesario ajustar la respiración a cada movimiento",
+              "Es necesario controlar la FC y la percepción subjetiva de esfuerzo (p. ej. Borg)"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la amplitud de movimiento articular",
+              "Reducir el riesgo de lesión"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos pasivos"
+            ],
+            "carga": {
+              "frecuencia": "Es preciso incluirla en las sesiones",
+              "tiempo": "30 segundos por ejercicio"
+            },
+            "consideracionesEspeciales": [
+              "Debe vigilarse la correcta ejecución de los ejercicios"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Mejorar el equilibrio y la coordinación"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de relajación y de estiramientos"
+            ],
+            "carga": {
+              "frecuencia": "Es preciso incluirla en las sesiones"
+            },
+            "consideracionesEspeciales": [
+              "Debe vigilarse la correcta ejecución de los ejercicios"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "12 semanas para conseguir la adhesión a la práctica regular de ejercicio físico",
+          "recomendaciones": [
+            "Una arritmia no siempre representa una enfermedad",
+            "Es necesario exigir una valoración funcional con un estudio cardiológico completo, incluyendo ecocardiograma, ergometría máxima u otras pruebas como el sistema de Holter, la RMN o el estudio electrofisiológico",
+            "La desaparición o reducción de las arritmias cuando se realiza ejercicio es signo de benignidad",
+            "El incremento de alteraciones arrítmicas en esfuerzo obligan a descartar organicidad",
+            "La aparición de taquicardia ventricular exige un estudio exhaustivo",
+            "En el caso de estudio electrofisiológico y ablación cardíaca, no debe iniciarse ningún programa de entrenamiento hasta pasadas 2 semanas"
+          ],
+          "adaptacionesPoblacionesEspeciales": {
+            "deportistas": [
+              "Es imprescindible una valoración funcional y una readaptación específica antes de reincorporarse a la práctica deportiva",
+              "Las bradicardias extremas con manifestaciones clínicas (mareo, lipotimia) pueden requerir el uso de un marcapasos"
+            ],
+            "personasMayores": [
+              "Es necesario motivarla en la práctica de ejercicio físico",
+              "En el caso de pacientes anticoagulantes (p. ej. fibrilación auricular), es necesario tener cuidado y evitar los deportes de riesgo y de impacto"
+            ]
+          },
+          "observaciones": [
+            "El programa debe ser individualizado y supervisado por profesionales acreditados",
+            "Es recomendable el monitoreo electrocardiográfico de los pacientes durante las sesiones",
+            "El personal responsable debe tener formación en RCP y utilización del DEA",
+            "Es necesario contar con un plan de emergencias"
+          ]
+        }
+      },
+      {
+        "condicion": "Cardiopatías congénitas",
+        "actividadesRecomendadas": {
+          "defectosSeptalesCorrYPequenosSinCorr": {
+            "sistemaCardiovascular": "Se puede participar en competición, deportes de ocio sin restricciones",
+            "sistemaMusculoesqueletico": "No existe ninguna restricción para la práctica de actividades con bajo riesgo de lesiones",
+            "otras": "Se realiza actividad ligera 3-6 meses después de poner el dispositivo o hasta que cicatrice la esternotomía"
+          },
+          "esstenosisAorticaLeve": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición, deportes de ocio y actividades físicas sin restricciones",
+            "sistemaMusculoesqueletico": "No existe ninguna restricción para la práctica de actividades con bajo riesgo de lesiones",
+            "otras": "Se recomienda una prueba de esfuerzo"
+          },
+          "estenosisAorticaModerada": {
+            "sistemaCardiovascular": "Se limita a una intensidad moderada en el caso de participar en deportes de competición",
+            "sistemaMusculoesqueletico": "Se limita a intensidades moderadas",
+            "otras": "Se recomienda una prueba de esfuerzo"
+          },
+          "insuficienciaAorticaLeveOModerada": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición, deportes de ocio y actividades físicas sin restricciones",
+            "sistemaMusculoesqueletico": "No existe ninguna restricción para la práctica de actividades con bajo riesgo de lesiones",
+            "otras": "Se excluye la dilatación del ventrículo izquierdo o aórtica y arritmias"
+          },
+          "valvulaAorticaBicuspideAislada": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición y deportes de ocio sin restricciones",
+            "sistemaMusculoesqueletico": "Es necesario evitar la alta intensidad"
+          },
+          "coartacionAortica": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición y deportes de ocio sin restricciones",
+            "sistemaMusculoesqueletico": "Se limita a una intensidad moderada",
+            "otras": "Es necesario realizar una prueba de esfuerzo para descartar respuesta de TA anormal"
+          },
+          "dilatacionOAneurismaAorticoLeve": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición y deportes de ocio sin restricciones",
+            "sistemaMusculoesqueletico": "Es necesario evitar una intensidad muy alta"
+          },
+          "dilatacionOAneurismaAorticoModerado": {
+            "sistemaCardiovascular": "Se limita a una intensidad moderada en el caso de participar en deportes de competición",
+            "sistemaMusculoesqueletico": "Se limita a una intensidad moderada"
+          },
+          "estenosisPulmonarConGradMenor30": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición y deportes de ocio sin restricciones",
+            "sistemaMusculoesqueletico": "No existe ninguna restricción para la práctica de actividades con bajo riesgo de lesiones",
+            "otras": "Puede ser útil una prueba de esfuerzo"
+          },
+          "estenosisPulmonarConGrad30A50": {
+            "sistemaCardiovascular": "Se limita a una intensidad moderada solo en deportes de competición",
+            "sistemaMusculoesqueletico": "Se limita a una intensidad moderada",
+            "otras": "Se puede participar en deportes de competición y deportes de ocio sin restricciones"
+          },
+          "tetralogiaFallotSinInsufSignif": {
+            "sistemaCardiovascular": "Se limita a competición de intensidad baja a moderada si existe disfunción ventricular derecha",
+            "sistemaMusculoesqueletico": "No existe ninguna restricción para la práctica de actividades con bajo riesgo de lesiones"
+          },
+          "insuficienciaPulmonarOTricuspSignif": {
+            "sistemaCardiovascular": "Se puede participar en deportes de competición y deportes de ocio sin restricciones",
+            "sistemaMusculoesqueletico": "No existe ninguna restricción para la práctica de actividades con bajo riesgo de lesiones"
+          },
+          "anomaliaEbsteinSinInsufSignif": {
+            "sistemaCardiovascular": "Se limita a una intensidad moderada en deportes de competición",
+            "sistemaMusculoesqueletico": "Se limita a una intensidad moderada",
+            "otras": "Se recomienda una prueba de esfuerzo y un seguimiento con monitor de Holter"
+          },
+          "transposicionGrandesArteriasCorregida": {
+            "sistemaCardiovascular": "Se limita a una intensidad moderada en deportes de competición",
+            "sistemaMusculoesqueletico": "Se limita a una intensidad moderada",
+            "otras": "Se realiza un PEFI según el estado clínico y pruebas complementarias"
+          },
+          "ventriculoUnicoFuncionalFontan": {
+            "sistemaCardiovascular": "Se limita a una intensidad moderada en deportes de competición",
+            "sistemaMusculoesqueletico": "Se limita a una intensidad moderada",
+            "otras": "Se recomienda una prueba de esfuerzo y un seguimiento con monitor de Holter"
+          },
+          "hipertensionPulmonarSindrome": {
+            "sistemaCardiovascular": "Es necesario individualizar las recomendaciones en función del estado clínico y la respuesta al ejercicio",
+            "sistemaMusculoesqueletico": "Es necesario individualizar las recomendaciones en función del estado clínico y la respuesta al ejercicio",
+            "otras": "Se recomienda una prueba de esfuerzo"
+          }
+        }
+      },
+      {
+        "condicion": "Cardiopatía isquémica",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mantener la funcionalidad de las AVD",
+              "Mejorar la tonalidad y la fuerza de los distintos grupos musculares"
+            ],
+            "tipoTrabajo": [
+              "Participación de grandes grupos musculares",
+              "Ejercicios poliarticulares"
+            ],
+            "carga": {
+              "frecuencia": "1-2 sesiones/semana",
+              "repeticiones": "25 repeticiones (30-70% de 1 RM)",
+              "series": "3 series",
+              "descanso": "60 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Se recomienda el trabajo con máquinas",
+              "Debe controlarse la respiración",
+              "Es necesario evitar el trabajo isométrico"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la condición física",
+              "Disminuir la progresión de la enfermedad cardiovascular arterioesclerótica",
+              "Mejorar el estado metabólico",
+              "Reducir los FRCV",
+              "Disminuir la morbimortalidad cardiovascular",
+              "Mejorar las relaciones sociales",
+              "Facilitar la integración en el trabajo",
+              "Mejorar la autoimagen, el bienestar y la calidad de vida"
+            ],
+            "tipoTrabajo": [
+              "Trabajo aeróbico, con participación de grandes grupos musculares (caminar, ir en bicicleta, golf, remo)"
+            ],
+            "carga": {
+              "frecuencia": "4-5 sessiones/semana",
+              "ergometriaNegativa": {
+                "intensidad": "75-85% de la FCM (escala de Borg 20: 11-14)"
+              },
+              "ergometriaPositiva": {
+                "intensidad": "75-85% del umbral de isquemia, 40-50% de la FCM teórica"
+              }
+            },
+            "consideracionesEspeciales": [
+              "Es necesario individualizar la prescripción de ejercicio en función de los resultados de la ergometría",
+              "Debe controlarse la FC",
+              "Es necesario aplicar escalas de percepción subjetiva del esfuerzo"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la amplitud de movimiento articular"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de Flexibilidad y movilidad articular"
+            ],
+            "carga": {
+              "frecuencia": "En cada sessión"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario conseguir una técnica correcta"
+            ]
+          }
+        }
+      },
+      {
+        "condicion": "Hipertensión arterial",
+        "capacidades": {
+          "resistenciaAerobica": {
+            "objetivos": [
+              "Controlar la PA",
+              "Mejorar la condición física, la capacidad funcional",
+              "Reducir el riesgo CV"
+            ],
+            "tipoTrabajo": [
+              "Calentamiento progresivo 5-10 minutos",
+              "Ejercicio dinámico, global, de grandes grupos musculares, cíclico, continuo, repetitivo y variado",
+              "Es necesario intercalar intervalos de recuperación activa"
+            ],
+            "carga": {
+              "frecuencia": "3-5 sesiones/semana (mejor 7 sesiones/semana)",
+              "tiempo": "20-60 minutos",
+              "intensidad": "40-70% de la FCR (escala de Borg: 8-14)",
+              "volumen": "10-30 METh/semana (700-2.000 kcal/semana)",
+              "recuperacion": "Largas recuperaciones activas: 3-15 minutos"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario evitar intensidades elevadas (>70-80% de la FCR)"
+            ]
+          },
+          "fuerza": {
+            "objetivos": [
+              "Mantener la tonalidad y la fuerza de los distintos grupos musculares",
+              "Favorecer el control de la musculatura respiratoria",
+              "Mantener la funcionalidad de las AVD"
+            ],
+            "tipoTrabajo": [
+              "Tonificación muscular dinámica con sobrecarga o tobillera lastrada, con poca carga",
+              "Contracciones dinámicas",
+              "Circuito de fuerza: ejercicios dinámicos globales multiserie"
+            ],
+            "carga": {
+              "frecuencia": "2-7 sesiones/semana",
+              "series": "1-5 series",
+              "intensidad": "25-50% de 1 RM (6-12 repeticiones/series) o autocargas (escala de Borg: 8-15)",
+              "tiempoTrabajo": "30-120 segundos",
+              "tiempoDescanso": "30-120 segundos",
+              "densidad": "Densidad T:D <1:1",
+              "velocidad": "Velocidad 1:1"
+            },
+            "consideracionesEspeciales": [
+              "Se realiza después del trabajo aeróbico",
+              "Trabajos con muchas repeticiones con cargas bajas",
+              "Es necesario evitar los trabajos isométricos",
+              "Si la TAS está controlada, pueden realizarse ejercicios compensatorios de recuperación activa entre series",
+              "Es necesario favorecer el control de la función respiratoria"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Reducir el riesgo de lesiones musculoesqueléticas",
+              "Mejorar la amplitud de movimiento articular"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos pasivos"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "series": "2 series por ejercicio",
+              "tiempo": "30 segundos"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario comenzar por grandes grupos musculares (extremidades inferiores, extremidades superiores, tronco)",
+              "Es necesario añadir un ejercicio diario"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "Tiempo del programa: >12 semanas",
+          "recomendaciones": [
+            "Es necesario valorar la medida de la frecuencia cardíaca y la presión arterial antes, durante o después de las sesiones de entrenamiento",
+            "Es necesario evitar el EF si la PAS es >200 mmHg o la PAD es >115 mmHg o la HTA no está controlada",
+            "Es necesario evitar la fuerza si la PAS es >180 mmHg o la PAD es >110 mmHg",
+            "En pacientes con baja capacidad funcional, es necesario valorar el entrenamiento específico de la musculatura respiratoria",
+            "Es necesario evitar el EF en las horas del mediodía, en verano, o a primera hora de la mañana, en invierno",
+            "Se recomienda una valoración funcional (con ergometría) previa"
+          ],
+          "observaciones": [
+            "Se recomienda una buena hidratación antes, durante y después de cada sesión",
+            "En el caso de exceso de peso, se recomienda un control de la composición corporal (IMC, porcentaje de grasa y porcentaje muscular) y asesoramiento nutricional",
+            "Se recomienda una monitorización instrumental de las sesiones (p. ej. pulsímetros, sistemas de telemetría, etc.)"
+          ]
+        }
+      },
+      {
+        "condicion": "Insuficiencia cardíaca",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mantener la funcionalidad de las AVD",
+              "Mejorar la fuerza de los distintos grupos musculares",
+              "Aumentar la masa magra"
+            ],
+            "tipoTrabajo": [
+              "Participan grandes grupos musculares",
+              "Ejercicios poliarticulares"
+            ],
+            "carga": {
+              "frecuencia": "2 sesiones/semana",
+              "repeticiones": "10-25 repeticiones (30-40% de 1 RM)",
+              "series": "1-3 series",
+              "descanso": "60 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Se recomienda el trabajo con máquinas y/o peso corporal",
+              "Es necesario establecer un período de adaptación antes de plantear objetivos",
+              "Es necesario incrementar progresivamente las cargas de trabajo",
+              "Es necesario respetar el tiempo de recuperación entre series"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la tolerancia al ejercicio",
+              "Mejorar la capacidad funcional para las AVD",
+              "Reducir el grado de discapacidad",
+              "Reducir la morbimortalidad",
+              "Mejorar el estado de ánimo, la autoestima y la independencia",
+              "Reducir el grado de discapacidad",
+              "Mejorar la calidad de vida"
+            ],
+            "tipoTrabajo": [
+              "Trabajo aeróbico, con la participación de grandes grupos musculares (caminar, ir en bicicleta en terreno plano, nadar, bailar, etc.)"
+            ],
+            "carga": {
+              "frecuencia": "2-5 sesiones/semana",
+              "tiempo": "10-40 minutos (con intervalos de 2-4 minutos de EF intercalando 1 minuto de descanso)",
+              "intensidad": "60-80% de la FCM, Test de conversación, Escala de Borg 20: 11-14"
+            },
+            "consideracionesEspeciales": [
+              "Se inicia con duraciones muy cortas",
+              "Se realiza un lento y progresivo incremento de la duración e intensidades de las sesiones",
+              "Es necesario controlar la FC y la presión arterial",
+              "Es necesario utilizar de referencia la prueba de esfuerzo para conocer la FC"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la flexibilidad y la movilidad articular"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos estáticos y dinámicos"
+            ],
+            "carga": {
+              "frecuencia": "En cada sessión"
+            },
+            "consideracionesEspeciales": [
+              "Es preciso vigilar su correcta ejecución"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Mejorar la coordinación y el equilibrio"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de relajación y respiración"
+            ],
+            "carga": {
+              "frecuencia": "Se incluye en todas las sesiones"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario controlar la correcta ejecución de los ejercicios"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "6 meses",
+          "recomendaciones": [
+            "Es necesario realizar una valoración funcional previa con ergoespirómetro y ecocardiograma",
+            "El programa de ejercicio físico individualizado (PEFI) debería supervisarse, con control de ECG y PA, especialmente durante las 6-12 primeras sesiones",
+            "Es necesario escoger actividades que gusten para favorecer la adhesión",
+            "Es preciso evitar temperaturas extremas a la hora de realizar ejercicio",
+            "Es necesario tener en cuenta que la respuesta al ejercicio de estos pacientes está condicionada por los efectos secundarios de los bloqueantes β y diuréticos utilizados"
+          ],
+          "adaptacionesPoblacionesEspeciales": {
+            "personasMayores": [
+              "Las tareas domésticas implican un esfuerzo. Deben iniciarse progresivamente, haciendo pausas"
+            ]
+          },
+          "observaciones": [
+            "Es necesario revalorar periódicamente la capacidad funcional",
+            "Es necesario controlar estrictamente los FRCV, especialmente la PA",
+            "Es preciso reducir el peso con una dieta hipocalórica, hiposódica y sin alcohol",
+            "Es necesario prevenir posibles infecciones con vacunación antigripal, neumocócica, etc.",
+            "Es preciso controlar estrictamente la función renal",
+            "Es preciso que los profesionales estén entrenados en reanimación cardiopulmonar"
+          ]
+        }
+      },
+      {
+        "condicion": "Insuficiencia venosa",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mejorar la fuerza resistencia, especialmente de las extremidades inferiores (flexores y extensores del pie)"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de flexión y extensión del pie",
+              "Ejercicios dinámicos de las extremidades inferiores"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": "10-20 repeticiones (40-70% de 1 RM)",
+              "series": "2-3 series"
+            },
+            "consideracionesEspeciales": [
+              "Conseguir una correcta ejecución de los ejercicios"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Aumentar la resistencia cardiorrespiratoria",
+              "Evitar la inactividad física",
+              "Evitar el sedentarismo",
+              "Evitar el sobrepeso y la obesidad",
+              "Facilitar el retorno venoso de las extremidades inferiores",
+              "Evitar problemas tromboembólicos",
+              "Evitar los edemas distales"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios activos de grandes grupos musculares de las extremidades inferiores que favorezcan la flexión y extensión del pie",
+              "Caminar, senderismo por superficies blandas",
+              "Ejercicios dinámicos de intensidad ligera o moderada (correr, golfo, baile, danza, ciclismo, natación, aqua-gym, etc.)",
+              "Ejercicios específicos de levantar las piernas y pedalear en el aire"
+            ],
+            "carga": {
+              "frecuencia": "5-7 sesiones/semana",
+              "tiempo": "30-90 minutos",
+              "intensidad": "40-70% de la FCM o test de conversación"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario incluir el calentamiento",
+              "Es necesario aprovechar todos los momentos posibles del día para caminar, pasear, correr, etc.",
+              "Es necesario intentar lograr 10.000 pasos cada día sin excepción"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la flexibilidad muscular",
+              "Mejorar la movilidad articular"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos de las extremidades inferiores tocando la punta de los pies",
+              "Ejercicios de movilidad"
+            ],
+            "carga": {
+              "frecuencia": "En cada sesión",
+              "tiempo": "30 segundos por ejercicio"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario controlar la correcta ejecución de los estiramientos"
+            ]
+          }
+        }
+      },
+      {
+        "condicion": "Enfermedad arterial periférica",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mejorar la tonalidad y la fuerza resistencia"
+            ],
+            "tipoTrabajo": [
+              "Tonificación muscular dinámica con sobrecarga o lastre",
+              "Contracciones isotónicas",
+              "Ejercicios globales multiserie"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": "10-15 repeticiones (50-70% de 1RM)",
+              "series": "2-3 series",
+              "descanso": "30-90 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Siempre posterior al trabajo aeróbico",
+              "Debe iniciarse tonificación con buena ejecución técnica",
+              "Control respiratorio"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la capacidad funcional",
+              "Aumentar la tolerancia al ejercicio",
+              "Incrementar la circulación colateral",
+              "Aumentar el umbral de claudicación (capacidad de caminar y hacer ejercicio antes de llegar a la claudicación)",
+              "Disminuir los síntomas de claudicación en la realización de las AVD",
+              "Modificar los factores de riesgo cardiovascular",
+              "Mejorar la morbimortalidad",
+              "Mejorar la calidad de vida"
+            ],
+            "tipoTrabajo": {
+              "actividadPrincipal": [
+                "Caminar al aire libre, cinta o cicloergómetro"
+              ],
+              "actividadComplementaria": [
+                "Cicloergómetro de brazos",
+                "Ejercicios globales, cíclicos, continuos, repetidos y variados (marcha nórdica, ciclismo, natación, remo)",
+                "Trabajo de alta intensidad y corta duración"
+              ]
+            },
+            "carga": {
+              "frecuencia": "3-5 sesiones/semana",
+              "tiempo": "20-40 minutos de ejercicio intermitente",
+              "intensidad": "40-70% VO2 máx. (FCR), Umbral de claudicación, Escala de Borg 20: 11-14"
+            },
+            "consideracionesEspeciales": [
+              "Cuando aparecen los síntomas de claudicación moderada, descansar un breve período de tiempo, de pie o sentado, hasta la desaparición de los síntomas (5 minutos)",
+              "Repetir la secuencia ejercicio-descanso hasta lograr la duración de actividad deseada",
+              "Estimular poco a poco el umbral de claudicación"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la amplitud de movimiento articular"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos pasivos",
+              "Grandes grupos musculares de extremidades inferiores"
+            ],
+            "carga": {
+              "frecuencia": "Puede incluirse en las sesiones",
+              "tiempo": "5-15 minutos"
+            },
+            "consideracionesEspeciales": [
+              "Inicialmente, amplitud de movimiento articular corto, de la musculatura de las extremidades inferiores"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Mejorar la coordinación y el equilibrio"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de relajación y respiración"
+            ],
+            "carga": {
+              "frecuencia": "Puede incluirse en las sesiones",
+              "tiempo": "5-15 minutos"
+            },
+            "consideracionesEspeciales": [
+              "Con el calentamiento y el enfriamiento"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "3-6 meses, para poder conseguir un buen cumplimiento",
+          "recomendaciones": [
+            "La duración e intensidad del ejercicio deben incrementarse cada 3-4 semanas",
+            "Durante la progresión del ejercicio, es necesario incrementar gradualmente la duración más que la intensidad",
+            "Deben evitarse las sesiones a primera hora de la mañana en invierno y a medio día en verano",
+            "Debido a la vasoconstricción periférica producida por bajas temperaturas, estos pacientes deben prolongar el tiempo destinado al calentamiento (10-15 minutos) en días fríos",
+            "Debe llevarse un calzado adecuado y cuidar los pies",
+            "Debe aconsejarse que el paciente siempre lleve la correspondiente medicación",
+            "Es necesario favorecer una correcta rehidratación a lo largo de las sesiones",
+            "Se debe insistir en la modificación de los estilos de vida, y evitar el consumo de tabaco y alcohol, el sobrepeso, la sal, los azúcares y las grasas saturadas"
+          ],
+          "adaptacionesPoblacionesEspeciales": {
+            "ambienteFrio": [
+              "Prolongar el calentamiento",
+              "Debido a la vasoconstricción periférica producida por bajas temperaturas, estos pacientes deben prolongar el tiempo destinado al calentamiento (10-15 minutos) en días fríos"
+            ]
+          },
+          "observaciones": [
+            "Se recomienda una valoración funcional con estudio cardiológico (ergometría en cinta de correr) y vascular (ecografía Doppler)",
+            "El programa debe estar supervisado por profesionales acreditados",
+            "Los responsables de las sesiones deberían tener formación en RCP y DEA"
+          ]
+        }
+      },
+      {
+        "condicion": "Miocardiopatías",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mejorar la fuerza muscular"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios de fuerza con cargas bajas"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": "10-15 repeticiones (40-70% de 1 RM)",
+              "series": "3-5 series",
+              "descanso": "60 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario controlar una correcta técnica de ejecución",
+              "Es necesario conseguir un buen control respiratorio en coordinación con los ejercicios"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la condición física y la capacidad funcional",
+              "Reducir el riesgo de morbimortalidad (muerte súbita)",
+              "Reducir el estrés emocional"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios con grandes grupos musculares",
+              "Actividad de baja carga dinámica (natación, bici en terreno plano)",
+              "En el caso de deportistas, es necesario valorar ejercicios de alta intensidad y corta duración"
+            ],
+            "carga": {
+              "frecuencia": "3-5 sesiones/semana",
+              "tiempo": "30-60 minutos",
+              "intensidad": "<60% de la FCM, Escala de Borg 20: 10-15, Test de conversación, Calentamiento y enfriamientos largos"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario iniciarla con intensidades ligeras y bajos volúmenes de trabajo",
+              "Es necesario incrementar la duración o la intensidad de forma muy lenta, siempre con estabilidad clínica y ECG en intensidades previas",
+              "Es necesario controlar la FC y la respiración"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la flexibilidad y la movilidad articular"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos pasivos"
+            ],
+            "carga": {
+              "frecuencia": "En cada sesión",
+              "tiempo": "30 segundos por ejercicio"
+            },
+            "consideracionesEspeciales": [
+              "Es imprescindible una vuelta a la calma (enfriamiento) antes del trabajo de flexibilidad"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Mejorar el equilibrio y la coordinación",
+              "Mejorar la funcionalidad en las AVD"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios propioceptivos o con desequilibrio",
+              "Ejercicios de relajación y respiración"
+            ],
+            "carga": {
+              "frecuencia": "Debe incluirse en las sesiones",
+              "tiempo": "5-15 minutos"
+            },
+            "consideracionesEspeciales": []
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "12 semanas como mínimo para poder lograr un buen cumplimiento",
+          "recomendaciones": [
+            "En general se permite el ejercicio y el deporte de tipo recreacional, con baja carga estática y dinámica (tipo IA, Mitchell)",
+            "Para aplicar un programa de ejercicio físico individualizado (PEFI) es necesaria una correcta valoración funcional para determinar los condicionantes individuales y establecer las bases de prescripción",
+            "La valoración funcional debe incluir ECG, ecocardiograma y ergometría, aunque pueden ser necesarias otras pruebas mediante el monitor de Holter, RMN, etc.",
+            "Es necesario evitar ambientes con temperatura y humedad elevadas",
+            "Es necesario evitar estimulantes como cafeína, teína o taurina",
+            "Debe pautarse una correcta hidratación",
+            "Durante las sesiones, es necesario estar atentos a síntomas como mareo, dolor torácico, palpitaciones o disnea",
+            "Se recomienda la medida de la temperatura antes de cada sesión. Nunca debe realizarse entrenamiento con un proceso febril"
+          ],
+          "adaptacionesPoblacionesEspeciales": {
+            "deportistas": [
+              "Son necesarios controles periódicos (valoración funcional médica deportiva para certificar la aptitud para la competición"
+            ],
+            "noDeportistas": [
+              "No debe iniciarse un PEFI hasta pasadas 4 semanas del alta hospitalaria"
+            ],
+            "pacientesConDCAI": [
+              "La intensidad de trabajo debe establecerse en función de la programación del DCAI",
+              "Es necesario evitar campos electromagnéticos (teléfonos móviles, microondas, etc.)",
+              "Es necesario evitar técnicas de fisioterapia como ultrasonidos, infrarrojos, magnetoterapia, etc.",
+              "La electroestimulación no está contraindicada",
+              "Es necesario reforzar pautas educativas"
+            ]
+          },
+          "observaciones": [
+            "Es necesario que profesionales acreditados y entrenados en RCP y DEA controlen y supervisen los PEFI"
+          ]
+        }
+      },
+      {
+        "condicion": "Portadores de marcapasos",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mejorar la fuerza de los distintos grupos musculares",
+              "Aumentar la masa magra",
+              "Prevenir patologías del aparato locomotor"
+            ],
+            "tipoTrabajo": [
+              "Participan grandes grupos musculares",
+              "Ejercicios poliarticulares",
+              "Trabajo con máquinas"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": ">20 repeticiones (30-40% de 1 RM)",
+              "series": "3-5 series",
+              "descanso": "30-60 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario establecer un período de adaptación antes de plantear objetivos",
+              "Es necesario incrementar progresivamente las cargas de trabajo",
+              "Deben evitarse ejercicios que impliquen una movilización excesiva de las extremidades superiores"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la condición física general",
+              "Normalizar las AVD",
+              "Mejorar la integración y las relaciones sociales",
+              "Mejorar el bienestar psíquico",
+              "Mejorar la calidad de vida"
+            ],
+            "tipoTrabajo": [
+              "Trabajo aeróbico de intensidad moderada en el que participan grandes grupos musculares (caminar, nadar, ir en bicicleta, remo, tenis, golf)",
+              "Ejercicios globales cíclicos, continuos, repetidos, variados",
+              "Ejercicios continuos variables con intervalos de recuperación activa",
+              "Ejercicios interválicos de corta duración"
+            ],
+            "carga": {
+              "frecuencia": "2-5 sesiones/semana",
+              "tiempo": "20-60 minutos/sesión",
+              "intensidad": "40-70% del VO2 máx. (FCR), 40-80% de la FCM, escala de Borg 20: 11-14 o test de conversación"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario aumentar progresivamente el tiempo de trabajo",
+              "La respiración se ajusta a cada movimiento",
+              "Es necesario hidratarse adecuadamente",
+              "Debe controlarse la FC con pulsímetro o aparato similar"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la flexibilidad muscular",
+              "Mejorar la amplitud de movimiento articular",
+              "Reducir el riesgo de lesiones"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos pasivos",
+              "Ejercicios de movilización articular"
+            ],
+            "carga": {
+              "frecuencia": "En cada sesión",
+              "tiempo": "30 segundos por ejercicio"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario procurar una correcta ejecución de los ejercicios"
+            ]
+          }
+        }
+      },
+      {
+        "condicion": "Valvulopatías",
+        "capacidades": {
+          "fuerza": {
+            "objetivos": [
+              "Mejorar la fuerza de los distintos grupos musculares",
+              "Aumentar la masa magra",
+              "Reducir el riesgo de lesiones"
+            ],
+            "tipoTrabajo": [
+              "Participan los grandes grupos musculares",
+              "Ejercicios poliarticulares",
+              "Trabajo con máquinas"
+            ],
+            "carga": {
+              "frecuencia": "2-3 sesiones/semana",
+              "repeticiones": "8-12 repeticiones (30-40% de 1 RM), >20 repeticiones",
+              "series": "3-5 series",
+              "descanso": "30-60 segundos entre series"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario establecer un período de adaptación antes de plantear objetivos",
+              "Es necesario incrementar progresivamente las cargas de trabajo"
+            ]
+          },
+          "resistencia": {
+            "objetivos": [
+              "Mejorar la resistencia aeróbica",
+              "Mejorar la composición corporal",
+              "Reducir y controlar los FRCV",
+              "Reducir el riesgo de muerte súbita",
+              "Reducir el riesgo de patologías crónicas",
+              "Mejorar la calidad de vida",
+              "Conseguir hacer un mínimo de 30 minutos continuados de actividad"
+            ],
+            "tipoTrabajo": [
+              "Trabajo aeróbico en el que participan grandes grupos musculares (caminar, ir en bici, remo)",
+              "Ejercicios de tipo continuo con intensidades variables",
+              "Ejercicios de alta intensidad y corta duración"
+            ],
+            "carga": {
+              "frecuencia": "3-5 sesiones/semana",
+              "intensidad": "40-70% del VO2 máx. (40-80% de la FCM, escala de Borg 20: 11-14 o test de conversación)"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario aumentar progresivamente el tiempo de trabajo",
+              "Es necesario establecer un período de adaptación antes de plantear objetivos",
+              "Es preciso prolongar los períodos de calentamiento y enfriamiento",
+              "Es necesario controlar la FC",
+              "Es necesario vigilar síntomas como mareo o disnea"
+            ]
+          },
+          "flexibilidad": {
+            "objetivos": [
+              "Mejorar la movilidad articular"
+            ],
+            "tipoTrabajo": [
+              "Estiramientos pasivos y activos"
+            ],
+            "carga": {
+              "frecuencia": "En todas las sesiones",
+              "tiempo": "30 segundos por ejercicio"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario llegar al punto de máxima molestia sin llegar al dolor"
+            ]
+          },
+          "neuromuscular": {
+            "objetivos": [
+              "Mejorar la coordinación y el equilibrio",
+              "Mantener la funcionalidad de las AVD"
+            ],
+            "tipoTrabajo": [
+              "Ejercicios propioceptivos",
+              "Ejercicios de relajación y respiración"
+            ],
+            "carga": {
+              "frecuencia": "Debe incluirse en las sesiones de entrenamiento"
+            },
+            "consideracionesEspeciales": [
+              "Es necesario favorecer una correcta ejecución de los ejercicios"
+            ]
+          }
+        },
+        "condicionamientosGenerales": {
+          "tiempoTrabajo": "12-24 semanas para lograr una buena adhesión al ejercicio",
+          "recomendaciones": [
+            "En general, antes de realizar un programa de ejercicio físico, es necesaria una valoración funcional para determinar los posibles condicionantes y bases de prescripción de un programa de ejercicio físico individualizado (PEFI)",
+            "En personas con baja condición física o desmotivadas, se recomienda iniciar con ejercicio físico intermitente (5-10 minutos/sesión) con incremento progresivo de la duración y de la intensidad"
+          ],
+          "adaptacionesPoblacionesEspeciales": {
+            "deportista": [
+              "Antes de la competición, en todos los casos, es necesaria una valoración funcional médico-deportiva con un estudio cardiológico exhaustivo (ECG, ecocardiografía Doppler, ergometría, etc.) para poder certificar la aptitud o posibles contraindicaciones deportivas",
+              "En general no está restringida la participación en valvulopatías leves y asintomáticas"
+            ],
+            "protesisValvularesYAnticoagulantes": [
+              "En general pueden realizarse actividades deportivas de tipo IA, IB (Clasificación de los deportes de Mitchell)",
+              "Los deportes de tipo III, de contacto o colisión suelen estar contraindicados",
+              "Para reducir el riesgo de endocarditis infecciosa se recomienda una bona higiene bucal y evitar los tatuajes y piercings corporales"
+            ]
+          },
+          "observaciones": [
+            "Es necesario conocer las posibles contraindicaciones en función de cada valvulopatía y el grado de gravedad",
+            "Se recomienda la aplicación de programas de ejercicios de tipo supervisado, con profesionales acreditados en ejercicio físico y con formación en RCP y DEA"
+          ]
+        }
+      }
+    ]
+  }
