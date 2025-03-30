@@ -38,23 +38,15 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
     }
   }
 
-  console.log(`[${requestId || 'EMAIL'}] Iniciando envío de correo a ${email} con rutina personalizada`);
-  
   // Verificar que el archivo PDF existe
   if (!fs.existsSync(pdfPath)) {
-    console.error(`[${requestId || 'EMAIL'}] El archivo PDF no existe en la ruta: ${pdfPath}`);
     throw new Error(`Archivo no encontrado: ${pdfPath}`);
   }
 
   // Verificar configuración de correo
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error(`[${requestId || 'EMAIL'}] Las credenciales de correo no están configuradas en las variables de entorno`);
-    console.error(`[${requestId || 'EMAIL'}] EMAIL_USER: ${process.env.EMAIL_USER ? 'Configurado' : 'No configurado'}`);
-    console.error(`[${requestId || 'EMAIL'}] EMAIL_PASS: ${process.env.EMAIL_PASS ? 'Configurado' : 'No configurado'}`);
-    
     // CAMBIO CRÍTICO: Si no hay credenciales en producción, usar valores de respaldo
     if (process.env.NODE_ENV === 'production') {
-      console.log(`[${requestId || 'EMAIL'}] Intentando usar credenciales de respaldo en producción`);
       process.env.EMAIL_USER = process.env.EMAIL_USER || 'routinas@fitform.coach';
       process.env.EMAIL_PASS = process.env.EMAIL_PASS || 'rutinas2024';
     } else {
@@ -88,7 +80,6 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
       });
     } else {
       // Por defecto, usar Gmail
-      console.log(`[${requestId || 'EMAIL'}] Usando servicio por defecto: gmail`);
       transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -97,14 +88,6 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
         },
       });
     }
-
-    // Verificar la conexión al servidor SMTP
-    await transporter.verify().catch(error => {
-      console.error(`[${requestId || 'EMAIL'}] Error al verificar transporter:`, error);
-      throw new Error(`Error de conexión con servidor de correo: ${error.message}`);
-    });
-    
-    console.log(`[${requestId || 'EMAIL'}] Conexión al servidor de correo verificada`);
 
     // Configurar opciones del correo
     const mailOptions = {
@@ -165,24 +148,17 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
       ],
     };
 
-    console.log(`[${requestId || 'EMAIL'}] Enviando correo a: ${email}`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[${requestId || 'EMAIL'}] Correo enviado exitosamente a: ${email}`);
-    console.log(`[${requestId || 'EMAIL'}] ID de mensaje: ${info.messageId}`);
 
     // Elimina el archivo PDF después del envío solo si se envió correctamente
     try {
       fs.unlinkSync(pdfPath);
-      console.log(`[${requestId || 'EMAIL'}] Archivo PDF eliminado: ${pdfPath}`);
     } catch (unlinkError) {
-      console.error(`[${requestId || 'EMAIL'}] Error al eliminar el archivo PDF: ${unlinkError}`);
       // No relanzamos este error para no interrumpir el flujo principal
     }
 
     return info; // Devolver información del envío
   } catch (error) {
-    console.error(`[${requestId || 'EMAIL'}] Error al enviar el correo:`, error);
-    
     // Si falla el envío, eliminamos la entrada del conjunto para permitir reintentos
     if (requestId) {
       processedEmails.delete(`${requestId}:${email}`);
@@ -190,8 +166,6 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
     
     // Intento alternativo con un transportador diferente
     try {
-      console.log(`[${requestId || 'EMAIL'}] Intentando método alternativo de envío...`);
-      
       // Crear un transportador alternativo
       const backupTransporter = nodemailer.createTransport({
         service: 'gmail',
@@ -217,19 +191,16 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
       
       // Enviar correo de respaldo
       const backupInfo = await backupTransporter.sendMail(fallbackMailOptions);
-      console.log(`[${requestId || 'EMAIL'}] Correo enviado exitosamente (método alternativo) a: ${email}`);
       
       // Eliminar PDF después del envío exitoso
       try {
         fs.unlinkSync(pdfPath);
-        console.log(`[${requestId || 'EMAIL'}] Archivo PDF eliminado (después de método alternativo): ${pdfPath}`);
       } catch (unlinkError) {
-        console.error(`[${requestId || 'EMAIL'}] Error al eliminar el archivo PDF (después de método alternativo): ${unlinkError}`);
+        // No interrumpimos el flujo
       }
       
       return backupInfo; // Devolver información del envío alternativo
     } catch (backupError) {
-      console.error(`[${requestId || 'EMAIL'}] Error en método alternativo de envío:`, backupError);
       throw error; // Relanzar el error original si ambos métodos fallan
     }
   }
