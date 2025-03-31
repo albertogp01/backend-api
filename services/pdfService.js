@@ -3,26 +3,36 @@ const path = require("path");
 const puppeteer = require("puppeteer");
 const os = require("os");
 
-async function generatePDF(htmlContent, clientName = "Cliente") {
+/**
+ * Genera un PDF a partir de contenido HTML, añadiendo una portada con gráfico radar.
+ *
+ * @param {string} htmlContent - La cadena HTML del contenido de la rutina (tablas, variantes).
+ * @param {string} chartImage - Cadena base64 de la imagen del gráfico radar.
+ * @param {string} clientName - Nombre del cliente.
+ * @returns {Promise<string>} - Ruta al archivo PDF generado en el directorio temporal.
+ */
+
+async function generatePDF(htmlContent, chartImage, clientName = "Cliente") {
   return new Promise(async (resolve, reject) => {
+    let browser; // Definir fuera para acceso en catch/finally
+    let tempFilePath = null; // Definir fuera para limpieza en error
+
     try {
       console.log("Generando PDF para:", clientName);
       const sanitizedName = clientName.replace(/[^a-zA-Z0-9]/g, "_");
       const fileName = `rutina_${sanitizedName}_${Date.now()}.pdf`;
-      
-      // Usar el directorio temporal del sistema operativo
       const tempDir = os.tmpdir();
-      const filePath = path.join(tempDir, fileName);
+      tempFilePath = path.join(tempDir, fileName); // Guardar ruta para posible limpieza
+
+      console.log(`Usando directorio temporal para PDF: ${tempDir}`);
       
-      console.log(`Usando directorio temporal: ${tempDir}`);
-      
-      // Preparar logo
+      // Preparar logo (como antes)
       const logoPath = path.resolve(__dirname, "../assets/logo.png");
       let logoBase64 = "";
       if (fs.existsSync(logoPath)) {
         logoBase64 = `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}`;
       } else {
-        console.error("Error: El archivo del logo no existe en la ruta:", logoPath);
+        console.warn("Advertencia: El archivo del logo no existe en la ruta:", logoPath);
       }
       
       const creationDate = new Date().toLocaleDateString("es-ES", {
@@ -49,6 +59,26 @@ async function generatePDF(htmlContent, clientName = "Cliente") {
       
       const currentYear = new Date().getFullYear();
       
+// --- Crear HTML de la Portada ---
+      const coverPageHtml = `
+        <div class="cover-page">
+          <div class="cover-header">
+            <img src="${logoBase64}" alt="Logo FitForm" class="cover-logo" />
+            <h1>Plan de Entrenamiento Personalizado</h1>
+          </div>
+          <div class="cover-client-info">
+             Para: <strong>${clientName}</strong> <br/>
+             Fecha de Creación: ${creationDate}
+          </div>
+          <div class="chart-container">
+            <img src="${chartImage}" alt="Gráfico Radar del Enfoque del Entrenamiento" class="radar-chart" />
+          </div>
+           <div class="cover-footer">
+                FitForm Coach &copy; ${currentYear}. Todos los derechos reservados.
+           </div>
+        </div>
+      `;
+
       // Crear HTML con estilos
       const styledHtml = `<html>
   <head>
