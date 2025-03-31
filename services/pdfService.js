@@ -4,7 +4,7 @@ const puppeteer = require("puppeteer");
 const os = require("os");
 
 // Importar la NUEVA función principal de chartService.js
-const { createDynamicCoverPage } = require('./services/chartService'); // Ajusta la ruta si es necesario
+const { createDynamicCoverPage } = require('./chartService');// Ajusta la ruta si es necesario
 
 async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", requestId = "") {
   return new Promise(async (resolve, reject) => {
