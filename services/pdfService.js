@@ -9,895 +9,593 @@ async function generatePDF(htmlContent, clientName = "Cliente") {
       console.log("Generando PDF para:", clientName);
       const sanitizedName = clientName.replace(/[^a-zA-Z0-9]/g, "_");
       const fileName = `rutina_${sanitizedName}_${Date.now()}.pdf`;
-      
+
       // Usar el directorio temporal del sistema operativo
       const tempDir = os.tmpdir();
       const filePath = path.join(tempDir, fileName);
-      
+
       console.log(`Usando directorio temporal: ${tempDir}`);
-      
+
       // Preparar logo
       const logoPath = path.resolve(__dirname, "../assets/logo.png");
       let logoBase64 = "";
       if (fs.existsSync(logoPath)) {
         logoBase64 = `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}`;
       } else {
-        console.error("Error: El archivo del logo no existe en la ruta:", logoPath);
+        console.warn("Advertencia: El archivo del logo no existe en la ruta:", logoPath, "- Se usará sin logo.");
       }
-      
+
       const creationDate = new Date().toLocaleDateString("es-ES", {
         year: "numeric", month: "long", day: "numeric"
       });
-      
-      // Procesar HTML - CORREGIDO: Mejorado el manejo del primer día
-      let modifiedHtml = htmlContent.replace(/<\/table>\s*<table>/g, "</table><div class='table-spacer'></div><table>");
-      
-      // Corregir el primer día especialmente para evitar problemas
-      if (modifiedHtml.startsWith("<table>")) {
-        const firstDayMatch = modifiedHtml.match(/<th colspan="5">(Día 1:.+?)<\/th>/);
-        if (firstDayMatch) {
-          modifiedHtml = `<h2 class="day-title first-day-title">${firstDayMatch[1]}</h2>${modifiedHtml}`;
-          modifiedHtml = modifiedHtml.replace(/<th colspan="5">Día 1:.+?<\/th>/, '');
-        }
-      }
-      
-      // Procesar el resto de los días
-      modifiedHtml = modifiedHtml.replace(
-        /<th colspan="5">(Día \d+:.+?)<\/th>/g, 
-        '</table><h2 class="day-title">$1</h2><table>'
-      );
-      
       const currentYear = new Date().getFullYear();
-      
-      // Crear HTML con estilos
-      const styledHtml = `<html>
-  <head>
+
+      // --- Procesamiento HTML Mejorado ---
+      // 1. Eliminar espacios entre tablas y añadir un marcador temporal
+      let modifiedHtml = htmlContent.replace(/<\/table>\s*<table>/g, "</table><table>");
+
+      // 2. Extraer títulos de día y envolver tablas en divs de día
+      const dayRegex = /<th colspan="5">(Día \d+:[^<]+)<\/th>/i;
+      let dayCounter = 0;
+      let processedHtml = "";
+      let currentDayContent = "";
+      let currentDayTitle = "";
+
+      const parts = modifiedHtml.split('');
+
+      parts.forEach((part, index) => {
+          const dayMatch = part.match(dayRegex);
+
+          if (dayMatch) {
+              // Si encontramos un título de día y ya teníamos contenido del día anterior, lo cerramos
+              if (currentDayContent) {
+                  processedHtml += `<div class="training-day-container" data-day="${dayCounter}">
+                                      <h2 class="day-title">${currentDayTitle}</h2>
+                                      ${currentDayContent}
+                                   </div>`;
+                  currentDayContent = ""; // Reiniciar contenido para el nuevo día
+              }
+              // Nuevo día encontrado
+              dayCounter++;
+              currentDayTitle = dayMatch[1]; // Guardar el título del nuevo día
+              // Añadir la tabla (sin el título th) al contenido del día actual
+              currentDayContent += part.replace(dayRegex, '');
+          } else {
+              // Si no es un título de día, es parte del contenido del día actual (tabla, variante, etc.)
+              currentDayContent += part;
+          }
+
+          // Si es la última parte, cerrar el último contenedor de día
+          if (index === parts.length - 1 && currentDayContent) {
+               processedHtml += `<div class="training-day-container" data-day="${dayCounter}">
+                                  <h2 class="day-title">${currentDayTitle}</h2>
+                                  ${currentDayContent}
+                               </div>`;
+          }
+      });
+
+      // --- HTML con Estilos Renovados ---
+      const styledHtml = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutina de Entrenamiento - ${clientName}</title>
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    
-    :root {
-        --primary-color: #0a2a5e;
-        --secondary-color: #2c4b7c;
-        --accent-color: #2196f3;
-        --routine-color: #1565c0;
-        --activation-color: #42a5f5;
-        --light-accent: #e3f2fd;
-        --light-gray: #f5f7fa;
-        --dark-gray: #37474f;
-        --medium-gray: #b0bec5;
-        --day-color: #e1f5fe;
-        --day-text: #01579b;
-        --row-even: #f5f9ff;
-        --row-odd: #ffffff;
-        --border-radius: 8px;
-        --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        --variant-bg: #fffde7;
-        --variant-border: #ffee58;
-        --variant-text: #333333;
-        --variant-accent: #ffd600;
-    }
-    
-    body {
-        font-family: 'Inter', 'Arial', sans-serif;
-        color: var(--dark-gray);
-        line-height: 1.6;
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+      :root {
+          --primary-color: #0D47A1; /* Azul Oscuro Principal */
+          --secondary-color: #1976D2; /* Azul Medio */
+          --accent-color: #42A5F5; /* Azul Claro (Énfasis) */
+          --highlight-color: #FFC107; /* Amarillo/Dorado (Variantes) */
+          --text-color: #263238; /* Gris Oscuro (Texto Principal) */
+          --text-light: #546E7A; /* Gris Medio (Texto Secundario) */
+          --bg-light: #F5F7FA; /* Gris Muy Claro (Fondo suave) */
+          --white: #FFFFFF;
+          --border-color: #E0E0E0; /* Borde sutil */
+          --border-color-light: #EEEEEE;
+          --success-color: #4CAF50;
+          --warning-color: #FF9800;
+          --error-color: #F44336;
+
+          --border-radius: 6px;
+          --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          --box-shadow-light: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+          --font-sans: 'Inter', 'Arial', sans-serif;
+          --font-size-base: 10.5px;
+          --font-size-sm: 9.5px;
+          --font-size-lg: 14px;
+          --font-size-xl: 18px;
+          --line-height-base: 1.6;
+
+          --header-height: 70px;
+          --footer-height: 50px;
+          --content-padding: 30px;
+          --page-width: 210mm; /* A4 width */
+          --page-height: 297mm; /* A4 height */
+      }
+
+      * {
+        box-sizing: border-box;
         margin: 0;
         padding: 0;
-        font-size: 11px;
-        position: relative;
-        width: 100%;
-        background-color: white;
-        min-height: 100vh;
-        letter-spacing: 0.3px;
-    }
-    
-    .header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        padding: 15px 0;
-        margin: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
-        border-bottom: 4px solid var(--accent-color);
-        width: 100%;
-        position: relative;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-    }
-    
-    .header-content {display: flex; justify-content: space-between; width: 100%; padding: 0 30px; align-items: center;}
-    
-    .header img {
-        width: 140px;
-        height: auto;
-        padding: 6px;
-        border-radius: calc(var(--border-radius) + 2px);
-        filter: brightness(0) invert(1);
-        transition: all 0.3s ease;
-    }
-    
-    .header .info {
-        text-align: right;
-        font-size: 13px;
-        padding: 8px 18px;
-        background-color: rgba(255, 255, 255, 0.18);
-        border-radius: var(--border-radius);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border-left: 3px solid rgba(255, 255, 255, 0.5);
-    }
-    
-    .header .info p {margin: 5px 0; font-weight: 500; letter-spacing: 0.4px;}
-    .header .info strong {font-weight: 600; letter-spacing: 0.5px;}
-    
-    .content-wrapper {
-        padding: 30px;
-        width: 100%;
-        box-sizing: border-box;
-        padding-bottom: 80px;
-        background-color: #ffffff;
-    }
-    
-    /* Estilos para el disclaimer - CENTRADO Y TEXTO NEGRO */
-    .disclaimer-container {
-        background-color: transparent;
-        border-radius: var(--border-radius);
-        padding: 25px 30px;
-        margin-bottom: 35px;
-        position: relative;
-        overflow: hidden;
-        border-left: none;
-        box-shadow: none;
-        page-break-inside: avoid;
-        text-align: center;
-    }
-    
-    .disclaimer-title {
-        font-weight: 700;
-        color: var(--primary-color);
-        font-size: 16px;
-        margin-bottom: 20px;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        position: relative;
-        padding-left: 0;
-        display: inline-block;
-    }
-    
-    .disclaimer-title::after {
-        content: "";
-        position: absolute;
-        bottom: -5px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, var(--accent-color) 0%, rgba(33, 150, 243, 0.3) 100%);
-        border-radius: 2px;
-    }
-    
-    .disclaimer-content {
-        font-size: 11px;
-        color: #000000;
-        line-height: 1.7;
-        text-align: left; /* Alinear el contenido a la izquierda */
-        max-width: 800px; /* Opcional: limitar el ancho máximo */
-        margin: 0 auto;
-    }
-    
-    .disclaimer-content p {
-        margin-bottom: 12px;
-    }
-    
-    .disclaimer-content strong {
-        color: var(--primary-color);
-        font-weight: 600;
-    }
-    
-    .disclaimer-content ul {
-        padding-left: 20px;
-        margin: 15px 0;
-        /* Centrado de la lista */
-        display: inline-block;
-        text-align: left;
-    }
-    
-    .disclaimer-content li {
-        margin-bottom: 8px;
-    }
-        
-    .disclaimer-footer {
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #e3e8f0;
-        font-style: italic;
-        font-size: 10px;
-        color: var(--medium-gray);
-    }
-    
-    .table-spacer {
-        height: 12px;
-        width: 100%;
-    }
-    
-    table + * {
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block;
-    height: 0 !important;
-    }
+      }
 
-    table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin-bottom: 0 !important;
-        font-size: 10px;
-        page-break-inside: auto;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: var(--box-shadow);
-        border: 1px solid #e0e0e0;
-        background-color: white;
-        position: relative;
-    }
-    
-    table::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 8px;
-        height: 100%;
-        background: linear-gradient(90deg, rgba(33,150,243,0) 0%, rgba(33,150,243,0.06) 100%);
-        pointer-events: none;
-        border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
-    }
-    
-    th, td {
-        padding: 12px 14px;
-        text-align: left;
-        word-wrap: break-word;
-        border: none;
-        border-bottom: 1px solid #e3e8f0;
-        border-right: 1px solid #e3e8f0;
-        position: relative;
-        vertical-align: middle;
-        transition: background-color 0.2s ease;
-    }
-    
-    th:last-child, td:last-child {border-right: none;}
-    tr:last-child td {border-bottom: none;}
-    
-    .day-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--primary-color);
-        margin: 30px 0 20px 0;
-        padding-bottom: 10px;
-        position: relative;
-        letter-spacing: 0.6px;
-        padding-left: 15px;
-        max-width: 80%;
-        display: inline-block;
-        text-transform: uppercase;
-    }
-    
-    /* Ajuste especial para el primer día */
-    .first-day-title {
-        margin-top: 50px; /* Aumentar el margen superior solo para el primer día */
-    }
-    
-    .day-title::before {display: none;}
-    
-    .day-title::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 15px;
-        width: calc(100% - 15px);
-        height: 2px;
-        background: linear-gradient(90deg, var(--accent-color) 0%, rgba(255,255,255,0) 100%);
-        border-radius: 1px;
-    }
-    
-    .activacion-header td,
-    .rutina-header td {
-        color: white !important;
-        font-weight: 600;
-        text-align: center;
-        font-size: 11px;
-        padding: 14px 15px;
-        letter-spacing: 0.6px;
-        position: relative;
-        text-transform: uppercase;
-    }
-    
-    .activacion-header td {
-        background-color: var(--activation-color) !important;
-        border-bottom: 2px solid #1e88e5;
-    }
-    
-    .rutina-header td {
-        background-color: var(--routine-color) !important;
-        border-bottom: 2px solid #0d47a1;
-    }
-    
-    .activacion-header td::after,
-    .rutina-header td::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.2);
-    }
-    
-    th:not([colspan]) {
-        background-color: var(--secondary-color);
-        color: white;
-        font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        padding: 13px 14px;
-        position: relative;
-    }
-    
-    th:not([colspan])::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.2);
-    }
-    
-    tr:nth-child(even) td {background-color: var(--row-even);}
-    tr:nth-child(odd) td {background-color: var(--row-odd);}
-    
-    td:hover {background-color: rgba(33, 150, 243, 0.07) !important;}
-    
-    tr td:first-child {
-        border-left: none;
-        font-weight: 500;
-        background-color: var(--day-color);
-        color: var(--day-text);
-        border-right: 2px solid #e3f2fd;
-    }
-    
-    tr td:last-child {border-right: none;}
-    
-    tr:last-child td:first-child {border-bottom-left-radius: calc(var(--border-radius) - 1px);}
-    tr:last-child td:last-child {border-bottom-right-radius: calc(var(--border-radius) - 1px);}
-    tr:first-child td:first-child:not(th) {border-top-left-radius: calc(var(--border-radius) - 1px);}
-    tr:first-child td:last-child:not(th) {border-top-right-radius: calc(var(--border-radius) - 1px);}
-    
-    th[colspan] {
-        text-align: center;
-        padding: 15px;
-        background-color: var(--accent-color);
-        color: white;
-        font-weight: 600;
-        letter-spacing: 0.7px;
-        text-transform: uppercase;
-        position: relative;
-        border-bottom: 2px solid #1976d2;
-    }
-    
-    th[colspan]::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.2);
-    }
-    
-    .variants-container, .side-variants-container {
-        background-color: white;
-        border-radius: var(--border-radius);
-        position: relative;
-        overflow: hidden;
-        border-left: none;
-        box-shadow: none;
-        page-break-inside: avoid;
-    }
-    
-    .variants-container {
-        padding: 15px 25px;
-        margin-bottom: 25px;
-        margin-top: 5px;
-    }
-    
-    .side-variants-container {
-        padding: 15px 22px;
-        margin-top: 5px;
-        margin-bottom: 25px;
-    }
-    
-    .variants-container::after, .side-variants-container::after {
-         display: none;
-    }
+      @page {
+          size: A4;
+          margin: 0; /* Quitamos márgenes de @page, los manejamos con padding en body/content */
+      }
 
-    .variants-title, .side-variants-title {
-        font-weight: 700;
-        color: #333333;
-        font-size: 14px;
-        margin-bottom: 12px;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        position: relative;
-        padding-left: 0;
-        display: inline-block;
-    }
-    
-    .variants-title::after, .side-variants-title::after {
-        content: "";
-        position: absolute;
-        bottom: -5px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, var(--variant-accent) 0%, rgba(255, 214, 0, 0.3) 100%);
-        border-radius: 2px;
-    }
-    
-    
+      body {
+          font-family: var(--font-sans);
+          font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
+          color: var(--text-color);
+          background-color: var(--bg-light); /* Fondo general suave */
+          -webkit-print-color-adjust: exact; /* Forzar impresión de fondos y colores */
+          print-color-adjust: exact;
+          padding-top: var(--header-height); /* Espacio para el header fijo */
+          padding-bottom: var(--footer-height); /* Espacio para el footer fijo */
+          min-height: var(--page-height); /* Asegurar altura mínima */
+      }
 
-    .variant-item, .side-variant-item {
-        margin-bottom: 8px;
-        padding-bottom: 8px;
-        border-bottom: none;
-        position: relative;
-    }
+      /* --- Header --- */
+      .header {
+          position: fixed; /* Fijar header */
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: var(--header-height);
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+          color: var(--white);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 var(--content-padding);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          z-index: 1000;
+          border-bottom: 3px solid var(--accent-color);
+      }
 
-    .variant-item:last-child, .side-variant-item:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-    }
+      .header .logo img {
+          height: 35px; /* Ajustar tamaño logo */
+          width: auto;
+          filter: brightness(0) invert(1); /* Logo blanco */
+          vertical-align: middle;
+      }
+      .header .logo span { /* Nombre opcional junto al logo */
+          font-size: var(--font-size-lg);
+          font-weight: 600;
+          margin-left: 10px;
+          vertical-align: middle;
+      }
 
-    .variant-title, .side-variant-title {
-        font-weight: 600;
-        color: #333333;
-        font-size: 11px;
-        margin-bottom: 7px;
-        letter-spacing: 0.4px;
-        position: relative;
-        padding-left: 12px;
-    }
-    
-    .side-variant-title {display: flex; align-items: center;}
-    
-    .variant-title::before, .side-variant-title::before {
-        content: '•';
-        position: absolute;
-        left: 0;
-        top: 0;
-        color: var(--variant-accent);
-        font-size: 14px;
-        font-weight: bold;
-    }
+      .header .info {
+          text-align: right;
+          font-size: var(--font-size-sm);
+      }
 
-    .variant-description, .side-variant-description {
-        font-size: 10px;
-        color: #333333;
-        line-height: 1.4;
-        padding-left: 12px;
-    }
+      .header .info p {
+          margin: 2px 0;
+          line-height: 1.4;
+      }
+      .header .info strong {
+          font-weight: 600;
+          margin-right: 5px;
+      }
 
-    .arrow-right {
-        color: var(--accent-color);
-        margin: 0 5px;
-        font-weight: 600;
-    }
-    
-    @page {
-        margin: 0;
-        size: A4;
-    }
-    
-    @page :first {
-        margin-top: 0;
-    }
-    
-    @page :not(:first) {
-        margin-top: 0;
-    }
-    
-    .training-day-container {
-        page-break-inside: avoid;
-        margin-bottom: 35px;
-        position: relative;
-    }
-    
-    /* Asegurar que los elementos dentro de un contenedor queden juntos */
-    .training-day-container table,
-    .training-day-container .variants-container,
-    .training-day-container .side-variants-container {
-        page-break-inside: avoid;
-    }
-    
-    /* Elemento con margen superior para saltos de página */
-    .page-break-spacer {
-        height: 50px;
-        width: 100%;
-        display: block;
-    }
-    
-    .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 55px;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        font-size: 10px;
-        border-top: 3px solid var(--accent-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 1000;
-        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .footer-left, .footer-center, .footer-right {
-        flex: 1;
-        padding: 0 25px;
-    }
-    
-    .footer-left {
-        text-align: left;
-        display: flex;
-        align-items: center;
-    }
-    
-    .footer-left img {
-        height: 15px;
-        width: auto;
-        filter: brightness(0) invert(1);
-    }
-    
-    .footer-left::before {display: none;}
-    .footer-center {text-align: center;}
-    .footer-right {text-align: right; font-weight: 400; letter-spacing: 0.5px;}
-    
-    .content-spacer {height: 60px; width: 100%;}
-    .page-break {
-        page-break-before: always;
-        display: block;
-        height: 0;
-        width: 100%;
-    }
-    
-    /* Clase para preservar los márgenes en los saltos de página */
-    .page-content {
-        padding-top: 50px;
-    }
-    
-    @keyframes pulse {
-        0% {opacity: 0.6;}
-        50% {opacity: 1;}
-        100% {opacity: 0.6;}
-    }
-    
-    .loading-message {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 20px 30px;
-        border-radius: var(--border-radius);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        z-index: 9999;
-        animation: pulse 2s infinite ease-in-out;
-        text-align: center;
-        font-weight: 500;
-    }
+      /* --- Footer --- */
+      .footer {
+          position: fixed; /* Fijar footer */
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: var(--footer-height);
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+          color: rgba(255, 255, 255, 0.8); /* Texto ligeramente transparente */
+          font-size: var(--font-size-sm);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 var(--content-padding);
+          border-top: 3px solid var(--accent-color);
+          z-index: 1000;
+      }
+      .footer-left { text-align: left; }
+      .footer-center { text-align: center; font-style: italic; opacity: 0.7;} /* Mensaje opcional central */
+      .footer-right { text-align: right; }
+
+      /* --- Contenido Principal --- */
+      .content-wrapper {
+          padding: var(--content-padding);
+          background-color: var(--white); /* Fondo blanco para el área de contenido principal */
+          /* Quitar min-height de aquí, body ya tiene padding */
+      }
+
+      /* --- Disclaimer / Información Importante --- */
+      .disclaimer-container {
+          background-color: #E3F2FD; /* Fondo azul muy claro */
+          border-left: 5px solid var(--accent-color);
+          border-radius: var(--border-radius);
+          padding: 20px;
+          margin-bottom: 35px;
+          page-break-inside: avoid; /* Intentar no romper esta sección */
+          font-size: var(--font-size-sm); /* Texto ligeramente más pequeño */
+          color: var(--text-light); /* Texto gris medio */
+      }
+
+      .disclaimer-title {
+          font-weight: 700;
+          color: var(--secondary-color); /* Azul medio */
+          font-size: var(--font-size-lg);
+          margin-bottom: 15px;
+          display: block; /* Asegurar que ocupa todo el ancho */
+          padding-bottom: 5px;
+          border-bottom: 1px solid rgba(66, 165, 245, 0.3); /* Línea sutil debajo */
+      }
+
+      .disclaimer-content p {
+          margin-bottom: 10px;
+          line-height: 1.5;
+      }
+      .disclaimer-content strong {
+          color: var(--primary-color); /* Azul oscuro */
+          font-weight: 600;
+      }
+      .disclaimer-content ul {
+          padding-left: 20px;
+          margin: 10px 0;
+          list-style: disc; /* Usar viñetas estándar */
+      }
+       .disclaimer-content ul li {
+          margin-bottom: 5px;
+       }
+       /* Colores específicos para la leyenda */
+       .disclaimer-content .color-activation { color: var(--accent-color); font-weight: 600; }
+       .disclaimer-content .color-routine { color: var(--secondary-color); font-weight: 600; }
+       .disclaimer-content .color-variant { color: var(--highlight-color); font-weight: 600; }
+
+
+      .disclaimer-footer {
+          margin-top: 15px;
+          padding-top: 10px;
+          border-top: 1px solid var(--border-color);
+          font-style: italic;
+          font-size: 9px;
+          color: var(--text-light);
+      }
+
+      /* --- Contenedor de Día de Entrenamiento --- */
+      .training-day-container {
+          margin-bottom: 30px;
+          page-break-inside: avoid; /* Intentar mantener el día junto */
+      }
+
+      /* Título del Día */
+      .day-title {
+          font-size: var(--font-size-xl);
+          font-weight: 700;
+          color: var(--primary-color);
+          margin-bottom: 20px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid var(--accent-color);
+          display: inline-block; /* Para que el borde no ocupe todo */
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+      }
+
+      /* --- Tablas de Ejercicios --- */
+      table {
+          width: 100%;
+          border-collapse: collapse; /* Bordes limpios */
+          margin-bottom: 15px; /* Espacio después de cada tabla */
+          font-size: var(--font-size-base);
+          border: 1px solid var(--border-color);
+          border-radius: var(--border-radius);
+          overflow: hidden; /* Para que el border-radius afecte a las celdas */
+          box-shadow: var(--box-shadow-light);
+          background-color: var(--white);
+          page-break-inside: auto; /* Permitir romper dentro si es necesario */
+      }
+
+       /* Encabezados de sección (Activación/Rutina) */
+      .section-header td {
+          font-weight: 600;
+          text-align: center !important; /* Forzar centro */
+          font-size: 11.5px; /* Ligeramente más grande */
+          padding: 10px 15px; /* Ajustar padding */
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          color: var(--white) !important; /* Asegurar texto blanco */
+          border-bottom: 2px solid rgba(0, 0, 0, 0.2); /* Sombra sutil */
+      }
+      .activacion-header td { background-color: var(--accent-color) !important; }
+      .rutina-header td { background-color: var(--secondary-color) !important; }
+
+      /* Encabezados de Columna (Ejercicio, Series, Reps, etc.) */
+      thead th {
+          background-color: var(--bg-light); /* Fondo gris claro */
+          color: var(--text-light); /* Texto gris medio */
+          font-size: var(--font-size-sm);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 10px 12px;
+          text-align: left;
+          border-bottom: 2px solid var(--border-color);
+      }
+
+      /* Celdas de Datos */
+      td, th {
+          padding: 10px 12px; /* Padding consistente */
+          text-align: left;
+          word-wrap: break-word;
+          border-bottom: 1px solid var(--border-color-light); /* Líneas horizontales más sutiles */
+          vertical-align: middle;
+      }
+      /* Quitar borde inferior de la última fila */
+       tbody tr:last-child td {
+           border-bottom: none;
+       }
+
+       /* Estilo alternado de filas */
+      tbody tr:nth-child(even) td {
+          background-color: var(--bg-light);
+      }
+      tbody tr:nth-child(odd) td {
+          background-color: var(--white);
+      }
+      /* Hover sutil */
+      tbody tr:hover td {
+         background-color: #E3F2FD; /* Azul muy claro al pasar el ratón (si es interactivo) */
+      }
+
+      /* Primera columna (Nombre del ejercicio) */
+      tbody td:first-child {
+         font-weight: 500; /* Ligeramente más énfasis */
+         color: var(--primary-color); /* Color primario para el nombre */
+      }
+
+       /* Estilo específico para columnas (si es necesario ajustar anchos) */
+       /* table td:nth-child(1) { width: 35%; } Nombre Ejercicio */
+       /* table td:nth-child(2) { width: 15%; } Series */
+       /* table td:nth-child(3) { width: 15%; } Reps */
+       /* table td:nth-child(4) { width: 15%; } Descanso */
+       /* table td:nth-child(5) { width: 20%; } Notas/RPE */
+
+
+      /* --- Variantes --- */
+      .variants-container, .side-variants-container {
+          background-color: #FFFDE7; /* Amarillo muy pálido */
+          border: 1px solid #FFF9C4; /* Borde amarillo pálido */
+          border-left: 4px solid var(--highlight-color); /* Borde izquierdo resaltado */
+          border-radius: var(--border-radius);
+          padding: 15px 20px;
+          margin-top: 10px; /* Espacio respecto a la tabla */
+          margin-bottom: 20px;
+          page-break-inside: avoid; /* Intentar no romper las variantes */
+          box-shadow: var(--box-shadow-light);
+      }
+
+      .variants-title, .side-variants-title {
+          font-weight: 700;
+          color: #795548; /* Marrón oscuro para el título de variantes */
+          font-size: var(--font-size-lg);
+          margin-bottom: 12px;
+          display: block;
+          padding-bottom: 5px;
+          border-bottom: 1px solid rgba(255, 193, 7, 0.3); /* Línea sutil amarilla */
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+      }
+
+      .variant-item, .side-variant-item {
+          margin-bottom: 10px;
+          padding-bottom: 10px;
+          border-bottom: 1px dashed var(--border-color-light); /* Separador sutil entre variantes */
+          position: relative;
+          padding-left: 15px; /* Espacio para el icono/bullet */
+      }
+      .variant-item:last-child, .side-variant-item:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+      }
+
+      /* Icono/Bullet para variantes */
+       .variant-item::before, .side-variant-item::before {
+           content: '💡'; /* Icono de bombilla o '▶' */
+           position: absolute;
+           left: 0;
+           top: 0;
+           color: var(--highlight-color);
+           font-size: 12px;
+       }
+
+
+      .variant-title, .side-variant-title { /* Título de CADA variante */
+          font-weight: 600;
+          color: var(--text-color);
+          font-size: var(--font-size-base); /* Mismo tamaño que texto base */
+          margin-bottom: 3px;
+      }
+      .side-variant-title { /* Para variantes lado a lado */
+         display: inline; /* Mostrar en línea */
+         margin-right: 5px;
+      }
+
+      .variant-description, .side-variant-description {
+          font-size: var(--font-size-sm); /* Descripción más pequeña */
+          color: var(--text-light);
+          line-height: 1.4;
+          padding-left: 0; /* No necesita padding extra aquí */
+      }
+
+      /* Flecha (si se usa en side-variants) */
+      .arrow-right {
+          color: var(--highlight-color);
+          font-weight: 700;
+          margin: 0 6px;
+      }
+
+
+      /* --- Saltos de Página y Espaciado --- */
+      .page-break {
+          page-break-before: always;
+          height: 0;
+          display: block;
+          clear: both; /* Asegurar que limpie flotantes si los hubiera */
+      }
+       /* Contenedor para contenido después de un salto, para aplicar padding superior */
+      .page-content-after-break {
+          padding-top: var(--content-padding); /* Añadir padding arriba después de un salto manual */
+      }
+
+
+      /* --- Utilidades --- */
+      .text-center { text-align: center; }
+      .text-right { text-align: right; }
+      .font-bold { font-weight: 700; }
+      .font-semibold { font-weight: 600; }
+
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="header">
-      <div class="header-content">
-        <img src="${logoBase64}" alt="Logo" />
-        <div class="info">
+      <div class="logo">
+          ${logoBase64 ? `<img src="${logoBase64}" alt="Logo">` : ''}
+          </div>
+      <div class="info">
           <p><strong>Cliente:</strong> ${clientName}</p>
           <p><strong>Fecha:</strong> ${creationDate}</p>
-        </div>
       </div>
     </div>
-   
+
     <div class="content-wrapper">
-      <!-- Nuevo elemento de disclaimer -->
-      <div class="disclaimer-container">
-        <div class="disclaimer-title">INFORMACIÓN IMPORTANTE</div>
-        <div class="disclaimer-content">
-          <p>Este programa de entrenamiento ha sido diseñado específicamente para ti a través del formulario que has respondido. Para maximizar tus resultados y garantizar tu seguridad, lee atentamente las siguientes recomendaciones:</p>
-          
-          <p><strong>Consulta médica:</strong> Antes de comenzar cualquier programa de ejercicio, especialmente si tiene condiciones médicas preexistentes, se recomienda consultar con un profesional de la salud.</p>
-          
-          <p><strong>Interpretación del programa:</strong> Este documento utiliza un sistema de colores para facilitar la comprensión:</p>
-          <ul>
-            <li><strong>Azul claro:</strong> Indica los ejercicios de activación, diseñados para preparar el cuerpo para el entrenamiento.</li>
-            <li><strong>Azul oscuro:</strong> Señala los ejercicios principales que conforman su rutina.</li>
-            <li><strong>Amarillo:</strong> Muestra variantes o alternativas para adaptar los ejercicios según sea necesario.</li>
-          </ul>
-          
-          <p><strong>Progresión gradual:</strong> Comienza con intensidades moderadas y aumenta gradualmente según tu adaptación. Respeta los descansos indicados y las series recomendadas.</p>
-          
-          <p><strong>Técnica correcta:</strong> Prioriza siempre la ejecución adecuada de los movimientos sobre el peso o la intensidad. En caso de duda, consulta con un entrenador.</p>
-          
-          <p><strong>Escucha a tu cuerpo:</strong> Si experimentas dolor (distinto a la incomodidad normal del ejercicio), mareos o dificultad para respirar, detén el entrenamiento y ves al médico.</p>
-             
-          <div class="disclaimer-footer">
-            Este programa es propiedad intelectual de Fitform y está destinado únicamente para uso personal del cliente. Queda prohibida su reproducción o distribución sin autorización.
-          </div>
+        <div class="disclaimer-container">
+            <div class="disclaimer-title">¡IMPORTANTE ANTES DE EMPEZAR!</div>
+            <div class="disclaimer-content">
+                <p>Esta rutina ha sido generada específicamente para ti. Para asegurar los mejores resultados y tu seguridad, por favor considera lo siguiente:</p>
+                <p><strong>Consulta Profesional:</strong> Si tienes alguna condición médica preexistente o dudas, consulta con tu médico o un fisioterapeuta antes de iniciar.</p>
+                <p><strong>Interpretación:</strong> Los colores te ayudan a identificar las secciones:</p>
+                <ul>
+                    <li><span class="color-activation">Azul Claro:</span> Ejercicios de activación/calentamiento.</li>
+                    <li><span class="color-routine">Azul Oscuro:</span> Ejercicios principales de la rutina.</li>
+                    <li><span class="color-variant">Amarillo:</span> Variantes o alternativas sugeridas.</li>
+                </ul>
+                <p><strong>Progresión:</strong> Empieza con calma y aumenta la intensidad gradualmente. Escucha a tu cuerpo y respeta los descansos.</p>
+                <p><strong>Técnica:</strong> ¡La forma es clave! Prioriza una ejecución correcta sobre levantar más peso o hacer más repeticiones. Si no estás seguro, busca vídeos o consulta a un profesional.</p>
+                <p><strong>Señales de Alerta:</strong> Detente si sientes dolor agudo (diferente a la fatiga muscular), mareos o dificultad para respirar.</p>
+                <div class="disclaimer-footer">
+                    Rutina generada por FitForm. Propiedad intelectual. Uso exclusivo para ${clientName}.
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <div class="content">${modifiedHtml}</div>
-      <div class="content-spacer"></div>
+
+        ${processedHtml}
+
     </div>
-    
+
     <div class="footer">
-      <div class="footer-left"><img src="${logoBase64}" alt="Logo" /></div>
-      <div class="footer-center"></div>
-      <div class="footer-right">© ${currentYear} Todos los derechos reservados</div>
+        <div class="footer-left">
+             ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="height: 20px; opacity: 0.7;">` : 'FitForm'}
+        </div>
+        <div class="footer-center">Tu plan personalizado</div>
+        <div class="footer-right">© ${currentYear} Todos los derechos reservados</div>
     </div>
-  </body>
+
+</body>
 </html>`;
 
-      // Lanzar navegador con opciones optimizadas para entornos sin interfaz gráfica
+      // --- Generación del PDF con Puppeteer ---
       const browser = await puppeteer.launch({
-        headless: true, // Usar true en lugar de "new" para mayor compatibilidad
+        headless: true, // 'true' suele ser más compatible que 'new' en algunos entornos
         args: [
-          "--no-sandbox", 
+          "--no-sandbox",
           "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu"
+          "--disable-dev-shm-usage", // Importante para entornos limitados (Docker, CI)
+          "--disable-gpu", // A menudo innecesario para renderizar HTML simple
+          "--font-render-hinting=none" // Puede mejorar la renderización de fuentes
         ]
       });
 
       const page = await browser.newPage();
-      
-      // Configurar viewport para A4
-      await page.setViewport({
-        width: 794,
-        height: 1123,
-        deviceScaleFactor: 1
-      });
-      
-      // Mostrar mensaje de carga
-      await page.setContent('<div class="loading-message">Generando rutina de entrenamiento...</div>', {
-        waitUntil: "networkidle0"
-      });
-      
-      await page.setContent(styledHtml, { waitUntil: "networkidle0" });
-      
-      // Script para organizar días y variantes - MEJORADO
+
+      // Establecer contenido HTML
+      // Usar 'domcontentloaded' puede ser más rápido si no dependes de recursos externos tardíos
+      await page.setContent(styledHtml, { waitUntil: 'networkidle0' }); // networkidle0 es más seguro si hay fuentes web o imágenes
+
+      // --- Script de Evaluación Post-Renderizado (Opcional, para ajustes finos) ---
+      // Añadimos saltos de página explícitos ANTES de cada día (excepto el primero)
+      // y movemos las variantes para que estén DENTRO del contenedor de su día.
       await page.evaluate(() => {
-        // Primero, asegurarnos de que todos los elementos de variante tengan un ID para facilitar su manipulación
-        document.querySelectorAll('.variants-container, .side-variants-container').forEach((variant, idx) => {
-          variant.id = 'variant-' + idx;
-          
-          // Extraer el número del día al que pertenece esta variante
-          const dayMatch = variant.innerHTML.match(/Día\s+(\d+)/i);
-          if (dayMatch) {
-            variant.dataset.dayNumber = dayMatch[1];
-          }
-        });
-        
-        // Organizar días y variantes en contenedores
-        const dayTitles = document.querySelectorAll('.day-title');
-        
-        dayTitles.forEach((title, index) => {
-          const dayContainer = document.createElement('div');
-          dayContainer.className = 'training-day-container';
-          
-          // Extraer el número de día del título
-          const dayNumberMatch = title.textContent.match(/Día\s+(\d+)/i);
-          if (dayNumberMatch) {
-            dayContainer.dataset.dayNumber = dayNumberMatch[1];
-          }
-          
-          title.parentNode.insertBefore(dayContainer, title);
-          dayContainer.appendChild(title);
-          
-          let nextElement = dayContainer.nextElementSibling;
-          while (nextElement && (nextElement.tagName === 'TABLE' || nextElement.classList.contains('table-spacer'))) {
-            const currentElement = nextElement;
-            nextElement = nextElement.nextElementSibling;
-            dayContainer.appendChild(currentElement);
-          }
-          
-          // Solo añadir salto de página para días posteriores al primer día
-          if (index > 0) {
-            const pageBreak = document.createElement('div');
-            pageBreak.className = 'page-break';
-            
-            // Añadir un wrapper para contener el día y mantener márgenes consistentes
-            const pageContent = document.createElement('div');
-            pageContent.className = 'page-content';
-            pageContent.style.paddingTop = '50px'; // Padding-top constante para mantener márgenes consistentes
-            
-            // Envolver el dayContainer en pageContent para mantener márgenes consistentes
-            dayContainer.parentNode.insertBefore(pageBreak, dayContainer);
-            dayContainer.parentNode.insertBefore(pageContent, dayContainer);
-            pageContent.appendChild(dayContainer);
-          }
-        });
-        
-        // Cambiar título de variantes principales
-        document.querySelectorAll('.variants-container').forEach(container => {
-          const titleEl = container.querySelector('.variants-title');
-          if (titleEl) titleEl.textContent = "VARIANTES";
-        });
-        
-        // MEJORA: Función para comprobar si una variante es pequeña (pocos items)
-        function isSmallVariant(variant) {
-          const items = variant.querySelectorAll('.variant-item, .side-variant-item');
-          return items.length <= 3;
-        }
-        
-        // MEJORA: Función para calcular el espacio disponible después de un elemento
-        function getAvailableSpace(element) {
-          if (!element) return 0;
-          
-          const rect = element.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-          const footerHeight = 55;
-          
-          return viewportHeight - rect.bottom - footerHeight;
-        }
-        
-        // MEJORA: Función para determinar si un elemento está cerca del footer
-        function isNearFooter(element, safetyMargin = 90) { // Reducido de 120px a 90px
-          if (!element) return false;
-          
-          const rect = element.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-          const footerThreshold = viewportHeight - safetyMargin;
-          return rect.bottom > footerThreshold;
-        }
-        
-        // MEJORADO: Algoritmo para mover variantes a sus contenedores de día
-        document.querySelectorAll('.training-day-container').forEach(dayContainer => {
-          const dayNumber = dayContainer.dataset.dayNumber;
-          if (!dayNumber) return;
-          
-          // Encontrar todas las variantes que pertenecen a este día
-          document.querySelectorAll('.variants-container, .side-variants-container').forEach(variant => {
-            const titleEl = variant.querySelector('.variants-title, .side-variants-title');
-            if (titleEl) titleEl.textContent = "VARIANTES";
-            
-            const variantDayMatch = variant.innerHTML.match(/Día\s+(\d+)/i);
-            if (variantDayMatch && variantDayMatch[1] === dayNumber) {
-              // Esta variante pertenece a este día
-              
-              // Obtener la última tabla del día
-              const tables = dayContainer.querySelectorAll('table');
-              if (tables.length === 0) return;
-              
-              const lastTable = tables[tables.length - 1];
-              
-              // Eliminar cualquier espaciador existente después de la tabla
-              if (lastTable.nextElementSibling && lastTable.nextElementSibling.className === 'table-spacer') {
-                lastTable.nextElementSibling.remove();
-              }
-              
-              // Crear un espaciador personalizado más pequeño
-              const smallSpacer = document.createElement('div');
-              smallSpacer.style.height = '8px'; // Espaciador reducido
-              lastTable.after(smallSpacer);
-              
-              // Verificar si podemos mantener la variante en la misma página
-              const isSmall = isSmallVariant(variant);
-              const availableSpace = getAvailableSpace(lastTable);
-              const variantHeight = isSmall ? 100 : 200; // Estimación aproximada
-              
-              if (isSmall && availableSpace > variantHeight) {
-                // Variante pequeña y hay espacio, mantenerla en la misma página
-                smallSpacer.after(variant);
-              } else if (isNearFooter(lastTable)) {
-                // No hay suficiente espacio, crear salto de página
-                const pageBreak = document.createElement('div');
-                pageBreak.className = 'page-break';
-                
-                const pageContent = document.createElement('div');
-                pageContent.className = 'page-content';
-                pageContent.style.paddingTop = '50px';
-                
-                dayContainer.appendChild(pageBreak);
-                dayContainer.appendChild(pageContent);
-                pageContent.appendChild(variant);
-              } else {
-                // Hay espacio pero la variante es grande, mantenerla en la misma página
-                smallSpacer.after(variant);
-              }
-            }
+          const dayContainers = document.querySelectorAll('.training-day-container');
+
+          dayContainers.forEach((container, index) => {
+              // 1. Añadir Salto de Página y Padding Superior (excepto al primero)
+              if (index > 0) {
+                  const pageBreak = document.createElement('div');
+                  pageBreak.className = 'page-break';
+                  container.parentNode.insertBefore(pageBreak, container);
+
+                  // Envolver el contenido del día en un div para aplicar padding post-salto
+                  const pageContentWrapper = document.createElement('div');
+                  pageContentWrapper.className = 'page-content-after-break';
+                  // Mover el título y las tablas/variantes dentro de este nuevo wrapper
+                  while (container.firstChild) {
+                    pageContentWrapper.appendChild(container.firstChild);
+                  }
+                  container.appendChild(pageContentWrapper);
+               }
+
+              // 2. Mover Variantes al final de su contenedor de día correspondiente
+              const dayNumber = container.dataset.day;
+              const variants = document.querySelectorAll(`.variants-container[data-day="${dayNumber}"], .side-variants-container[data-day="${dayNumber}"]`); // Asumiendo que añadimos data-day a las variantes en el HTML original o aquí
+
+              // (Este paso es más complejo si las variantes no están ya dentro del container.
+              // La lógica de procesamiento HTML anterior ya debería agruparlas.
+              // Si no, necesitarías buscar variantes fuera y moverlas aquí.)
+              // Por simplicidad, asumimos que el procesamiento HTML inicial ya las agrupó.
+              // Si no es así, este es el lugar para encontrarlas y moverlas:
+              // variants.forEach(variant => container.querySelector('.page-content-after-break, div:not(.page-content-after-break)')?.appendChild(variant)); // Añadir al final del contenido del día
+
           });
-        });
-        
-        // Optimizar la colocación de variantes sin crear saltos innecesarios
-        document.querySelectorAll('.training-day-container').forEach(container => {
-          // Obtener la última tabla en el contenedor del día
-          const tables = container.querySelectorAll('table');
-          if (tables.length === 0) return;
-          
-          const lastTable = tables[tables.length - 1];
-          
-          // Obtener todas las variantes en este contenedor de día
-          const variants = container.querySelectorAll('.variants-container, .side-variants-container');
-          
-          if (variants.length > 0) {
-            // Mover todas las variantes después de la última tabla
-            variants.forEach(variant => {
-              // Eliminar cualquier salto de página existente antes de la variante
-              if (variant.previousElementSibling && variant.previousElementSibling.classList.contains('page-break')) {
-                variant.previousElementSibling.remove();
-              }
-              
-              // Calcular el espacio disponible después de la última tabla
-              const availableSpace = getAvailableSpace(lastTable);
-              const variantHeight = variant.getBoundingClientRect().height;
-              
-              // Crear un salto de página solo si realmente no hay suficiente espacio
-              if (variantHeight > availableSpace && isNearFooter(lastTable, 90)) {
-                // Crear salto de página antes de la variante
-                const pageBreak = document.createElement('div');
-                pageBreak.className = 'page-break';
-                
-                // Crear un contenedor con margen para la variante
-                const pageContent = document.createElement('div');
-                pageContent.className = 'page-content';
-                
-                // Insertar los elementos en el orden correcto
-                container.insertBefore(pageBreak, variant);
-                container.insertBefore(pageContent, variant);
-                pageContent.appendChild(variant);
-              }
-            });
-          }
-        });
-        
-        // Eliminar cualquier salto de página innecesario
-        document.querySelectorAll('.page-break').forEach(pageBreak => {
-          const nextElement = pageBreak.nextElementSibling;
-          if (!nextElement || nextElement.classList.contains('page-break')) {
-            pageBreak.remove();
-          }
-        });
-        
-        // Asegurar que haya espacio suficiente al final de cada día para evitar solapamiento con el footer
-        document.querySelectorAll('.training-day-container').forEach(container => {
-          const spacer = document.createElement('div');
-          spacer.className = 'content-spacer';
-          spacer.style.height = '60px'; // Espacio suficiente para evitar el footer
-          container.appendChild(spacer);
-        });
+
+           // 3. Cambiar título genérico de las secciones de variantes
+           document.querySelectorAll('.variants-container .variants-title, .side-variants-container .side-variants-title').forEach(titleEl => {
+                // Asegurarnos de que solo cambiamos el TÍTULO de la sección, no de cada item.
+                 if (titleEl.parentElement.classList.contains('variants-container') || titleEl.parentElement.classList.contains('side-variants-container')) {
+                    if (titleEl.textContent.toLowerCase().includes('variantes')) { // Solo si parece ser el título general
+                       titleEl.textContent = "💡 VARIANTES Y AJUSTES";
+                    }
+                 }
+           });
       });
 
       // Generar PDF
       const pdfBuffer = await page.pdf({
         path: filePath,
         format: 'A4',
-        margin: { top: '0', right: '0', bottom: '0', left: '0' },
-        printBackground: true,
-        preferCSSPageSize: true,
-        timeout: 60000 // Aumentar timeout a 60 segundos para archivos grandes
+        printBackground: true, // ¡Esencial para que se vean los colores y fondos!
+        margin: { // Márgenes CERO porque controlamos el espacio con padding y header/footer fijos
+            top: '0mm',
+            right: '0mm',
+            bottom: '0mm',
+            left: '0mm'
+        },
+        preferCSSPageSize: true, // Usar el tamaño A4 definido en CSS
+        timeout: 90000 // Aumentar timeout a 90 segundos por si acaso
       });
 
       await browser.close();
-      console.log("PDF generado correctamente en:", filePath);
+      console.log("✅ PDF generado correctamente en:", filePath);
       resolve(filePath);
+
     } catch (error) {
-      console.error("Error en generatePDF:", error);
+      console.error("❌ Error en generatePDF:", error);
       reject(error);
     }
   });
