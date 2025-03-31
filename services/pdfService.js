@@ -620,24 +620,21 @@ async function generatePDF(htmlContent, clientName = "Cliente") {
         page-break-after: always;
         background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
     }
-    </style>
-    <!-- Script para el gráfico radar -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1"></script>
-    ${chartScript}
-  </head>
-  <body>
-     <!-- Insertar página de portada con gráfico radar -->
-    ${coverPageHtml}
-    <div class="page-break"></div>
-    <div class="header">
-      <div class="header-content">
-        <img src="${logoBase64}" alt="Logo" />
-        <div class="info">
-          <p><strong>Cliente:</strong> ${clientName}</p>
-          <p><strong>Fecha:</strong> ${creationDate}</p>
-        </div>
-      </div>
-    </div>
+     </style>
+     ${chartScript} // Se mantiene esta línea, ya que chartScript ahora incluye la carga de Chart.js y el código de inicialización
+   </head>
+   <body>
+     ${coverPageHtml}
+     <div class="page-break"></div>
+     <div class="header">
+       <div class="header-content">
+         <img src="${logoBase64}" alt="Logo" />
+         <div class="info">
+           <p><strong>Cliente:</strong> ${clientName}</p>
+           <p><strong>Fecha:</strong> ${creationDate}</p>
+         </div>
+       </div>
+     </div>
    
     <div class="content-wrapper">
       <!-- Nuevo elemento de disclaimer -->

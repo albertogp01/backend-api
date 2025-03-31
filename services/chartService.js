@@ -1,9 +1,9 @@
 const puppeteer = require('puppeteer');
 
 /**
- * Analyzes the routine HTML to calculate training component scores
- * @param {string} routineHtml - The HTML content of the generated routine
- * @returns {Object} - Scores for each training component (0-100)
+ * Analyzes the routine HTML to calculate training component scores.
+ * @param {string} routineHtml - The HTML content of the generated routine.
+ * @returns {Object} - Scores for each training component (0-100).
  */
 function calculateTrainingComponentScores(routineHtml) {
   // Initialize scores
@@ -18,25 +18,25 @@ function calculateTrainingComponentScores(routineHtml) {
 
   // If no HTML, return default scores
   if (!routineHtml || routineHtml.trim() === '') {
-    // Default balanced profile
+    // Default balanced profile if no data
     return {
-      fuerza: 60,
-      hipertrofia: 60,
-      movilidad: 60,
-      potencia: 60,
-      tecnica: 60,
-      cardio: 60
+      fuerza: 50,
+      hipertrofia: 50,
+      movilidad: 50,
+      potencia: 50,
+      tecnica: 50,
+      cardio: 50
     };
   }
 
   // Keywords for each training component
   const keywords = {
-    fuerza: ['fuerza', 'strength', 'carga', 'peso', 'resistencia', 'weight', 'sentadilla', 'squat', 'press', 'deadlift', 'peso muerto', 'power', 'potencia', 'rm', '1rm', 'máxima', 'maximales', 'intensidad alta'],
-    hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'volume', 'muscle', 'músculo', 'muscular', 'growth', 'crecimiento', 'tamaño', 'size', 'bodybuilding', 'culturismo', 'series', 'repeticiones', 'reps'],
-    movilidad: ['movilidad', 'mobility', 'flexibility', 'flexibilidad', 'stretching', 'estiramiento', 'range', 'motion', 'rango', 'articular', 'joint', 'rom', 'elasticidad', 'elongación'],
-    potencia: ['potencia', 'power', 'explosiv', 'explosión', 'velocidad', 'speed', 'fast', 'rápido', 'salto', 'jump', 'plyometric', 'pliometría', 'reactiv', 'sprint', 'lanzamiento', 'throw', 'tiempo', 'time'],
+    fuerza: ['fuerza', 'strength', 'carga', 'peso', 'resistencia', 'weight', 'sentadilla', 'squat', 'press', 'deadlift', 'peso muerto', 'power', 'potencia', 'rm', '1rm', 'máxima', 'maximales', 'intensidad alta', 'pesado', 'heavy'],
+    hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'volume', 'muscle', 'músculo', 'muscular', 'growth', 'crecimiento', 'tamaño', 'size', 'bodybuilding', 'culturismo', 'series', 'repeticiones', 'reps', 'rir'],
+    movilidad: ['movilidad', 'mobility', 'flexibility', 'flexibilidad', 'stretching', 'estiramiento', 'range', 'motion', 'rango', 'articular', 'joint', 'rom', 'elasticidad', 'elongación', 'estirar', 'stretch'],
+    potencia: ['potencia', 'power', 'explosiv', 'explosi[oó]n', 'velocidad', 'speed', 'fast', 'rápido', 'salto', 'jump', 'plyometric', 'pliometría', 'reactiv', 'sprint', 'lanzamiento', 'throw', 'tiempo', 'time', 'tempo.*[xX]'],
     tecnica: ['técnica', 'technique', 'form', 'forma', 'skill', 'habilidad', 'balance', 'equilibrio', 'coordination', 'coordinación', 'control', 'pattern', 'patrón', 'motor', 'stability', 'estabilidad'],
-    cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'stamina', 'interval', 'intervalos', 'hiit', 'heart', 'rate', 'ritmo', 'cardiac', 'cardíaco', 'vo2', 'máximo']
+    cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'stamina', 'interval', 'intervalos', 'hiit', 'heart', 'rate', 'ritmo', 'cardiac', 'cardíaco', 'vo2', 'máximo', 'correr', 'run', 'nadar', 'swim']
   };
 
   // Count occurrences of keywords
@@ -49,394 +49,540 @@ function calculateTrainingComponentScores(routineHtml) {
     cardio: 0
   };
 
-  // Analyze the HTML content for each component
+  // Analyze the HTML content for each component using keywords
   Object.keys(keywords).forEach(component => {
     keywords[component].forEach(keyword => {
       // Create a case-insensitive regular expression with word boundaries
-      const regex = new RegExp(`\\b${keyword}\\w*\\b`, 'gi');
-      const matches = routineHtml.match(regex) || [];
-      counts[component] += matches.length;
+      // Handles accents and variations for some keywords implicitly if they share roots
+      try {
+        const regex = new RegExp(`\\b${keyword}\\w*\\b`, 'gi');
+        const matches = routineHtml.match(regex) || [];
+        counts[component] += matches.length;
+      } catch (e) {
+        console.warn(`Invalid regex for keyword: ${keyword}`, e);
+      }
     });
   });
 
-  // Additional analysis for exercise types
-  const strengthSets = (routineHtml.match(/(\d+-\d+|<\d+)\s*reps/gi) || []).length;
-  const hypertrophySets = (routineHtml.match(/(\d+-\d+)\s*reps/gi) || []).length;
-  const highReps = (routineHtml.match(/(1[5-9]|[2-9][0-9])\s*reps/gi) || []).length;
-  const lowReps = (routineHtml.match(/([1-6])\s*reps/gi) || []).length;
-  
-  // Add to counts based on rep ranges
-  counts.fuerza += lowReps * 2;
-  counts.hipertrofia += hypertrophySets * 1.5;
-  counts.cardio += highReps;
+  // --- Additional Heuristics ---
 
-  // Look for intensity indicators
-  const intensityPatterns = {
-    fuerza: [/alta\s+intensidad/gi, /high\s+intensity/gi, /pesado/gi, /heavy/gi, /\b[7-9][0-9]%/g, /\b1?[0-9][0-9]% ?(1|de)? ?RM/gi],
-    potencia: [/explosiv/gi, /veloc[a-z]*\s+máxima/gi, /max[a-z]*\s+speed/gi, /rápido/gi, /fast/gi, /\btempo\b.*\b[xX]\b/gi],
-    cardio: [/interval/gi, /hiit/gi, /sprint/gi, /aer[óo]bic/gi, /cardio/gi, /cardíaco/gi, /cardiac/gi],
-    tecnica: [/estabilidad/gi, /stability/gi, /control/gi, /balance/gi, /equilibrio/gi, /coordinación/gi, /coordination/gi],
-    movilidad: [/estirar/gi, /stretch/gi, /flex[a-z]*\b/gi, /rom/gi, /rango/gi, /range/gi, /joint/gi, /articular/gi]
-  };
+  // 1. Rep Ranges Analysis
+  const repMatches = routineHtml.match(/(\d+)\s*-\s*(\d+)\s+reps?/gi) || routineHtml.match(/(\d+)\s+reps?/gi) || [];
+  let lowRepSets = 0;
+  let midRepSets = 0;
+  let highRepSets = 0;
 
-  // Apply intensity analysis
-  Object.keys(intensityPatterns).forEach(component => {
-    intensityPatterns[component].forEach(pattern => {
-      const matches = routineHtml.match(pattern) || [];
-      counts[component] += matches.length * 2; // Give more weight to intensity indicators
-    });
-  });
-
-  // Get maximum count for normalization
-  const maxCount = Math.max(...Object.values(counts), 1); // Avoid division by zero
-
-  // Calculate normalized scores (0-100)
-  Object.keys(counts).forEach(component => {
-    scores[component] = Math.min(Math.round((counts[component] / maxCount) * 100), 100);
-  });
-
-  // Minimum threshold to ensure all components have some representation
-  const minThreshold = 20;
-  Object.keys(scores).forEach(component => {
-    if (scores[component] < minThreshold) {
-      scores[component] = minThreshold;
+  repMatches.forEach(match => {
+    const repNumbers = match.match(/\d+/g);
+    if (repNumbers) {
+        const maxReps = Math.max(...repNumbers.map(Number));
+        if (maxReps <= 6) lowRepSets++;
+        else if (maxReps <= 12) midRepSets++;
+        else highRepSets++;
     }
   });
 
+  counts.fuerza += lowRepSets * 1.5; // Boost strength for low reps
+  counts.hipertrofia += midRepSets * 1.5; // Boost hypertrophy for mid reps
+  counts.cardio += highRepSets * 0.5; // Slightly boost cardio/endurance for high reps
+
+  // 2. Specific Exercise Keywords
+  const specificExercises = {
+    fuerza: ['press de banca', 'sentadilla', 'peso muerto', 'press militar'],
+    hipertrofia: ['curl', 'elevaciones laterales', 'extensiones de triceps', 'remo con mancuernas'],
+    movilidad: ['rotaciones', 'puente de glúteos', 'estiramiento'],
+    potencia: ['salto', 'lanzamiento', 'swing'],
+    tecnica: ['equilibrio', 'pistol squat', 'turkish get up'],
+    cardio: ['correr', 'burpee', 'jumping jack']
+  };
+
+  Object.keys(specificExercises).forEach(component => {
+    specificExercises[component].forEach(ex => {
+      try {
+        const regex = new RegExp(ex.replace(/\s+/g, '\\s+'), 'gi'); // Match exercise name case-insensitively
+        const matches = routineHtml.match(regex) || [];
+        counts[component] += matches.length * 2; // Give higher weight to specific exercises
+      } catch(e) {
+         console.warn(`Invalid regex for exercise: ${ex}`, e);
+      }
+    });
+  });
+
+  // 3. Intensity/Tempo Indicators
+  if (routineHtml.match(/RIR\s+[0-2]/gi)) counts.hipertrofia += 5; // High intensity -> Hypertrophy/Strength
+  if (routineHtml.match(/RIR\s+[3-4]/gi)) counts.hipertrofia += 2; // Moderate intensity
+  if (routineHtml.match(/tempo.*[xX]/gi)) counts.potencia += 5; // Explosive tempo
+  if (routineHtml.match(/tempo\s+\d{3,}/gi)) counts.tecnica += 3; // Controlled tempo -> Technique/Hypertrophy
+
+  // --- Normalization ---
+
+  // Calculate total count for relative scoring
+  const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+  // If totalCount is 0, return default balanced scores
+  if (totalCount === 0) {
+    return { fuerza: 50, hipertrofia: 50, movilidad: 50, potencia: 50, tecnica: 50, cardio: 50 };
+  }
+
+  // Calculate normalized scores (0-100) based on proportion
+  Object.keys(counts).forEach(component => {
+    scores[component] = Math.round((counts[component] / totalCount) * 100);
+  });
+
+  // --- Smoothing and Thresholding ---
+
+  // Ensure scores sum roughly to 100 after adjustments (optional, can lead to complex redistribution)
+  // For simplicity, we'll just apply a minimum threshold.
+
+  // Apply a minimum threshold to avoid zero scores if a component is present at all
+  const minThreshold = 10;
+  let belowThresholdCount = 0;
+  let totalAboveThreshold = 0;
+
+  Object.keys(scores).forEach(component => {
+    if (counts[component] > 0 && scores[component] < minThreshold) {
+      scores[component] = minThreshold;
+    }
+    if (scores[component] < minThreshold) {
+        belowThresholdCount++;
+    } else {
+        totalAboveThreshold += scores[component];
+    }
+  });
+
+  // Optional: Redistribute remaining points if needed, but can get complex.
+  // Let's cap scores at 100 instead.
+   Object.keys(scores).forEach(component => {
+      scores[component] = Math.min(scores[component], 100);
+   });
+
+
+  // Find the component(s) with the highest score for potential use in description
+  let maxScore = 0;
+  let mainComponents = [];
+  Object.entries(scores).forEach(([component, score]) => {
+    if (score > maxScore) {
+      maxScore = score;
+      mainComponents = [component];
+    } else if (score === maxScore) {
+      mainComponents.push(component);
+    }
+  });
+
+  // Add main components to the scores object to pass it easily
+  scores.mainComponents = mainComponents;
+  // Capitalize component names for display
+  scores.mainComponentsDisplay = mainComponents.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
+
+
+  console.log("Calculated Scores:", scores); // Log scores for debugging
   return scores;
 }
 
+
 /**
- * Generates radar chart HTML for the cover page
- * @param {Object} scores - Training component scores
- * @param {string} clientName - Name of the client
- * @returns {string} - HTML for the radar chart cover page
+ * Generates radar chart HTML for the cover page (Improved Design).
+ * @param {Object} scores - Training component scores including mainComponentsDisplay.
+ * @param {string} clientName - Name of the client.
+ * @returns {string} - HTML for the radar chart cover page.
  */
 function generateRadarChartHtml(scores, clientName = 'Cliente') {
+  const date = new Date().toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Generate dynamic description based on main components
+  let description = `Hola ${clientName}, este gráfico visualiza el enfoque de tu nuevo plan de entrenamiento. `;
+  if (scores.mainComponents && scores.mainComponents.length > 0) {
+      description += `Hemos puesto énfasis en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus objetivos.`;
+  } else {
+      description += `Está diseñado para proporcionarte un desarrollo equilibrado en todas las áreas clave.`;
+  }
+
   return `
-  <div class="cover-page">
-    <div class="cover-header">
-      <div class="logo-container">
-        <img class="cover-logo" src="LOGO_BASE_64_PLACEHOLDER" alt="Logo">
-      </div>
-      <div class="client-info">
-        <h2>${clientName || 'Cliente'}</h2>
-        <p>Plan de Entrenamiento Personalizado</p>
-        <p class="date">${new Date().toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}</p>
+  <div class="cover-page-new">
+    <div class="cover-header-new">
+      <img class="cover-logo-new" src="LOGO_BASE_64_PLACEHOLDER" alt="Logo Fitform">
+      <div class="client-info-new">
+        <h1>${clientName}</h1>
+        <p>${date}</p>
       </div>
     </div>
-    
-    <div class="cover-title">Perfil de Entrenamiento</div>
-    
-    <div class="radar-chart-container">
-      <canvas id="radarChart" width="500" height="400"></canvas>
+
+    <div class="cover-main-new">
+      <div class="cover-text-content">
+          <h2>Tu Hoja de Ruta Fitness</h2>
+          <p class="cover-description-new">${description}</p>
+          <div class="components-legend-new">
+              <div class="legend-column">
+                  <div class="component-item-new">
+                      <div class="component-dot-new fuerza-color"></div>
+                      <div class="component-label-new">Fuerza: <span>${scores.fuerza}%</span></div>
+                  </div>
+                  <div class="component-item-new">
+                      <div class="component-dot-new hipertrofia-color"></div>
+                      <div class="component-label-new">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
+                  </div>
+                  <div class="component-item-new">
+                      <div class="component-dot-new movilidad-color"></div>
+                      <div class="component-label-new">Movilidad: <span>${scores.movilidad}%</span></div>
+                  </div>
+              </div>
+              <div class="legend-column">
+                  <div class="component-item-new">
+                      <div class="component-dot-new potencia-color"></div>
+                      <div class="component-label-new">Potencia: <span>${scores.potencia}%</span></div>
+                  </div>
+                  <div class="component-item-new">
+                      <div class="component-dot-new tecnica-color"></div>
+                      <div class="component-label-new">Técnica: <span>${scores.tecnica}%</span></div>
+                  </div>
+                  <div class="component-item-new">
+                      <div class="component-dot-new cardio-color"></div>
+                      <div class="component-label-new">Cardio: <span>${scores.cardio}%</span></div>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <div class="radar-chart-container-new">
+        <canvas id="radarChart"></canvas>
+      </div>
     </div>
-    
-    <div class="cover-description">
-      <p>Este perfil muestra la distribución de los componentes clave en tu rutina de entrenamiento personalizada. Cada eje representa un aspecto importante de tu programa.</p>
-    </div>
-    
-    <div class="components-legend">
-      <div class="component-item">
-        <div class="component-dot fuerza-color"></div>
-        <div class="component-label">Fuerza: <span>${scores.fuerza}%</span></div>
-      </div>
-      <div class="component-item">
-        <div class="component-dot hipertrofia-color"></div>
-        <div class="component-label">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
-      </div>
-      <div class="component-item">
-        <div class="component-dot movilidad-color"></div>
-        <div class="component-label">Movilidad: <span>${scores.movilidad}%</span></div>
-      </div>
-      <div class="component-item">
-        <div class="component-dot potencia-color"></div>
-        <div class="component-label">Potencia: <span>${scores.potencia}%</span></div>
-      </div>
-      <div class="component-item">
-        <div class="component-dot tecnica-color"></div>
-        <div class="component-label">Técnica: <span>${scores.tecnica}%</span></div>
-      </div>
-      <div class="component-item">
-        <div class="component-dot cardio-color"></div>
-        <div class="component-label">Cardio: <span>${scores.cardio}%</span></div>
-      </div>
+
+    <div class="cover-footer-new">
+        <p>© ${new Date().getFullYear()} Fitform - Todos los derechos reservados</p>
     </div>
   </div>
   `;
 }
 
 /**
- * Generates CSS styles for the radar chart cover page
- * @returns {string} - CSS styles
+ * Generates CSS styles for the improved radar chart cover page.
+ * @returns {string} - CSS styles.
  */
 function getRadarChartStyles() {
+  // Using the same color variables defined in pdfService.js
   return `
-    /* Radar Chart Cover Page Styles */
-    .cover-page {
+    /* Improved Radar Chart Cover Page Styles */
+    .cover-page-new {
       position: relative;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      padding: 40px;
-      page-break-after: always;
-      background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+      min-height: 100vh; /* Ensure it takes full page height */
+      width: 100%;
+      padding: 50px 60px; /* Generous padding */
+      background: linear-gradient(145deg, var(--primary-color) 0%, var(--secondary-color) 100%); /* Use brand gradient */
+      color: #ffffff; /* Default text color on dark background */
+      box-sizing: border-box;
+      font-family: 'Inter', 'Arial', sans-serif;
+      page-break-after: always; /* Ensure it's on its own page */
     }
-    
-    .cover-header {
+
+    .cover-header-new {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 50px;
+      align-items: flex-start; /* Align items to the top */
+      margin-bottom: 40px; /* Space below header */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Subtle separator */
+      padding-bottom: 20px;
     }
-    
-    .logo-container {
-      flex: 0 0 150px;
-    }
-    
-    .cover-logo {
-      width: 140px;
+
+    .cover-logo-new {
+      width: 130px; /* Slightly smaller logo */
       height: auto;
+      filter: brightness(0) invert(1); /* Make logo white */
+      opacity: 0.9;
     }
-    
-    .client-info {
+
+    .client-info-new {
       text-align: right;
     }
-    
-    .client-info h2 {
-      font-size: 24px;
+
+    .client-info-new h1 {
+      font-size: 32px; /* Larger client name */
       font-weight: 700;
-      color: var(--primary-color);
-      margin: 0 0 8px 0;
-    }
-    
-    .client-info p {
+      color: #ffffff;
       margin: 0 0 5px 0;
-      color: var(--text-color);
-      font-size: 16px;
+      line-height: 1.2;
     }
-    
-    .client-info .date {
-      color: var(--medium-gray);
-      font-size: 14px;
+
+    .client-info-new p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.8); /* Slightly transparent white for date */
+      font-size: 15px;
+      font-weight: 400;
     }
-    
-    .cover-title {
-      font-size: 36px;
-      font-weight: 800;
-      color: var(--primary-color);
-      margin-bottom: 40px;
-      text-align: center;
-      letter-spacing: 0.5px;
+
+    .cover-main-new {
+        flex-grow: 1; /* Allow main content to fill space */
+        display: flex;
+        align-items: center; /* Vertically center chart and text */
+        justify-content: space-between;
+        gap: 50px; /* Space between text/legend and chart */
+        width: 100%;
+        margin-bottom: 40px; /* Space above footer */
+    }
+
+    .cover-text-content {
+        flex: 1; /* Take available space */
+        max-width: 45%; /* Limit width */
+    }
+
+    .cover-text-content h2 {
+      font-size: 28px; /* Title size */
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 20px;
+      line-height: 1.3;
       position: relative;
+      display: inline-block;
     }
-    
-    .cover-title:after {
-      content: '';
-      display: block;
-      width: 80px;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary-color) 0%, transparent 100%);
-      position: absolute;
-      bottom: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 2px;
+
+     /* Optional: Underline for the title */
+    .cover-text-content h2::after {
+       content: '';
+       position: absolute;
+       bottom: -8px;
+       left: 0;
+       width: 60px;
+       height: 3px;
+       background-color: var(--accent-color); /* Use accent color for underline */
+       border-radius: 2px;
     }
-    
-    .radar-chart-container {
-      width: 500px;
-      height: 400px;
-      margin: 0 auto 40px;
-      background-color: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      position: relative;
-    }
-    
-    .cover-description {
-      max-width: 600px;
-      text-align: center;
-      color: var(--dark-gray);
+
+
+    .cover-description-new {
       font-size: 16px;
+      color: rgba(255, 255, 255, 0.85);
       line-height: 1.7;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+      font-weight: 400;
     }
-    
-    .components-legend {
+
+    .cover-description-new strong {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .components-legend-new {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      max-width: 700px;
-      margin: 0 auto;
+      gap: 30px; /* Space between columns */
+      background-color: rgba(255, 255, 255, 0.08); /* Subtle background for legend */
+      padding: 20px;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
-    
-    .component-item {
+
+    .legend-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px; /* Space between items in a column */
+    }
+
+    .component-item-new {
       display: flex;
       align-items: center;
       gap: 10px;
-      background-color: white;
-      padding: 8px 15px;
-      border-radius: 50px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
-    
-    .component-dot {
-      width: 12px;
-      height: 12px;
+
+    .component-dot-new {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
-    
-    .fuerza-color { background-color: rgba(49, 130, 206, 1); }
-    .hipertrofia-color { background-color: rgba(72, 187, 120, 1); }
-    .movilidad-color { background-color: rgba(246, 173, 85, 1); }
-    .potencia-color { background-color: rgba(237, 100, 166, 1); }
-    .tecnica-color { background-color: rgba(159, 122, 234, 1); }
-    .cardio-color { background-color: rgba(246, 224, 94, 1); }
-    
-    .component-label {
+
+    /* Use distinct, bright colors for dots on dark background */
+    .fuerza-color { background-color: #3498db; } /* Blue */
+    .hipertrofia-color { background-color: #2ecc71; } /* Green */
+    .movilidad-color { background-color: #f1c40f; } /* Yellow */
+    .potencia-color { background-color: #e74c3c; } /* Red */
+    .tecnica-color { background-color: #9b59b6; } /* Purple */
+    .cardio-color { background-color: #e67e22; } /* Orange */
+
+    .component-label-new {
       font-size: 14px;
       font-weight: 500;
-      color: var(--dark-gray);
+      color: rgba(255, 255, 255, 0.9);
     }
-    
-    .component-label span {
+
+    .component-label-new span {
       font-weight: 700;
-      color: var(--primary-color);
+      color: #ffffff;
     }
-    
-    /* Ensure the canvas takes the full container size */
+
+    .radar-chart-container-new {
+      flex: 1; /* Take available space */
+      max-width: 48%; /* Limit width */
+      height: 400px; /* Fixed height */
+      background-color: rgba(255, 255, 255, 0.95); /* Almost white background for contrast */
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      display: flex; /* Center canvas inside */
+      align-items: center;
+      justify-content: center;
+    }
+
     #radarChart {
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .cover-footer-new {
+        width: 100%;
+        text-align: center;
+        padding-top: 20px;
+        margin-top: auto; /* Push footer to the bottom */
+        border-top: 1px solid rgba(255, 255, 255, 0.2); /* Subtle separator */
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
     }
   `;
 }
 
 /**
- * Generates Chart.js initialization script for the radar chart
- * @param {Object} scores - Training component scores
- * @returns {string} - JavaScript code for initializing the chart
+ * Generates Chart.js initialization script for the radar chart (Adjusted for new design).
+ * @param {Object} scores - Training component scores.
+ * @returns {string} - JavaScript code for initializing the chart.
  */
 function getRadarChartScript(scores) {
+  // Convert scores object to array in the correct order for Chart.js
+  const chartData = [
+      scores.fuerza,
+      scores.hipertrofia,
+      scores.movilidad,
+      scores.potencia,
+      scores.tecnica,
+      scores.cardio
+  ];
+
   return `
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
       // Function to initialize the radar chart
       function initRadarChart() {
-        const ctx = document.getElementById('radarChart').getContext('2d');
-        
-        // Training component scores calculated from routine analysis
-        const scores = {
-          fuerza: ${scores.fuerza},
-          hipertrofia: ${scores.hipertrofia},
-          movilidad: ${scores.movilidad},
-          potencia: ${scores.potencia},
-          tecnica: ${scores.tecnica},
-          cardio: ${scores.cardio}
-        };
-        
-        // Chart.js configuration
-        const radarChart = new Chart(ctx, {
+        const ctx = document.getElementById('radarChart');
+        if (!ctx) {
+            console.error("Canvas element #radarChart not found");
+            return;
+        }
+        const chartContext = ctx.getContext('2d');
+        if (!chartContext) {
+             console.error("Failed to get 2D context from canvas");
+            return;
+        }
+
+        // Chart.js configuration - Adjusted for better visuals on light background
+        const radarChart = new Chart(chartContext, {
           type: 'radar',
           data: {
             labels: ['Fuerza', 'Hipertrofia', 'Movilidad', 'Potencia', 'Técnica', 'Cardio'],
             datasets: [{
               label: 'Perfil de Entrenamiento',
-              data: [scores.fuerza, scores.hipertrofia, scores.movilidad, scores.potencia, scores.tecnica, scores.cardio],
-              backgroundColor: 'rgba(49, 130, 206, 0.2)',
-              borderColor: 'rgba(49, 130, 206, 1)',
+              data: ${JSON.stringify(chartData)}, // Use data array
+              backgroundColor: 'rgba(10, 42, 94, 0.2)', // Use primary color with transparency
+              borderColor: 'rgba(10, 42, 94, 0.8)', // Darker border
               borderWidth: 2,
-              pointBackgroundColor: 'rgba(49, 130, 206, 1)',
-              pointBorderColor: '#fff',
+              pointBackgroundColor: 'rgba(10, 42, 94, 1)', // Solid points
+              pointBorderColor: '#fff', // White border around points
               pointHoverBackgroundColor: '#fff',
-              pointHoverBorderColor: 'rgba(49, 130, 206, 1)'
+              pointHoverBorderColor: 'rgba(10, 42, 94, 1)'
             }]
           },
           options: {
             scales: {
-              r: {
-                angleLines: {
+              r: { // Radial axis (the spokes)
+                angleLines: { // Lines radiating from the center
                   display: true,
-                  color: 'rgba(0, 0, 0, 0.1)'
+                  color: 'rgba(0, 0, 0, 0.1)' // Light grey lines
                 },
                 suggestedMin: 0,
                 suggestedMax: 100,
-                ticks: {
-                  stepSize: 20,
-                  backgroundColor: 'rgba(0, 0, 0, 0.1)'
+                grid: { // Lines forming the web
+                    color: 'rgba(0, 0, 0, 0.1)' // Light grey lines
                 },
-                pointLabels: {
+                ticks: { // Numbers on the axis (0, 20, 40...)
+                  stepSize: 20,
+                  color: 'rgba(0, 0, 0, 0.5)', // Darker grey for numbers
+                  backdropColor: 'rgba(255, 255, 255, 0.7)', // Semi-transparent white background for ticks
+                  padding: 8
+                },
+                pointLabels: { // Labels around the edge (Fuerza, Cardio...)
                   font: {
-                    size: 14,
-                    weight: 'bold'
-                  }
+                    size: 13, // Slightly smaller labels
+                    weight: '600' // Bolder
+                  },
+                  color: 'rgba(0, 0, 0, 0.8)' // Dark text for labels
                 }
               }
             },
             plugins: {
               legend: {
-                display: false
+                display: false // Legend is handled separately in HTML
               },
               tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                titleFont: {
-                  size: 14
-                },
-                bodyFont: {
-                  size: 13
-                },
-                padding: 10
+                enabled: true,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark tooltip
+                titleFont: { size: 14 },
+                bodyFont: { size: 13 },
+                padding: 10,
+                boxPadding: 4
               }
             },
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false // Important to fit container
           }
         });
       }
-      
-      // Call chart initialization after page load
-      document.addEventListener('DOMContentLoaded', initRadarChart);
+
+      // Ensure chart initializes after the DOM is ready,
+      // especially important when content is set dynamically by Puppeteer.
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initRadarChart);
+      } else {
+          // DOMContentLoaded has already fired
+          initRadarChart();
+      }
     </script>
   `;
 }
 
+
 /**
- * Creates a complete radar chart cover page with scores calculated from routine HTML
- * @param {string} routineHtml - The HTML content of the routine
- * @param {string} clientName - Name of the client
- * @param {string} logoBase64 - Base64 encoded logo image
- * @returns {string} - Complete HTML for the radar chart cover page
+ * Creates a complete radar chart cover page with scores calculated from routine HTML.
+ * @param {string} routineHtml - The HTML content of the routine.
+ * @param {string} clientName - Name of the client.
+ * @param {string} logoBase64 - Base64 encoded logo image.
+ * @returns {object} - Object containing coverPageHtml, styles, script, and scores.
  */
 function createRadarChartCoverPage(routineHtml, clientName, logoBase64) {
   // Calculate scores based on the routine content
-  const scores = calculateTrainingComponentScores(routineHtml);
-  
-  // Generate HTML for the cover page
+  const scores = calculateTrainingComponentScores(routineHtml); // scores now includes mainComponentsDisplay
+
+  // Generate HTML for the cover page using the improved function
   let coverPageHtml = generateRadarChartHtml(scores, clientName);
-  
+
   // Replace logo placeholder with actual base64 image
   if (logoBase64) {
     coverPageHtml = coverPageHtml.replace('LOGO_BASE_64_PLACEHOLDER', logoBase64);
+  } else {
+     // Provide a fallback or remove the img tag if no logo
+     coverPageHtml = coverPageHtml.replace('<img class="cover-logo-new" src="LOGO_BASE_64_PLACEHOLDER" alt="Logo Fitform">', '');
+     console.warn("Logo Base64 not provided for cover page.");
   }
-  
-  // Add styles and scripts
+
+  // Get styles and script using the improved functions
   const styles = getRadarChartStyles();
-  const script = getRadarChartScript(scores);
-  
+  const script = getRadarChartScript(scores); // Pass scores to script function
+
   return { coverPageHtml, styles, script, scores };
 }
 
 module.exports = {
-  calculateTrainingComponentScores,
+  calculateTrainingComponentScores, // Export if needed elsewhere
   createRadarChartCoverPage
 };
