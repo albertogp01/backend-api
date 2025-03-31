@@ -608,9 +608,27 @@ async function generatePDF(htmlContent, clientName = "Cliente") {
         text-align: center;
         font-weight: 500;
     }
+
+    .cover-page {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        padding: 40px;
+        page-break-after: always;
+        background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+    }
     </style>
+    <!-- Script para el gráfico radar -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1"></script>
+    ${chartScript}
   </head>
   <body>
+     <!-- Insertar página de portada con gráfico radar -->
+    ${coverPageHtml}
+    <div class="page-break"></div>
     <div class="header">
       <div class="header-content">
         <img src="${logoBase64}" alt="Logo" />
