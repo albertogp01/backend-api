@@ -1,12 +1,12 @@
 const puppeteer = require('puppeteer');
 
 /**
- * Analyzes the routine HTML to calculate training component scores.
- * @param {string} routineHtml - The HTML content of the generated routine.
- * @returns {Object} - Scores for each training component (0-100).
+ * Analiza el HTML de la rutina para calcular las puntuaciones de los componentes de entrenamiento.
+ * @param {string} routineHtml - El contenido HTML de la rutina generada.
+ * @returns {Object} - Puntuaciones para cada componente de entrenamiento (0-100).
  */
 function calculateTrainingComponentScores(routineHtml) {
-  // Initialize scores
+  // Inicializar puntuaciones
   const scores = {
     fuerza: 0,
     hipertrofia: 0,
@@ -16,9 +16,9 @@ function calculateTrainingComponentScores(routineHtml) {
     cardio: 0
   };
 
-  // If no HTML, return default scores
+  // Si no hay HTML, devolver puntuaciones predeterminadas
   if (!routineHtml || routineHtml.trim() === '') {
-    // Default balanced profile if no data
+    // Perfil equilibrado predeterminado si no hay datos
     return {
       fuerza: 50,
       hipertrofia: 50,
@@ -29,7 +29,7 @@ function calculateTrainingComponentScores(routineHtml) {
     };
   }
 
-  // Keywords for each training component
+  // Palabras clave para cada componente de entrenamiento
   const keywords = {
     fuerza: ['fuerza', 'strength', 'carga', 'peso', 'resistencia', 'weight', 'sentadilla', 'squat', 'press', 'deadlift', 'peso muerto', 'power', 'potencia', 'rm', '1rm', 'máxima', 'maximales', 'intensidad alta', 'pesado', 'heavy'],
     hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'volume', 'muscle', 'músculo', 'muscular', 'growth', 'crecimiento', 'tamaño', 'size', 'bodybuilding', 'culturismo', 'series', 'repeticiones', 'reps', 'rir'],
@@ -39,7 +39,7 @@ function calculateTrainingComponentScores(routineHtml) {
     cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'stamina', 'interval', 'intervalos', 'hiit', 'heart', 'rate', 'ritmo', 'cardiac', 'cardíaco', 'vo2', 'máximo', 'correr', 'run', 'nadar', 'swim']
   };
 
-  // Count occurrences of keywords
+  // Contar ocurrencias de palabras clave
   const counts = {
     fuerza: 0,
     hipertrofia: 0,
@@ -49,24 +49,24 @@ function calculateTrainingComponentScores(routineHtml) {
     cardio: 0
   };
 
-  // Analyze the HTML content for each component using keywords
+  // Analizar el contenido HTML para cada componente usando palabras clave
   Object.keys(keywords).forEach(component => {
     keywords[component].forEach(keyword => {
-      // Create a case-insensitive regular expression with word boundaries
-      // Handles accents and variations for some keywords implicitly if they share roots
+      // Crear una expresión regular insensible a mayúsculas/minúsculas con límites de palabra
+      // Maneja acentos y variaciones para algunas palabras clave implícitamente si comparten raíces
       try {
         const regex = new RegExp(`\\b${keyword}\\w*\\b`, 'gi');
         const matches = routineHtml.match(regex) || [];
         counts[component] += matches.length;
       } catch (e) {
-        console.warn(`Invalid regex for keyword: ${keyword}`, e);
+        console.warn(`Expresión regular inválida para la palabra clave: ${keyword}`, e);
       }
     });
   });
 
-  // --- Additional Heuristics ---
+  // --- Heurísticas Adicionales ---
 
-  // 1. Rep Ranges Analysis
+  // 1. Análisis de Rangos de Repeticiones
   const repMatches = routineHtml.match(/(\d+)\s*-\s*(\d+)\s+reps?/gi) || routineHtml.match(/(\d+)\s+reps?/gi) || [];
   let lowRepSets = 0;
   let midRepSets = 0;
@@ -82,11 +82,11 @@ function calculateTrainingComponentScores(routineHtml) {
     }
   });
 
-  counts.fuerza += lowRepSets * 1.5; // Boost strength for low reps
-  counts.hipertrofia += midRepSets * 1.5; // Boost hypertrophy for mid reps
-  counts.cardio += highRepSets * 0.5; // Slightly boost cardio/endurance for high reps
+  counts.fuerza += lowRepSets * 1.5; // Impulsar fuerza para bajas repeticiones
+  counts.hipertrofia += midRepSets * 1.5; // Impulsar hipertrofia para repeticiones medias
+  counts.cardio += highRepSets * 0.5; // Impulsar ligeramente cardio/resistencia para altas repeticiones
 
-  // 2. Specific Exercise Keywords
+  // 2. Palabras Clave de Ejercicios Específicos
   const specificExercises = {
     fuerza: ['press de banca', 'sentadilla', 'peso muerto', 'press militar'],
     hipertrofia: ['curl', 'elevaciones laterales', 'extensiones de triceps', 'remo con mancuernas'],
@@ -99,42 +99,42 @@ function calculateTrainingComponentScores(routineHtml) {
   Object.keys(specificExercises).forEach(component => {
     specificExercises[component].forEach(ex => {
       try {
-        const regex = new RegExp(ex.replace(/\s+/g, '\\s+'), 'gi'); // Match exercise name case-insensitively
+        const regex = new RegExp(ex.replace(/\s+/g, '\\s+'), 'gi'); // Coincidir nombre de ejercicio insensible a mayúsculas/minúsculas
         const matches = routineHtml.match(regex) || [];
-        counts[component] += matches.length * 2; // Give higher weight to specific exercises
+        counts[component] += matches.length * 2; // Dar mayor peso a ejercicios específicos
       } catch(e) {
-         console.warn(`Invalid regex for exercise: ${ex}`, e);
+         console.warn(`Expresión regular inválida para el ejercicio: ${ex}`, e);
       }
     });
   });
 
-  // 3. Intensity/Tempo Indicators
-  if (routineHtml.match(/RIR\s+[0-2]/gi)) counts.hipertrofia += 5; // High intensity -> Hypertrophy/Strength
-  if (routineHtml.match(/RIR\s+[3-4]/gi)) counts.hipertrofia += 2; // Moderate intensity
-  if (routineHtml.match(/tempo.*[xX]/gi)) counts.potencia += 5; // Explosive tempo
-  if (routineHtml.match(/tempo\s+\d{3,}/gi)) counts.tecnica += 3; // Controlled tempo -> Technique/Hypertrophy
+  // 3. Indicadores de Intensidad/Tempo
+  if (routineHtml.match(/RIR\s+[0-2]/gi)) counts.hipertrofia += 5; // Alta intensidad -> Hipertrofia/Fuerza
+  if (routineHtml.match(/RIR\s+[3-4]/gi)) counts.hipertrofia += 2; // Intensidad moderada
+  if (routineHtml.match(/tempo.*[xX]/gi)) counts.potencia += 5; // Tempo explosivo
+  if (routineHtml.match(/tempo\s+\d{3,}/gi)) counts.tecnica += 3; // Tempo controlado -> Técnica/Hipertrofia
 
-  // --- Normalization ---
+  // --- Normalización ---
 
-  // Calculate total count for relative scoring
+  // Calcular el conteo total para puntuación relativa
   const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
-  // If totalCount is 0, return default balanced scores
+  // Si totalCount es 0, devolver puntuaciones equilibradas predeterminadas
   if (totalCount === 0) {
     return { fuerza: 50, hipertrofia: 50, movilidad: 50, potencia: 50, tecnica: 50, cardio: 50 };
   }
 
-  // Calculate normalized scores (0-100) based on proportion
+  // Calcular puntuaciones normalizadas (0-100) basadas en la proporción
   Object.keys(counts).forEach(component => {
     scores[component] = Math.round((counts[component] / totalCount) * 100);
   });
 
-  // --- Smoothing and Thresholding ---
+  // --- Suavizado y Umbral ---
 
-  // Ensure scores sum roughly to 100 after adjustments (optional, can lead to complex redistribution)
-  // For simplicity, we'll just apply a minimum threshold.
+  // Asegurar que las puntuaciones sumen aproximadamente 100 después de los ajustes (opcional, puede llevar a una redistribución compleja)
+  // Por simplicidad, solo aplicaremos un umbral mínimo.
 
-  // Apply a minimum threshold to avoid zero scores if a component is present at all
+  // Aplicar un umbral mínimo para evitar puntuaciones de cero si un componente está presente
   const minThreshold = 10;
   let belowThresholdCount = 0;
   let totalAboveThreshold = 0;
@@ -150,14 +150,14 @@ function calculateTrainingComponentScores(routineHtml) {
     }
   });
 
-  // Optional: Redistribute remaining points if needed, but can get complex.
-  // Let's cap scores at 100 instead.
+  // Opcional: Redistribuir puntos restantes si es necesario, pero puede volverse complejo.
+  // En su lugar, limitaremos las puntuaciones a 100.
    Object.keys(scores).forEach(component => {
-      scores[component] = Math.min(scores[component], 100);
+       scores[component] = Math.min(scores[component], 100);
    });
 
 
-  // Find the component(s) with the highest score for potential use in description
+  // Encontrar el(los) componente(s) con la puntuación más alta para uso potencial en la descripción
   let maxScore = 0;
   let mainComponents = [];
   Object.entries(scores).forEach(([component, score]) => {
@@ -169,22 +169,22 @@ function calculateTrainingComponentScores(routineHtml) {
     }
   });
 
-  // Add main components to the scores object to pass it easily
+  // Añadir componentes principales al objeto de puntuaciones para pasarlo fácilmente
   scores.mainComponents = mainComponents;
-  // Capitalize component names for display
+  // Capitalizar nombres de componentes para mostrar
   scores.mainComponentsDisplay = mainComponents.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
 
 
-  console.log("Calculated Scores:", scores); // Log scores for debugging
+  console.log("Puntuaciones Calculadas:", scores); // Registrar puntuaciones para depuración
   return scores;
 }
 
 
 /**
- * Generates radar chart HTML for the cover page (Improved Design).
- * @param {Object} scores - Training component scores including mainComponentsDisplay.
- * @param {string} clientName - Name of the client.
- * @returns {string} - HTML for the radar chart cover page.
+ * Genera el HTML del gráfico radar para la portada (Diseño Mejorado).
+ * @param {Object} scores - Puntuaciones de componentes de entrenamiento incluyendo mainComponentsDisplay.
+ * @param {string} clientName - Nombre del cliente.
+ * @returns {string} - HTML para la portada del gráfico radar.
  */
 function generateRadarChartHtml(scores, clientName = 'Cliente') {
   const date = new Date().toLocaleDateString('es-ES', {
@@ -193,7 +193,7 @@ function generateRadarChartHtml(scores, clientName = 'Cliente') {
     day: 'numeric'
   });
 
-  // Generate dynamic description based on main components
+  // Generar descripción dinámica basada en los componentes principales
   let description = `Hola ${clientName}, este gráfico visualiza el enfoque de tu nuevo plan de entrenamiento. `;
   if (scores.mainComponents && scores.mainComponents.length > 0) {
       description += `Hemos puesto énfasis en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus objetivos.`;
@@ -201,6 +201,9 @@ function generateRadarChartHtml(scores, clientName = 'Cliente') {
       description += `Está diseñado para proporcionarte un desarrollo equilibrado en todas las áreas clave.`;
   }
 
+  // **Nota:** Se ha mantenido la estructura HTML original ya que proporciona
+  // los ganchos necesarios para aplicar los estilos CSS mejorados.
+  // Las clases '-new' se mantienen para coherencia con el código original.
   return `
   <div class="cover-page-new">
     <div class="cover-header-new">
@@ -259,42 +262,54 @@ function generateRadarChartHtml(scores, clientName = 'Cliente') {
 }
 
 /**
- * Generates CSS styles for the improved radar chart cover page.
- * @returns {string} - CSS styles.
+ * Genera estilos CSS para la portada del gráfico radar mejorada.
+ * @returns {string} - Estilos CSS.
  */
 function getRadarChartStyles() {
-  // Using the same color variables defined in pdfService.js
+  // **CSS Mejorado:** Se han refinado los estilos para una estética superior,
+  // manteniendo la estructura y las variables de color implícitas del original.
+  // Se asume la existencia de --primary-color, --secondary-color, --accent-color, --border-radius.
   return `
-    /* Improved Radar Chart Cover Page Styles */
+    /* Estilos Mejorados Portada Gráfico Radar */
+    :root {
+        /* Definición de variables de color de ejemplo si no están definidas globalmente */
+        --primary-color: #0a2a5e; /* Azul oscuro */
+        --secondary-color: #1e477e; /* Azul medio */
+        --accent-color: #3498db; /* Azul brillante (usado para subrayado) */
+        --border-radius: 8px; /* Radio de borde estándar */
+    }
+
     .cover-page-new {
       position: relative;
       display: flex;
       flex-direction: column;
-      min-height: 100vh; /* Ensure it takes full page height */
+      min-height: 100vh; /* Asegura altura completa de página */
       width: 100%;
-      padding: 50px 60px; /* Generous padding */
-      background: linear-gradient(145deg, var(--primary-color) 0%, var(--secondary-color) 100%); /* Use brand gradient */
-      color: #ffffff; /* Default text color on dark background */
-      box-sizing: border-box;
-      font-family: 'Inter', 'Arial', sans-serif;
-      page-break-after: always; /* Ensure it's on its own page */
+      /* Padding ajustado para mejor equilibrio visual */
+      padding: 55px 65px;
+      /* Gradiente sutil y profesional */
+      background: linear-gradient(140deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: #ffffff; /* Color de texto predeterminado sobre fondo oscuro */
+      box-sizing: border-box; /* Incluye padding y border en el tamaño total */
+      font-family: 'Inter', 'Arial', sans-serif; /* Fuente limpia y moderna */
+      page-break-after: always; /* Asegura que esté en su propia página (para PDF) */
     }
 
     .cover-header-new {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start; /* Align items to the top */
-      margin-bottom: 40px; /* Space below header */
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Subtle separator */
-      padding-bottom: 20px;
+      align-items: flex-start; /* Alinear items arriba */
+      margin-bottom: 45px; /* Espacio incrementado bajo la cabecera */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15); /* Separador más sutil */
+      padding-bottom: 25px; /* Padding incrementado */
     }
 
     .cover-logo-new {
-      width: 130px; /* Slightly smaller logo */
+      width: 140px; /* Tamaño de logo ligeramente aumentado */
       height: auto;
-      filter: brightness(0) invert(1); /* Make logo white */
-      opacity: 0.9;
+      filter: brightness(0) invert(1); /* Asegura logo blanco */
+      opacity: 0.95; /* Opacidad ligeramente aumentada */
     }
 
     .client-info-new {
@@ -302,127 +317,131 @@ function getRadarChartStyles() {
     }
 
     .client-info-new h1 {
-      font-size: 32px; /* Larger client name */
-      font-weight: 700;
+      font-size: 34px; /* Nombre de cliente más prominente */
+      font-weight: 700; /* Negrita */
       color: #ffffff;
-      margin: 0 0 5px 0;
-      line-height: 1.2;
+      margin: 0 0 8px 0; /* Espacio ajustado bajo el nombre */
+      line-height: 1.15; /* Interlineado ajustado */
     }
 
     .client-info-new p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.8); /* Slightly transparent white for date */
-      font-size: 15px;
-      font-weight: 400;
+      color: rgba(255, 255, 255, 0.8); /* Blanco ligeramente transparente para la fecha */
+      font-size: 16px; /* Tamaño de fuente de fecha aumentado */
+      font-weight: 400; /* Peso normal */
     }
 
     .cover-main-new {
-        flex-grow: 1; /* Allow main content to fill space */
+        flex-grow: 1; /* Permite que el contenido principal llene el espacio */
         display: flex;
-        align-items: center; /* Vertically center chart and text */
+        align-items: center; /* Centrar verticalmente gráfico y texto */
         justify-content: space-between;
-        gap: 50px; /* Space between text/legend and chart */
+        gap: 60px; /* Espacio aumentado entre texto/leyenda y gráfico */
         width: 100%;
-        margin-bottom: 40px; /* Space above footer */
+        margin-bottom: 50px; /* Espacio aumentado sobre el pie de página */
     }
 
     .cover-text-content {
-        flex: 1; /* Take available space */
-        max-width: 45%; /* Limit width */
+        flex: 1; /* Tomar espacio disponible */
+        max-width: 48%; /* Ancho máximo ajustado */
     }
 
     .cover-text-content h2 {
-      font-size: 28px; /* Title size */
+      font-size: 30px; /* Tamaño de título aumentado */
       font-weight: 700;
       color: #ffffff;
-      margin-bottom: 20px;
-      line-height: 1.3;
+      margin-bottom: 25px; /* Espacio aumentado bajo el título */
+      line-height: 1.25; /* Interlineado ajustado */
       position: relative;
-      display: inline-block;
+      display: inline-block; /* Para que el ::after funcione correctamente */
     }
 
-     /* Optional: Underline for the title */
+    /* Subrayado refinado para el título */
     .cover-text-content h2::after {
-       content: '';
-       position: absolute;
-       bottom: -8px;
-       left: 0;
-       width: 60px;
-       height: 3px;
-       background-color: var(--accent-color); /* Use accent color for underline */
-       border-radius: 2px;
+      content: '';
+      position: absolute;
+      bottom: -10px; /* Posición ajustada */
+      left: 0;
+      width: 70px; /* Ancho aumentado */
+      height: 3.5px; /* Grosor ligeramente aumentado */
+      background-color: var(--accent-color); /* Usar color de acento */
+      border-radius: 3px; /* Bordes redondeados */
     }
 
 
     .cover-description-new {
-      font-size: 16px;
-      color: rgba(255, 255, 255, 0.85);
-      line-height: 1.7;
-      margin-bottom: 30px;
+      font-size: 17px; /* Tamaño de fuente aumentado para legibilidad */
+      color: rgba(255, 255, 255, 0.9); /* Mayor opacidad para mejor contraste */
+      line-height: 1.75; /* Interlineado generoso */
+      margin-bottom: 35px; /* Espacio aumentado */
       font-weight: 400;
     }
 
     .cover-description-new strong {
-        color: #ffffff;
-        font-weight: 600;
+        color: #ffffff; /* Blanco puro para énfasis */
+        font-weight: 600; /* Semi-negrita */
     }
 
     .components-legend-new {
       display: flex;
-      gap: 30px; /* Space between columns */
-      background-color: rgba(255, 255, 255, 0.08); /* Subtle background for legend */
-      padding: 20px;
-      border-radius: var(--border-radius);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      gap: 35px; /* Espacio aumentado entre columnas */
+      background-color: rgba(255, 255, 255, 0.06); /* Fondo de leyenda más sutil */
+      padding: 25px; /* Padding aumentado */
+      border-radius: var(--border-radius); /* Usar radio de borde estándar */
+      border: 1px solid rgba(255, 255, 255, 0.1); /* Borde muy sutil */
     }
 
     .legend-column {
         display: flex;
         flex-direction: column;
-        gap: 12px; /* Space between items in a column */
+        gap: 15px; /* Espacio aumentado entre items en una columna */
     }
 
     .component-item-new {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px; /* Espacio aumentado entre punto y etiqueta */
     }
 
     .component-dot-new {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
+      width: 11px; /* Tamaño de punto ligeramente aumentado */
+      height: 11px;
+      border-radius: 50%; /* Círculo perfecto */
+      flex-shrink: 0; /* Evitar que el punto se encoja */
+      /* Añadir un borde sutil para definición */
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* Use distinct, bright colors for dots on dark background */
-    .fuerza-color { background-color: #3498db; } /* Blue */
-    .hipertrofia-color { background-color: #2ecc71; } /* Green */
-    .movilidad-color { background-color: #f1c40f; } /* Yellow */
-    .potencia-color { background-color: #e74c3c; } /* Red */
-    .tecnica-color { background-color: #9b59b6; } /* Purple */
-    .cardio-color { background-color: #e67e22; } /* Orange */
+    /* Colores de puntos (mantenidos del original, son distintivos) */
+    .fuerza-color { background-color: #3498db; } /* Azul */
+    .hipertrofia-color { background-color: #2ecc71; } /* Verde */
+    .movilidad-color { background-color: #f1c40f; } /* Amarillo */
+    .potencia-color { background-color: #e74c3c; } /* Rojo */
+    .tecnica-color { background-color: #9b59b6; } /* Púrpura */
+    .cardio-color { background-color: #e67e22; } /* Naranja */
 
     .component-label-new {
-      font-size: 14px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.9);
+      font-size: 15px; /* Tamaño de etiqueta aumentado */
+      font-weight: 500; /* Peso medio */
+      color: rgba(255, 255, 255, 0.95); /* Casi blanco para claridad */
     }
 
     .component-label-new span {
-      font-weight: 700;
+      font-weight: 700; /* Negrita para el valor porcentual */
       color: #ffffff;
+      margin-left: 4px; /* Pequeño espacio antes del porcentaje */
     }
 
     .radar-chart-container-new {
-      flex: 1; /* Take available space */
-      max-width: 48%; /* Limit width */
-      height: 400px; /* Fixed height */
-      background-color: rgba(255, 255, 255, 0.95); /* Almost white background for contrast */
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      display: flex; /* Center canvas inside */
+      flex: 1; /* Tomar espacio disponible */
+      max-width: 48%; /* Ancho máximo mantenido */
+      height: 420px; /* Altura ligeramente aumentada */
+      background-color: rgba(255, 255, 255, 0.98); /* Fondo casi opaco para máximo contraste del gráfico */
+      border-radius: 10px; /* Radio de borde ligeramente mayor */
+      padding: 30px; /* Padding interno aumentado */
+      /* Sombra más suave y difusa */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      display: flex; /* Centrar canvas interior */
       align-items: center;
       justify-content: center;
     }
@@ -435,22 +454,22 @@ function getRadarChartStyles() {
     .cover-footer-new {
         width: 100%;
         text-align: center;
-        padding-top: 20px;
-        margin-top: auto; /* Push footer to the bottom */
-        border-top: 1px solid rgba(255, 255, 255, 0.2); /* Subtle separator */
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.7);
+        padding-top: 25px; /* Padding superior aumentado */
+        margin-top: auto; /* Empujar pie de página al fondo */
+        border-top: 1px solid rgba(255, 255, 255, 0.15); /* Separador sutil */
+        font-size: 12px; /* Tamaño de fuente ligeramente aumentado */
+        color: rgba(255, 255, 255, 0.75); /* Opacidad ajustada */
     }
   `;
 }
 
 /**
- * Generates Chart.js initialization script for the radar chart (Adjusted for new design).
- * @param {Object} scores - Training component scores.
- * @returns {string} - JavaScript code for initializing the chart.
+ * Genera el script de inicialización de Chart.js para el gráfico radar (Ajustado para nuevo diseño).
+ * @param {Object} scores - Puntuaciones de componentes de entrenamiento.
+ * @returns {string} - Código JavaScript para inicializar el gráfico.
  */
 function getRadarChartScript(scores) {
-  // Convert scores object to array in the correct order for Chart.js
+  // Convertir objeto de puntuaciones a array en el orden correcto para Chart.js
   const chartData = [
       scores.fuerza,
       scores.hipertrofia,
@@ -460,91 +479,97 @@ function getRadarChartScript(scores) {
       scores.cardio
   ];
 
+  // **Nota:** La configuración del gráfico (colores, fuentes) se mantiene ya que
+  // fue diseñada para funcionar sobre el fondo claro del contenedor del gráfico.
+  // Los ajustes visuales principales se realizan a través del CSS.
   return `
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
-      // Function to initialize the radar chart
+      // Función para inicializar el gráfico radar
       function initRadarChart() {
         const ctx = document.getElementById('radarChart');
         if (!ctx) {
-            console.error("Canvas element #radarChart not found");
+            console.error("Elemento Canvas #radarChart no encontrado");
             return;
         }
         const chartContext = ctx.getContext('2d');
         if (!chartContext) {
-             console.error("Failed to get 2D context from canvas");
+             console.error("Fallo al obtener el contexto 2D del canvas");
             return;
         }
 
-        // Chart.js configuration - Adjusted for better visuals on light background
+        // Configuración Chart.js - Ajustada para mejor visualización sobre fondo claro
         const radarChart = new Chart(chartContext, {
           type: 'radar',
           data: {
             labels: ['Fuerza', 'Hipertrofia', 'Movilidad', 'Potencia', 'Técnica', 'Cardio'],
             datasets: [{
               label: 'Perfil de Entrenamiento',
-              data: ${JSON.stringify(chartData)}, // Use data array
-              backgroundColor: 'rgba(10, 42, 94, 0.2)', // Use primary color with transparency
-              borderColor: 'rgba(10, 42, 94, 0.8)', // Darker border
-              borderWidth: 2,
-              pointBackgroundColor: 'rgba(10, 42, 94, 1)', // Solid points
-              pointBorderColor: '#fff', // White border around points
+              data: ${JSON.stringify(chartData)}, // Usar array de datos
+              backgroundColor: 'rgba(10, 42, 94, 0.25)', // Color primario con transparencia ajustada
+              borderColor: 'rgba(10, 42, 94, 0.85)', // Borde más oscuro y opaco
+              borderWidth: 2.5, // Borde ligeramente más grueso
+              pointBackgroundColor: 'rgba(10, 42, 94, 1)', // Puntos sólidos
+              pointBorderColor: '#fff', // Borde blanco alrededor de los puntos
               pointHoverBackgroundColor: '#fff',
-              pointHoverBorderColor: 'rgba(10, 42, 94, 1)'
+              pointHoverBorderColor: 'rgba(10, 42, 94, 1)',
+              pointRadius: 4, // Radio de punto
+              pointHoverRadius: 6 // Radio de punto al pasar el ratón
             }]
           },
           options: {
             scales: {
-              r: { // Radial axis (the spokes)
-                angleLines: { // Lines radiating from the center
+              r: { // Eje radial (los radios)
+                angleLines: { // Líneas que irradian desde el centro
                   display: true,
-                  color: 'rgba(0, 0, 0, 0.1)' // Light grey lines
+                  color: 'rgba(0, 0, 0, 0.1)' // Líneas gris claro
                 },
                 suggestedMin: 0,
                 suggestedMax: 100,
-                grid: { // Lines forming the web
-                    color: 'rgba(0, 0, 0, 0.1)' // Light grey lines
+                grid: { // Líneas formando la telaraña
+                    color: 'rgba(0, 0, 0, 0.1)' // Líneas gris claro
                 },
-                ticks: { // Numbers on the axis (0, 20, 40...)
+                ticks: { // Números en el eje (0, 20, 40...)
                   stepSize: 20,
-                  color: 'rgba(0, 0, 0, 0.5)', // Darker grey for numbers
-                  backdropColor: 'rgba(255, 255, 255, 0.7)', // Semi-transparent white background for ticks
-                  padding: 8
+                  color: 'rgba(0, 0, 0, 0.6)', // Gris más oscuro para números
+                  backdropColor: 'rgba(255, 255, 255, 0.75)', // Fondo blanco semitransparente para ticks
+                  padding: 10 // Padding aumentado
                 },
-                pointLabels: { // Labels around the edge (Fuerza, Cardio...)
+                pointLabels: { // Etiquetas alrededor del borde (Fuerza, Cardio...)
                   font: {
-                    size: 13, // Slightly smaller labels
-                    weight: '600' // Bolder
+                    size: 13.5, // Tamaño de etiquetas ligeramente aumentado
+                    weight: '600' // Semi-negrita
                   },
-                  color: 'rgba(0, 0, 0, 0.8)' // Dark text for labels
+                  color: 'rgba(0, 0, 0, 0.85)' // Texto oscuro para etiquetas
                 }
               }
             },
             plugins: {
               legend: {
-                display: false // Legend is handled separately in HTML
+                display: false // La leyenda se maneja por separado en HTML
               },
               tooltip: {
                 enabled: true,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark tooltip
-                titleFont: { size: 14 },
+                backgroundColor: 'rgba(0, 0, 0, 0.85)', // Tooltip oscuro
+                titleFont: { size: 14, weight: 'bold' },
                 bodyFont: { size: 13 },
-                padding: 10,
-                boxPadding: 4
+                padding: 12, // Padding aumentado
+                boxPadding: 5,
+                cornerRadius: 4 // Bordes redondeados para tooltip
               }
             },
             responsive: true,
-            maintainAspectRatio: false // Important to fit container
+            maintainAspectRatio: false // Importante para ajustarse al contenedor
           }
         });
       }
 
-      // Ensure chart initializes after the DOM is ready,
-      // especially important when content is set dynamically by Puppeteer.
+      // Asegurar que el gráfico se inicializa después de que el DOM esté listo,
+      // especialmente importante cuando el contenido es establecido dinámicamente por Puppeteer.
       if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', initRadarChart);
       } else {
-          // DOMContentLoaded has already fired
+          // DOMContentLoaded ya se ha disparado
           initRadarChart();
       }
     </script>
@@ -553,36 +578,36 @@ function getRadarChartScript(scores) {
 
 
 /**
- * Creates a complete radar chart cover page with scores calculated from routine HTML.
- * @param {string} routineHtml - The HTML content of the routine.
- * @param {string} clientName - Name of the client.
- * @param {string} logoBase64 - Base64 encoded logo image.
- * @returns {object} - Object containing coverPageHtml, styles, script, and scores.
+ * Crea una portada completa de gráfico radar con puntuaciones calculadas a partir del HTML de la rutina.
+ * @param {string} routineHtml - El contenido HTML de la rutina.
+ * @param {string} clientName - Nombre del cliente.
+ * @param {string} logoBase64 - Imagen del logo codificada en Base64.
+ * @returns {object} - Objeto que contiene coverPageHtml, styles, script y scores.
  */
 function createRadarChartCoverPage(routineHtml, clientName, logoBase64) {
-  // Calculate scores based on the routine content
-  const scores = calculateTrainingComponentScores(routineHtml); // scores now includes mainComponentsDisplay
+  // Calcular puntuaciones basadas en el contenido de la rutina
+  const scores = calculateTrainingComponentScores(routineHtml); // scores ahora incluye mainComponentsDisplay
 
-  // Generate HTML for the cover page using the improved function
+  // Generar HTML para la portada usando la función mejorada
   let coverPageHtml = generateRadarChartHtml(scores, clientName);
 
-  // Replace logo placeholder with actual base64 image
+  // Reemplazar el marcador de posición del logo con la imagen base64 real
   if (logoBase64) {
     coverPageHtml = coverPageHtml.replace('LOGO_BASE_64_PLACEHOLDER', logoBase64);
   } else {
-     // Provide a fallback or remove the img tag if no logo
-     coverPageHtml = coverPageHtml.replace('<img class="cover-logo-new" src="LOGO_BASE_64_PLACEHOLDER" alt="Logo Fitform">', '');
-     console.warn("Logo Base64 not provided for cover page.");
+    // Proporcionar un fallback o eliminar la etiqueta img si no hay logo
+    coverPageHtml = coverPageHtml.replace(/<img class="cover-logo-new".*?>/g, ''); // Eliminar etiqueta img si no hay logo
+    console.warn("Logo Base64 no proporcionado para la portada.");
   }
 
-  // Get styles and script using the improved functions
+  // Obtener estilos y script usando las funciones mejoradas
   const styles = getRadarChartStyles();
-  const script = getRadarChartScript(scores); // Pass scores to script function
+  const script = getRadarChartScript(scores); // Pasar puntuaciones a la función de script
 
   return { coverPageHtml, styles, script, scores };
 }
 
 module.exports = {
-  calculateTrainingComponentScores, // Export if needed elsewhere
+  calculateTrainingComponentScores, // Exportar si se necesita en otro lugar
   createRadarChartCoverPage
 };
