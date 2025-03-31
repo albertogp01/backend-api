@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer");
 const os = require("os");
+const { createRadarChartCoverPage } = require("./chartService"); // Import the chart service
 
 async function generatePDF(htmlContent, clientName = "Cliente") {
   return new Promise(async (resolve, reject) => {
@@ -45,6 +46,13 @@ async function generatePDF(htmlContent, clientName = "Cliente") {
       modifiedHtml = modifiedHtml.replace(
         /<th colspan="5">(Día \d+:.+?)<\/th>/g, 
         '</table><h2 class="day-title">$1</h2><table>'
+      );
+      
+      // Generate radar chart cover page
+      const { coverPageHtml, styles: chartStyles, script: chartScript, scores } = createRadarChartCoverPage(
+        htmlContent, 
+        clientName, 
+        logoBase64
       );
       
       const currentYear = new Date().getFullYear();
