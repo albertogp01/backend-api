@@ -675,7 +675,7 @@ th[colspan]::after {
 </html>`;
 
       // Lanzar navegador con opciones optimizadas para entornos sin interfaz gráfica
-      const browser = await puppeteer.launch({
+        browser = await puppeteer.launch({
         headless: true, // Usar true en lugar de "new" para mayor compatibilidad
         args: [
           "--no-sandbox",
