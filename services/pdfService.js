@@ -4,7 +4,7 @@ const puppeteer = require("puppeteer");
 const os = require("os");
 
 // Importar la NUEVA función principal de chartService.js
-const { createDynamicCoverPage } = require('./chartService');// Ajusta la ruta si es necesario
+const { createRadarChartCoverPage } = require('./chartService');// Ajusta la ruta si es necesario
 
 async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", requestId = "") {
   return new Promise(async (resolve, reject) => {
@@ -56,9 +56,9 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
       // --- Generar HTML de la Portada Dinámica ---
       console.log("Generando HTML de la portada...");
       // Pasamos htmlContent (la rutina) para análisis interno en chartService
-      console.log(`[DEBUG PDF] Llamando a createDynamicCoverPage con clientName: ${clientName}, htmlContent length: ${htmlContent?.length || 0}, logoBase64 disponible: ${!!logoBase64}`);
-      const coverPageHtmlString = createDynamicCoverPage(clientName, htmlContent, logoBase64);
-      console.log(`[DEBUG PDF] createDynamicCoverPage devolvió un string de longitud: ${coverPageHtmlString?.length || 0}`);
+      console.log(`[DEBUG PDF] Llamando a createRadarCoverChart con clientName: ${clientName}, htmlContent length: ${htmlContent?.length || 0}, logoBase64 disponible: ${!!logoBase64}`);
+      const coverPageHtmlString = createRadarCoverChart(clientName, htmlContent, logoBase64);
+      console.log(`[DEBUG PDF] createRadarCoverChart devolvió un string de longitud: ${coverPageHtmlString?.length || 0}`);
 
       // --- Ensamblar el HTML COMPLETO para TODO el PDF ---
       const fullPdfHtml = `
