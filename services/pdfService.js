@@ -700,7 +700,10 @@ th[colspan]::after {
      
       // Estableciendo contenido COMPLETO en Puppeteer...
       console.log("Estableciendo contenido COMPLETO en Puppeteer...");
-      await page.setContent(fullPdfHtml, { waitUntil: 'networkidle0' }); // Usar 'networkidle0' o 'load'
+      await page.setContent(fullPdfHtml, { 
+        waitUntil: 'networkidle0',
+        timeout: 60000 // Aumentar a 60 segundos
+    }); // Usar 'networkidle0' o 'load'
       console.log("Contenido establecido.");
 
       // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
