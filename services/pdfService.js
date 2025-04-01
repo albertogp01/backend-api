@@ -705,342 +705,50 @@ th[colspan]::after {
         deviceScaleFactor: 1
       });
      
-      // Mostrar mensaje de carga
-      await page.setContent('<div class="loading-message">Generando rutina de entrenamiento...</div>', {
-        waitUntil: "networkidle0"
-      });
-     
-      // Estableciendo contenido usando estrategia alternativa
-      console.log("Estableciendo contenido en Puppeteer usando estrategia alternativa...");
-      // 1. Primero establecer un documento HTML básico
-      await page.setContent('<html><head><meta charset="UTF-8"></head><body></body></html>', { timeout: 30000 });
+      // +++ BLOQUE NUEVO RECOMENDADO (REEMPLAZO) +++
 
-      // 2. Luego inyectar el contenido completo usando page.evaluate()
-      await page.evaluate((html) => {
-        document.body.innerHTML = html;
-      }, fullPdfHtml);
-
-      // 3. Esperar explícitamente a que el DOM esté listo
-      await page.waitForFunction(() => {
-        return document.readyState === 'complete';
-      }, { timeout: 60000 });
-      
-        // IMPORTANTE: Quitar la espera de gráficos específicos que causaban timeout
-      console.log("Esperando a que los gráficos se inicialicen...");
-      
-      // Eliminamos la espera por Chart.js y usamos un enfoque más directo
-      await page.evaluate(() => {
-        // Inyectamos directamente Chart.js si no está presente
-        if (typeof window.Chart === 'undefined') {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js';
-          script.onload = () => {
-            console.log('Chart.js cargado correctamente');
-            // Inicializar directamente cualquier gráfico necesario
-            if (document.getElementById('radarChart')) {
-              try {
-                const initRadarChart = new Function(`
-                  const ctx = document.getElementById('radarChart');
-                  if (!ctx) return;
-                  const chartContext = ctx.getContext('2d');
-                  if (!chartContext) return;
-                  
-                  new Chart(chartContext, {
-                    type: 'radar',
-                    data: {
-                      labels: ['Fuerza', 'Hipertrofia', 'Movilidad', 'Potencia', 'Técnica', 'Cardio'],
-                      datasets: [{
-                        label: 'Perfil de Entrenamiento',
-                        data: [${scores.fuerza}, ${scores.hipertrofia}, ${scores.movilidad}, ${scores.potencia}, ${scores.tecnica}, ${scores.cardio}],
-                        backgroundColor: 'rgba(10, 42, 94, 0.25)',
-                        borderColor: 'rgba(10, 42, 94, 0.85)',
-                        borderWidth: 2.5,
-                        pointBackgroundColor: 'rgba(10, 42, 94, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(10, 42, 94, 1)',
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                      }]
-                    },
-                    options: {
-                      scales: {
-                        r: {
-                          angleLines: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.1)'
-                          },
-                          suggestedMin: 0,
-                          suggestedMax: 100,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                          },
-                          ticks: {
-                            stepSize: 20,
-                            color: 'rgba(0, 0, 0, 0.6)',
-                            backdropColor: 'rgba(255, 255, 255, 0.75)',
-                            padding: 10
-                          },
-                          pointLabels: {
-                            font: {
-                              size: 13.5,
-                              weight: '600'
-                            },
-                            color: 'rgba(0, 0, 0, 0.85)'
-                          }
-                        }
-                      },
-                      plugins: {
-                        legend: {
-                          display: false
-                        },
-                        tooltip: {
-                          enabled: true,
-                          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                          titleFont: { size: 14, weight: 'bold' },
-                          bodyFont: { size: 13 },
-                          padding: 12,
-                          boxPadding: 5,
-                          cornerRadius: 4
-                        }
-                      },
-                      responsive: true,
-                      maintainAspectRatio: false
-                    }
-                  });
-                `);
-                initRadarChart();
-              } catch (e) {
-                console.error('Error al inicializar gráfico radar:', e);
-              }
-            }
-          };
-          document.head.appendChild(script);
-        } else {
-          console.log('Chart.js ya está cargado');
-          // Inicializar gráficos si ya está cargado Chart.js
-        }
-        
-        // Resolver después de un tiempo fijo para permitir la carga visual
-        return new Promise(resolve => setTimeout(resolve, 1000));
+      // *** PASO CLAVE: Cargar contenido y ESPERAR ***
+      console.log("Estableciendo contenido y esperando...");
+      // Carga TODO el HTML (portada + rutina + estilos + scripts) de una vez
+      // y espera a que la red se calme (importante para CDN de Chart.js y logo)
+      await page.setContent(fullPdfHtml, {
+          waitUntil: 'networkidle0', // Espera a que la red se calme
+          timeout: 90000 // Timeout generoso
       });
 
-      // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
-      console.log("Ejecutando script de evaluación en la página...");
-      await page.evaluate(() => {
-        // Primero, asegurarnos de que todos los elementos de variante tengan un ID para facilitar su manipulación
-        document.querySelectorAll('.variants-container, .side-variants-container').forEach((variant, idx) => {
-          variant.id = 'variant-' + idx;
-         
-          // Extraer el número del día al que pertenece esta variante
-          const dayMatch = variant.innerHTML.match(/Día\s+(\d+)/i);
-          if (dayMatch) {
-            variant.dataset.dayNumber = dayMatch[1];
-          }
-        });
-       
-        // Organizar días y variantes en contenedores
-        const dayTitles = document.querySelectorAll('.day-title');
-       
-        dayTitles.forEach((title, index) => {
-          const dayContainer = document.createElement('div');
-          dayContainer.className = 'training-day-container';
-         
-          // Extraer el número de día del título
-          const dayNumberMatch = title.textContent.match(/Día\s+(\d+)/i);
-          if (dayNumberMatch) {
-            dayContainer.dataset.dayNumber = dayNumberMatch[1];
-          }
-         
-          title.parentNode.insertBefore(dayContainer, title);
-          dayContainer.appendChild(title);
-         
-          let nextElement = dayContainer.nextElementSibling;
-          while (nextElement && (nextElement.tagName === 'TABLE' || nextElement.classList.contains('table-spacer'))) {
-            const currentElement = nextElement;
-            nextElement = nextElement.nextElementSibling;
-            dayContainer.appendChild(currentElement);
-          }
-         
-          // Solo añadir salto de página para días posteriores al primer día
-          if (index > 0) {
-            const pageBreak = document.createElement('div');
-            pageBreak.className = 'page-break';
-           
-            // Añadir un wrapper para contener el día y mantener márgenes consistentes
-            const pageContent = document.createElement('div');
-            pageContent.className = 'page-content';
-            pageContent.style.paddingTop = '50px'; // Padding-top constante para mantener márgenes consistentes
-           
-            // Envolver el dayContainer en pageContent para mantener márgenes consistentes
-            dayContainer.parentNode.insertBefore(pageBreak, dayContainer);
-            dayContainer.parentNode.insertBefore(pageContent, dayContainer);
-            pageContent.appendChild(dayContainer);
-          }
-        });
-       
-        // Cambiar título de variantes principales
-        document.querySelectorAll('.variants-container').forEach(container => {
-          const titleEl = container.querySelector('.variants-title');
-          if (titleEl) titleEl.textContent = "VARIANTES";
-        });
-       
-        // MEJORA: Función para comprobar si una variante es pequeña (pocos items)
-        function isSmallVariant(variant) {
-          const items = variant.querySelectorAll('.variant-item, .side-variant-item');
-          return items.length <= 3;
-        }
-       
-        // MEJORA: Función para calcular el espacio disponible después de un elemento
-        function getAvailableSpace(element) {
-          if (!element) return 0;
-         
-          const rect = element.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-          const footerHeight = 55;
-         
-          return viewportHeight - rect.bottom - footerHeight;
-        }
-       
-        // MEJORA: Función para determinar si un elemento está cerca del footer
-        function isNearFooter(element, safetyMargin = 90) { // Reducido de 120px a 90px
-          if (!element) return false;
-         
-          const rect = element.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-          const footerThreshold = viewportHeight - safetyMargin;
-          return rect.bottom > footerThreshold;
-        }
-       
-        // MEJORADO: Algoritmo para mover variantes a sus contenedores de día
-        document.querySelectorAll('.training-day-container').forEach(dayContainer => {
-          const dayNumber = dayContainer.dataset.dayNumber;
-          if (!dayNumber) return;
-          
-          // Encontrar todas las variantes que pertenecen a este día
-          document.querySelectorAll('.variants-container, .side-variants-container').forEach(variant => {
-            const titleEl = variant.querySelector('.variants-title, .side-variants-title');
-            if (titleEl) titleEl.textContent = "VARIANTES";
-           
-            const variantDayMatch = variant.innerHTML.match(/Día\s+(\d+)/i);
-            if (variantDayMatch && variantDayMatch[1] === dayNumber) {
-              // Esta variante pertenece a este día
-             
-              // Obtener la última tabla del día
-              const tables = dayContainer.querySelectorAll('table');
-              if (tables.length === 0) return;
-             
-              const lastTable = tables[tables.length - 1];
-             
-              // Eliminar cualquier espaciador existente después de la tabla
-              if (lastTable.nextElementSibling && lastTable.nextElementSibling.className === 'table-spacer') {
-                lastTable.nextElementSibling.remove();
-              }
-             
-              // Crear un espaciador personalizado más pequeño
-              const smallSpacer = document.createElement('div');
-              smallSpacer.style.height = '8px'; // Espaciador reducido
-              lastTable.after(smallSpacer);
-             
-              // Verificar si podemos mantener la variante en la misma página
-              const isSmall = isSmallVariant(variant);
-              const availableSpace = getAvailableSpace(lastTable);
-              const variantHeight = isSmall ? 100 : 200; // Estimación aproximada
-             
-              if (isSmall && availableSpace > variantHeight) {
-                // Variante pequeña y hay espacio, mantenerla en la misma página
-                smallSpacer.after(variant);
-              } else if (isNearFooter(lastTable)) {
-                // No hay suficiente espacio, crear salto de página
-                const pageBreak = document.createElement('div');
-                pageBreak.className = 'page-break';
-               
-                const pageContent = document.createElement('div');
-                pageContent.className = 'page-content';
-                pageContent.style.paddingTop = '50px';
-               
-                dayContainer.appendChild(pageBreak);
-                dayContainer.appendChild(pageContent);
-                pageContent.appendChild(variant);
-              } else {
-                // Hay espacio pero la variante es grande, mantenerla en la misma página
-                smallSpacer.after(variant);
-              }
-            }
-          });
-        });
+      // Opcional: Añadir una pequeña espera fija adicional si 'networkidle0'
+      // a veces no es suficiente para que el gráfico termine de animarse/renderizarse.
+      // await page.waitForTimeout(1000); // Ejemplo: 1 segundo extra
 
-        // Optimizar la colocación de variantes sin crear saltos innecesarios
-        document.querySelectorAll('.training-day-container').forEach(container => {
-          // Obtener la última tabla en el contenedor del día
-          const tables = container.querySelectorAll('table');
-          if (tables.length === 0) return;
-          const lastTable = tables[tables.length - 1];
-          // Obtener todas las variantes en este contenedor de día
-          const variants = container.querySelectorAll('.variants-container, .side-variants-container');        
-          if (variants.length > 0) {
-            // Mover todas las variantes después de la última tabla
-            variants.forEach(variant => {
-              // Eliminar cualquier salto de página existente antes de la variante
-              if (variant.previousElementSibling && variant.previousElementSibling.classList.contains('page-break')) {
-                variant.previousElementSibling.remove();
-              }
-              // Calcular el espacio disponible después de la última tabla
-              const availableSpace = getAvailableSpace(lastTable);
+      // Opcional: Esperar a que el elemento del gráfico exista y sea visible
+      // try {
+      //     await page.waitForSelector('#radarChart', { visible: true, timeout: 10000 });
+      //     console.log("Canvas del gráfico radar encontrado y visible.");
+      // } catch (waitError) {
+      //     console.warn("No se pudo encontrar el canvas del gráfico radar o no era visible:", waitError.message);
+      //     // Puedes decidir si continuar o fallar aquí
+      // }
 
-              const variantHeight = variant.getBoundingClientRect().height;            
-              // Crear un salto de página solo si realmente no hay suficiente espacio
-              if (variantHeight > availableSpace && isNearFooter(lastTable, 90)) {
-                // Crear salto de página antes de la variante
-                const pageBreak = document.createElement('div');
-                pageBreak.className = 'page-break';              
-                // Crear un contenedor con margen para la variante
-                const pageContent = document.createElement('div');
-                pageContent.className = 'page-content';              
-                // Insertar los elementos en el orden correcto
-                container.insertBefore(pageBreak, variant);
-                container.insertBefore(pageContent, variant);
-                pageContent.appendChild(variant);
-              }
-            });
-          }
-        });
-        // Eliminar cualquier salto de página innecesario
-        document.querySelectorAll('.page-break').forEach(pageBreak => {
-          const nextElement = pageBreak.nextElementSibling;
-          if (!nextElement || nextElement.classList.contains('page-break')) {
-            pageBreak.remove();
-          }
-        });
-        // Asegurar que haya espacio suficiente al final de cada día para evitar solapamiento con el footer
-        document.querySelectorAll('.training-day-container').forEach(container => {
-          const spacer = document.createElement('div');
-          spacer.className = 'content-spacer';
-          spacer.style.height = '60px'; // Espacio suficiente para evitar el footer
-          container.appendChild(spacer);
-        });
-      });
-          
-      try {
-        // Generar PDF
-        const pdfBuffer = await page.pdf({
+
+      // --- Generar PDF ---
+      console.log("Generando PDF...");
+      // Ahora la llamada a page.pdf() ocurre DESPUÉS de que la página
+      // (incluyendo scripts y estilos) ha tenido tiempo de cargarse y ejecutarse.
+      const pdfBuffer = await page.pdf({
           path: filePath,
           format: 'A4',
           margin: { top: '0', right: '0', bottom: '0', left: '0' },
           printBackground: true,
-          preferCSSPageSize: true,
-          timeout: 90000 // Aumentar a 90 segundos
-        });
-        console.log("PDF generado correctamente en:", filePath);
-        await browser.close();
-        console.log("Navegador cerrado correctamente");
-        resolve(filePath);
-      } catch (pdfError) {
-        console.error("Error específico al generar PDF:", pdfError.message);
-        if (browser) await browser.close();
-        console.log("Navegador cerrado después de error");
-        reject(pdfError);
-      }
+          preferCSSPageSize: true, // Usa el @page size del CSS si está definido
+          timeout: 90000
+      });
+
+      console.log("PDF generado correctamente en:", filePath);
+      await browser.close(); // Cierra el navegador DESPUÉS de generar el PDF
+      console.log("Navegador cerrado correctamente");
+      resolve(filePath); // Resuelve la promesa con la ruta del archivo
+
+// +++ FIN DEL BLOQUE NUEVO RECOMENDADO +++
     } catch (error) {
       console.error("Error en generatePDF:", error);
       if (browser) {
