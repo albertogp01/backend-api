@@ -1,4 +1,4 @@
-// chartService.js (Análisis Estructural Volumen por Día + Logging - CORREGIDO v10)
+// chartService.js (Visual Enhancements v11)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -68,7 +68,6 @@ function calculateTrainingComponentScores(routineHtml) {
         if (numbers && numbers.length >= 2) {
             // Heuristic: Assume the first number is sets if it's reasonable (e.g., < 10)
             // and the second number looks like reps (e.g., > 1 or a range).
-            // This is imperfect but tries to handle common "Sets x Reps" formats.
             const potentialSets = parseInt(numbers[0], 10);
             const potentialReps = numbers[1]; // Keep as string to check for range '-'
             if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 10) { // Check if first number looks like sets
@@ -239,6 +238,7 @@ function calculateTrainingComponentScores(routineHtml) {
  * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
  */
 function calculateDailyVolume(routineHtml) {
+    // Use v10 logic - no changes needed here as it correctly identifies sets now
     console.log("[Volume Calc v10] Starting...");
     const dailyVolume = {};
 
@@ -334,7 +334,7 @@ function calculateDailyVolume(routineHtml) {
                 if (dataCells && dataCells.length > setsColumnIndex) {
                     const setsCellHtml = dataCells[setsColumnIndex];
                     const setsText = setsCellHtml.replace(/<[^>]+>/g, '').trim();
-                    console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Text in Sets Column (${setsColumnIndex}): "${setsText}"`); // Log text found
+                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Text in Sets Column (${setsColumnIndex}): "${setsText}"`); // Log text found
 
                     // Attempt to parse the sets text as a number
                     let setsFound = 0;
@@ -342,21 +342,21 @@ function calculateDailyVolume(routineHtml) {
                         const potentialSets = parseInt(setsText, 10);
                         if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check
                             setsFound = potentialSets;
-                            console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Parsed Sets: ${setsFound}`);
+                            // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Parsed Sets: ${setsFound}`);
 
                             // Optional: Check if REPS column indicates time (like Plancha) for logging/confirmation
                             if (repsColumnIndex !== -1 && dataCells.length > repsColumnIndex) {
                                 const repsText = dataCells[repsColumnIndex].replace(/<[^>]+>/g, '').trim();
                                 if (timeDurationRegex.test(repsText)) {
-                                    console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Detected time-based exercise in Reps column ("${repsText}") with ${setsFound} sets.`);
+                                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Detected time-based exercise in Reps column ("${repsText}") with ${setsFound} sets.`);
                                 }
                             }
 
                         } else {
-                             console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
+                             // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
                         }
                     } else {
-                         console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
+                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
                     }
 
 
@@ -364,12 +364,12 @@ function calculateDailyVolume(routineHtml) {
                     if (setsFound > 0 && !isNaN(setsFound)) {
                         dailyVolume[currentDay] += setsFound;
                     } else {
-                         console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
+                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
                     }
 
                 } else {
                     // This row doesn't seem to have enough data cells or structure is unexpected
-                     console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
+                     // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
                 }
             } else if (!isLikelyHeaderRow && setsColumnIndex === -1) {
                  // This case should be less common now, means we are past day header but haven't found column headers yet
@@ -416,7 +416,7 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
         description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`;
     }
 
-    // HTML Structure
+    // HTML Structure - REMOVED COMMENT
     return `
     <div class="cover-page-new">
       <div class="cover-header-new">
@@ -468,7 +468,7 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
               <canvas id="radarChart"></canvas>
           </div>
           <div class="chart-container-new volume-chart-container-new">
-              {/* Título del gráfico actualizado */}
+              {/* REMOVED -> Título del gráfico actualizado */}
               <h3 class="chart-title">Volumen Total Estimado por Día (Series)</h3>
               <canvas id="volumeLineChart"></canvas>
           </div>
@@ -878,12 +878,12 @@ function getRadarChartScript(scores) {
 
 /**
  * Genera el script de inicialización de Chart.js para el gráfico de líneas de volumen DIARIO.
+ * INCLUYE MEJORAS VISUALES Y PLUGIN DATALABELS.
  * @param {Object} dailyVolumeData - Datos de volumen diario (ej. {'Día 1': 20, 'Día 2': 18}).
  * @returns {string} - Código JavaScript para inicializar el gráfico de líneas.
  */
 function getVolumeLineChartScript(dailyVolumeData) {
     // Extraer etiquetas (Día 1, Día 2...) y datos (total series)
-    // Asegurarse de que los días estén ordenados correctamente si es necesario
     const sortedDays = Object.keys(dailyVolumeData).sort((a, b) => {
         const numA = parseInt(a.match(/\d+/)?.[0] || 0);
         const numB = parseInt(b.match(/\d+/)?.[0] || 0);
@@ -893,25 +893,22 @@ function getVolumeLineChartScript(dailyVolumeData) {
     const labels = sortedDays;
     const data = sortedDays.map(day => dailyVolumeData[day]);
 
-    // Check if data is empty and provide default if needed for display
     const displayLabels = labels.length > 0 ? labels : ['No Data'];
     const displayData = data.length > 0 ? data : [0];
-    // Determine if the chart should display the "No Data" message
-    // Check if dailyVolumeData is empty OR if all values are 0
     const noDataAvailable = (Object.keys(dailyVolumeData).length === 0 || data.every(v => v === 0));
-    console.log(`[Volume Script - Daily] Generating script. No data available: ${noDataAvailable}`);
-    console.log(`[Volume Script - Daily] dailyVolumeData for script: ${JSON.stringify(dailyVolumeData)}`);
-    console.log(`[Volume Script - Daily] Labels for chart: ${JSON.stringify(displayLabels)}`);
-    console.log(`[Volume Script - Daily] Data for chart: ${JSON.stringify(displayData)}`);
+    console.log(`[Volume Script - Daily v11] Generating script. No data available: ${noDataAvailable}`);
+    console.log(`[Volume Script - Daily v11] dailyVolumeData for script: ${JSON.stringify(dailyVolumeData)}`);
+    console.log(`[Volume Script - Daily v11] Labels for chart: ${JSON.stringify(displayLabels)}`);
+    console.log(`[Volume Script - Daily v11] Data for chart: ${JSON.stringify(displayData)}`);
 
 
     const lineChartColors = {
-        backgroundColor: 'rgba(52, 152, 219, 0.15)', // Lighter blue area fill
-        borderColor: 'rgba(52, 152, 219, 0.9)',     // Solid blue line
-        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
+        // Using a slightly more vibrant blue from the theme
+        main: 'rgba(52, 152, 219, 1)', // var(--accent-color) as solid
+        areaFill: 'rgba(52, 152, 219, 0.2)', // Lighter fill
+        pointBorder: '#ffffff',
+        pointHoverBackground: '#ffffff',
+        datalabelColor: '#333' // Darker color for data labels for contrast
     };
 
     return `
@@ -932,59 +929,56 @@ function getVolumeLineChartScript(dailyVolumeData) {
          }
 
         // Display message if no data
-        const noData = ${noDataAvailable}; // Use the calculated boolean
+        const noData = ${noDataAvailable};
         if (noData) {
-            console.log("[Volume Script - Daily] No data flag is true, displaying message on canvas.");
-            // Clear previous drawings (important if chart existed before)
+            console.log("[Volume Script - Daily v11] No data flag is true, displaying message on canvas.");
              if (window.myVolumeChart) {
                  window.myVolumeChart.destroy();
-                 window.myVolumeChart = null; // Clear the global variable
+                 window.myVolumeChart = null;
              }
-            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Clear canvas
-            // Ensure canvas has dimensions before drawing text
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasElement.width = canvasElement.offsetWidth;
             canvasElement.height = canvasElement.offsetHeight;
-            ctx.font = "14px 'Inter', sans-serif"; // Slightly smaller font
-            ctx.fillStyle = '#777'; // Lighter gray
+            ctx.font = "14px 'Inter', sans-serif";
+            ctx.fillStyle = '#777';
             ctx.textAlign = 'center';
-            // Calculate center position more reliably after setting dimensions
             const centerX = canvasElement.width / 2;
             const centerY = canvasElement.height / 2;
             ctx.fillText("No se pudo calcular el volumen.", centerX, centerY);
             console.warn("No volume data to display in line chart.");
-            return; // Stop chart initialization
+            return;
         } else {
-             console.log("[Volume Script - Daily] Data is available, proceeding with chart initialization.");
+             console.log("[Volume Script - Daily v11] Data is available, proceeding with chart initialization.");
         }
 
 
-        // Chart.js Configuration
+        // Chart.js Configuration with DataLabels plugin
         try {
-            // Destruir gráfico existente si lo hay
             if (window.myVolumeChart) {
-                console.log("[Volume Script - Daily] Destroying existing volume chart instance.");
+                console.log("[Volume Script - Daily v11] Destroying existing volume chart instance.");
                 window.myVolumeChart.destroy();
             }
-            console.log("[Volume Script - Daily] Creating new Chart instance.");
-            window.myVolumeChart = new Chart(ctx, { // Asignar a la variable global
-                type: 'line', // Could also be 'bar' if preferred
+            console.log("[Volume Script - Daily v11] Creating new Chart instance.");
+            window.myVolumeChart = new Chart(ctx, {
+                type: 'line',
+                plugins: [ChartDataLabels], // Register plugin for this chart instance
                 data: {
-                    // Use sorted days as labels and total sets as data
                     labels: ${JSON.stringify(displayLabels)},
                     datasets: [{
-                        label: 'Series Totales por Día', // Updated label
+                        label: 'Series Totales por Día',
                         data: ${JSON.stringify(displayData)},
                         fill: true,
-                        backgroundColor: '${lineChartColors.backgroundColor}',
-                        borderColor: '${lineChartColors.borderColor}',
-                        borderWidth: 2, // Adjusted width
-                        pointBackgroundColor: '${lineChartColors.pointBackgroundColor}',
-                        pointBorderColor: '${lineChartColors.pointBorderColor}',
-                        pointHoverBackgroundColor: '${lineChartColors.pointHoverBackgroundColor}',
-                        pointHoverBorderColor: '${lineChartColors.pointHoverBorderColor}',
-                        pointRadius: 3.5, // Adjusted size
-                        pointHoverRadius: 5.5, // Adjusted size
-                        tension: 0.1 // Slightly less tension for potentially fewer points
+                        backgroundColor: '${lineChartColors.areaFill}', // Use defined color
+                        borderColor: '${lineChartColors.main}', // Use defined color
+                        borderWidth: 2.5, // Slightly thicker line
+                        pointBackgroundColor: '${lineChartColors.main}',
+                        pointBorderColor: '${lineChartColors.pointBorder}',
+                        pointBorderWidth: 1.5, // Make point border visible
+                        pointHoverBackgroundColor: '${lineChartColors.pointHoverBackground}',
+                        pointHoverBorderColor: '${lineChartColors.main}',
+                        pointRadius: 4.5, // Larger points
+                        pointHoverRadius: 6.5, // Larger hover points
+                        tension: 0.2 // Slightly more curve
                     }]
                 },
                 options: {
@@ -992,23 +986,23 @@ function getVolumeLineChartScript(dailyVolumeData) {
                         y: {
                             beginAtZero: true,
                             title: {
-                                display: true, // Show Y-axis title
-                                text: 'Número Total de Series', // Updated title
+                                display: true,
+                                text: 'Número Total de Series',
                                 font: { size: 11 },
                                 color: '#666',
                                 padding: { top: 0, bottom: 5 }
                             },
                             ticks: {
-                                color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
-                                precision: 0, // Ensure whole numbers for sets
-                                font: { size: 10 } // Smaller font
+                                color: 'rgba(0, 0, 0, 0.6)',
+                                precision: 0, // Ensure whole numbers
+                                font: { size: 10 }
                             },
                              grid: {
-                                 color: 'rgba(0, 0, 0, 0.06)' // Lighter grid
+                                 color: 'rgba(0, 0, 0, 0.08)' // Slightly more visible grid
                              }
                         },
                         x: {
-                             title: { // Optional X-axis title
+                             title: {
                                  display: true,
                                  text: 'Día de Entrenamiento',
                                  font: { size: 11 },
@@ -1016,19 +1010,19 @@ function getVolumeLineChartScript(dailyVolumeData) {
                                  padding: { top: 5, bottom: 0 }
                              },
                              ticks: {
-                                 color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
-                                 font: { size: 10 } // Smaller font
+                                 color: 'rgba(0, 0, 0, 0.7)', // Slightly darker ticks
+                                 font: { size: 10 }
                              },
                              grid: {
-                                 display: false // Hide vertical grid lines
+                                 display: false
                              }
                         }
                     },
                     plugins: {
                         legend: {
-                            display: false, // Hide legend (only one line)
+                            display: false, // Keep legend hidden for single dataset
                         },
-                        tooltip: {
+                        tooltip: { // Keep tooltips for hover details
                             enabled: true,
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleFont: { size: 12, weight: 'bold' },
@@ -1037,13 +1031,11 @@ function getVolumeLineChartScript(dailyVolumeData) {
                             boxPadding: 3,
                             cornerRadius: 3,
                              callbacks: {
-                                 // Show "Day X: Y series" in tooltip
                                  title: function(tooltipItems) {
-                                     // tooltipItems is an array, usually with one item for line charts
                                      return tooltipItems[0]?.label || '';
                                  },
                                  label: function(context) {
-                                     let label = context.dataset.label || ''; // "Series Totales por Día"
+                                     let label = context.dataset.label || '';
                                      if (label) { label += ': '; }
                                      if (context.parsed.y !== null) {
                                          label += context.parsed.y + ' series';
@@ -1051,15 +1043,34 @@ function getVolumeLineChartScript(dailyVolumeData) {
                                      return label;
                                  }
                              }
+                        },
+                        datalabels: { // Configuration for chartjs-plugin-datalabels
+                            display: true, // Show labels by default
+                            anchor: 'end', // Position label at the end of the data element
+                            align: 'top', // Align label above the anchor point
+                            color: '${lineChartColors.datalabelColor}', // Label text color
+                            font: {
+                                size: 10, // Slightly smaller font for labels
+                                weight: '600' // Make labels bold
+                            },
+                            formatter: (value, context) => {
+                                // Show the value directly (number of sets)
+                                return value;
+                                // Optional: Add suffix like ' series'
+                                // return value + ' s';
+                            },
+                            // Optional: Add padding or offset if needed
+                            // offset: 4,
+                            // padding: { top: 4 }
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false // Crucial for resizing
+                    maintainAspectRatio: false
                 }
             });
-             console.log("[Volume Script - Daily] Volume chart initialized successfully."); // Confirmation log
+             console.log("[Volume Script - Daily v11] Volume chart initialized successfully with datalabels.");
         } catch (error) {
-             console.error("[Volume Script - Daily] Error initializing Volume Line Chart:", error);
+             console.error("[Volume Script - Daily v11] Error initializing Volume Line Chart:", error);
         }
       }
 
@@ -1068,11 +1079,12 @@ function getVolumeLineChartScript(dailyVolumeData) {
           document.addEventListener('DOMContentLoaded', initVolumeLineChart);
       } else {
           // Delay slightly if DOM is already loaded
-          setTimeout(initVolumeLineChart, 50); // Reduced delay
+          setTimeout(initVolumeLineChart, 50);
       }
     </script>
     `;
 }
+
 
 /**
  * Creates a complete cover page including radar and volume charts.
@@ -1086,11 +1098,11 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     const scores = calculateTrainingComponentScores(routineHtml);
 
     // 2. Calculate DAILY volume using the revised function
-    const dailyVolumeData = calculateDailyVolume(routineHtml); // Use the updated function (v9)
+    const dailyVolumeData = calculateDailyVolume(routineHtml); // Use v10
     console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
-    // 3. Generate cover page HTML (placeholders for charts)
+    // 3. Generate cover page HTML (placeholders for charts) - Use v11 with comment removed
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
 
     // 4. Replace logo placeholder
@@ -1106,12 +1118,14 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
 
     // 6. Get Chart.js initialization scripts
     const radarScript = getRadarChartScript(scores);
-    // Pass the DAILY volume data to the updated script generator
+    // Pass the DAILY volume data to the updated script generator (v11 with datalabels)
     const volumeScript = getVolumeLineChartScript(dailyVolumeData);
 
-    // 7. Combine scripts (including the main Chart.js library)
+    // 7. Combine scripts (including Chart.js AND the datalabels plugin)
     const combinedScript = `
         <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+        <script> Chart.register(ChartDataLabels); </script> {/* Register plugin globally */}
         ${radarScript}
         ${volumeScript}
     `;
@@ -1130,16 +1144,14 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
 // Export the main function and the revised volume function name
 module.exports = {
     calculateTrainingComponentScores,
-    calculateDailyVolume, // Export the revised function name (v9)
+    calculateDailyVolume, // Export v10
     createCoverPage,
     // Keep other exports if they were needed for testing/other modules
     generateCoverPageHtml,
     getCoverPageStyles,
     getRadarChartScript,
-    getVolumeLineChartScript
+    getVolumeLineChartScript // Export v11
 };
-
-// --- END OF UNCHANGED FUNCTIONS ---
 
 
 
