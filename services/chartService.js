@@ -1,4 +1,4 @@
-// chartService.js (Visual Enhancements v11)
+// chartService.js (Comment Removed & Visual Enhancements v12)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -416,7 +416,7 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
         description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`;
     }
 
-    // HTML Structure - REMOVED COMMENT
+    // HTML Structure - COMMENT FULLY REMOVED
     return `
     <div class="cover-page-new">
       <div class="cover-header-new">
@@ -468,7 +468,6 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
               <canvas id="radarChart"></canvas>
           </div>
           <div class="chart-container-new volume-chart-container-new">
-              {/* REMOVED -> Título del gráfico actualizado */}
               <h3 class="chart-title">Volumen Total Estimado por Día (Series)</h3>
               <canvas id="volumeLineChart"></canvas>
           </div>
@@ -1102,7 +1101,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
-    // 3. Generate cover page HTML (placeholders for charts) - Use v11 with comment removed
+    // 3. Generate cover page HTML (placeholders for charts) - Use v12 with comment removed
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
 
     // 4. Replace logo placeholder
@@ -1152,6 +1151,7 @@ module.exports = {
     getRadarChartScript,
     getVolumeLineChartScript // Export v11
 };
+
 
 
 
