@@ -106,10 +106,14 @@ function getWeightExcludingSession(responses, sessionTime) {
 
     const formatWeight = (value) => {
         const trimmedValue = String(value || '').trim();
-        if (/\d+(\.\d+)?\s*(kg|kilos|libras|lb)/i.test(trimmedValue)) {
-            return trimmedValue.replace(/kilos/i, 'kg').replace(/libras/i, 'lb'); // Normalizar unidad
+        if (/\d+([.,]\d+)?\s*(kg|kilos|libras|lb)/i.test(trimmedValue)) {
+             // Extraer valor y unidad, normalizar unidad
+             const match = trimmedValue.match(/(\d+([.,]\d+)?)\s*(kg|kilos|lb|libras)?/i);
+             const numValue = match[1].replace(',', '.');
+             const unit = (match[3] || 'kg').toLowerCase();
+             return `${numValue} ${unit.startsWith('k') ? 'kg' : 'lb'}`;
         }
-        if (/^\d+(\.\d+)?$/.test(trimmedValue)) { // Si solo son números
+        if (/^\d+([.,]\d+)?$/.test(trimmedValue)) { // Si solo son números
             return trimmedValue + " kg"; // Asumir kg
         }
         return trimmedValue; // Devolver como está si no coincide
@@ -142,14 +146,14 @@ function getWeightExcludingSession(responses, sessionTime) {
 
     // 4. Buscar respuesta con patrón de peso (kg/lb) en preguntas no conflictivas
     const weightPatternResponse = responses.find(r => r && r.answer &&
-        /\b\d+(\.\d+)?\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
+        /\b\d+([.,]\d+)?\s*(kg|kilos|libras|lb)\b/i.test(r.answer) &&
         r.question &&
         !r.question.toLowerCase().includes("tiempo") &&
         !r.question.toLowerCase().includes("sesión") &&
         !r.question.toLowerCase().includes("altura") // Añadir exclusión de altura
     );
     if (weightPatternResponse?.answer) {
-        const weightMatch = weightPatternResponse.answer.match(/\b\d+(\.\d+)?\s*(kg|kilos|libras|lb)\b/i);
+        const weightMatch = weightPatternResponse.answer.match(/\b\d+([.,]\d+)?\s*(kg|kilos|libras|lb)\b/i);
         let extractedWeight = weightMatch ? weightMatch[0].trim() : formatWeight(weightPatternResponse.answer); // Extraer o formatear
         extractedWeight = formatWeight(extractedWeight); // Re-formatear/normalizar
         if (!checkConflict(extractedWeight)) {
@@ -185,16 +189,29 @@ function getHeightExcludingSession(responses, sessionTime) {
 
     const formatHeight = (value) => {
         const trimmedValue = String(value || '').trim();
-        if (/\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)/i.test(trimmedValue)) {
-            return trimmedValue.replace(/metros/i, 'm').replace(/pies|pie/i, 'ft'); // Normalizar unidad
+        const heightMatch = trimmedValue.match(/(\d+([.,]\d+)?)\s*(cm|m|metros|ft|pie|pies)?/i);
+
+        if (heightMatch) {
+            const numValue = parseFloat(heightMatch[1].replace(',', '.'));
+            let unit = (heightMatch[3] || '').toLowerCase();
+            if (!unit) { // Si no hay unidad, inferir
+                if (numValue >= 1.4 && numValue <= 2.3) unit = 'm';
+                else if (numValue >= 140 && numValue <= 230) unit = 'cm';
+                else unit = 'cm'; // Default a cm
+            }
+            if (unit.startsWith('m')) return `${numValue} m`;
+            if (unit === 'cm') return `${numValue} cm`;
+            if (unit.startsWith('f') || unit.startsWith('p')) return `${numValue} ft`; // Normalizar a ft
+            return `${numValue} cm`; // Fallback
         }
-        if (/^\d+(\.\d+)?$/.test(trimmedValue)) { // Solo números
-            const numValue = parseFloat(trimmedValue);
-            if (numValue >= 1.4 && numValue <= 2.3) return trimmedValue + " m"; // Asumir metros
-            if (numValue >= 140 && numValue <= 230) return trimmedValue + " cm"; // Asumir cm
-            return trimmedValue + " cm"; // Default a cm si es número pero fuera de rangos
-        }
-        return trimmedValue; // Devolver tal cual si no es número ni tiene formato
+         if (/^\d+([.,]\d+)?$/.test(trimmedValue)) { // Si solo es número, intentar inferir
+             const numValue = parseFloat(trimmedValue);
+             if (numValue >= 1.4 && numValue <= 2.3) return `${numValue} m`;
+             if (numValue >= 140 && numValue <= 230) return `${numValue} cm`;
+             return `${numValue} cm`; // Default a cm
+         }
+
+        return trimmedValue; // Devolver tal cual si no es número ni tiene formato reconocible
     };
 
     // 1. Buscar por campo específico 'altura'
@@ -225,18 +242,16 @@ function getHeightExcludingSession(responses, sessionTime) {
 
     // 4. Buscar respuesta con patrón de altura (cm/m/ft) en preguntas no conflictivas
     const heightPatternResponse = responses.find(r => r && r.answer &&
-        /\b\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
+        /\b\d+([.,]\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i.test(r.answer) &&
         r.question &&
         !r.question.toLowerCase().includes("tiempo") &&
         !r.question.toLowerCase().includes("sesión") &&
         !r.question.toLowerCase().includes("peso") // Añadir exclusión de peso
     );
     if (heightPatternResponse?.answer) {
-        const heightMatch = heightPatternResponse.answer.match(/\b\d+(\.\d+)?\s*(cm|metros|m|pie|pies|ft)\b/i);
-        let extractedHeight = heightMatch ? heightMatch[0].trim() : formatHeight(heightPatternResponse.answer); // Extraer o formatear
-        extractedHeight = formatHeight(extractedHeight); // Re-formatear/normalizar
-        if (!checkConflict(extractedHeight)) {
-            return extractedHeight; // Ya viene formateado por la regex o formatHeight
+        let formatted = formatHeight(heightPatternResponse.answer); // Usar formatHeight directamente
+        if (!checkConflict(formatted)) {
+            return formatted;
         }
     }
 
@@ -261,13 +276,14 @@ function getAnswer(questionKeyword, responses) {
     // --- Búsqueda Priorizada ---
     // 1. Buscar por campo específico (field) si coincide con la keyword
     const responseByField = responses.find(r => r && r.field && r.field.toLowerCase() === normalizedKeyword);
-    if (responseByField?.answer?.trim()) {
+    // Devolver respuesta incluso si está vacía si se encontró por field (para capturar "No" o "" explícitos)
+    if (responseByField && typeof responseByField.answer === 'string') {
         return responseByField.answer.trim();
     }
 
     // 2. Buscar por coincidencia de keyword en el texto de la PREGUNTA
     const responseByQuestion = responses.find(r => r && r.question && r.question.toLowerCase().includes(normalizedKeyword));
-    if (responseByQuestion?.answer?.trim()) {
+    if (responseByQuestion && typeof responseByQuestion.answer === 'string') {
         return responseByQuestion.answer.trim();
     }
 
@@ -283,7 +299,7 @@ function getAnswer(questionKeyword, responses) {
         (isConflictingKeyword || // Si buscamos una keyword conflictiva, no filtramos por pregunta
             !conflictingKeywords.some(ck => r.question.toLowerCase().includes(ck))) // Si no, filtramos preguntas conflictivas
     );
-    if (responseByAnswer?.answer?.trim()) {
+    if (responseByAnswer && typeof responseByAnswer.answer === 'string') {
         // console.log(`Keyword '${normalizedKeyword}' encontrada en respuesta: '${responseByAnswer.answer}' (Pregunta: '${responseByAnswer.question}') - Usando Fallback`);
         return responseByAnswer.answer.trim();
     }
@@ -388,7 +404,7 @@ const generateRoutine = async (formData, options = {}) => {
         return await createPromptAndGenerate(formattedResponsesForPrompt, responses, options);
 
     } catch (error) {
-        console.error("Error en generateRoutine:", error.message);
+        console.error("Error en generateRoutine:", error);
         // Lanzar un error más específico o el mismo error
         throw new Error(`Error al generar rutina: ${error.message}`);
     }
@@ -444,7 +460,7 @@ function processFormFieldsObject(formFields) {
             const questionText = questionMap[field] || field; // Usar field como fallback si no hay pregunta mapeada
             // Permitir respuestas vacías '' pero filtrar null/undefined
             const answerValue = (value !== null && value !== undefined) ? String(value) : '';
-            const trimmedValue = answerValue.trim();
+            // const trimmedValue = answerValue.trim(); // No hacer trim aquí, hacerlo al formatear para prompt
 
             // Incluir el campo incluso si la respuesta está vacía (para que getAnswer pueda encontrarlo si es necesario)
             // El filtrado final para el prompt se hará después
@@ -519,8 +535,9 @@ function processTextLines(textLines) {
                  results.push(mapped);
              } else {
                  // Si no se puede mapear, añadir como info adicional
-                 results.push({ question: `Información línea ${index + 1}`, answer: line });
-                 console.log(`Línea ${index + 1} ('${line}') no reconocida, añadida como información adicional.`);
+                 const infoField = `info_linea_${index + 1}`;
+                 results.push({ question: `Información línea ${index + 1}`, answer: line, field: infoField });
+                 console.log(`Línea ${index + 1} ('${line}') no reconocida, añadida como ${infoField}.`);
              }
         }
         // Si possibleNewLineFormat es true pero esta línea no tiene \n, se ignora a menos que haya currentQuestion
@@ -546,22 +563,22 @@ function processTextLines(textLines) {
  * Intenta mapear UNA SOLA línea de texto a una pregunta conocida.
  * Usado como helper en processTextLines para líneas sueltas.
  * @param {string} line - La línea de texto a mapear.
- * @returns {object|null} - Objeto { question, answer } si se mapea, o null.
+ * @returns {object|null} - Objeto { question, answer, field } si se mapea, o null.
  */
 function mapSingleLineToQuestion(line) {
     if (!line) return null;
     const lineLower = line.toLowerCase();
 
-    // Mapeos rápidos y comunes
-    if (/\b(kg|kilos|lb|libras)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuánto pesas?", answer: line };
-    if (/\b(cm|m|metros|ft|pie)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuál es tu altura?", answer: line };
-    if (/\b(min|minutos|hr|hora)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuánto tiempo puedes dedicar por sesión?", answer: line };
-    if (/\b(d[ií]as|veces)\b/i.test(lineLower) && /\bsemana\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuántos días a la semana puedes entrenar?", answer: line };
-    if (/\b(años|edad)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuál es tu edad?", answer: line };
-    if (/\b(hombre|mujer|masculino|femenino|no binario)\b/i.test(lineLower)) return { question: "¿Cuál es tu género?", answer: line };
-    if (/\b(principiante|intermedio|avanzado)\b/i.test(lineLower)) return { question: "¿Cuál es tu nivel de experiencia con el entrenamiento?", answer: line };
-    if (/\b(casa|gimnasio|gym|parque)\b/i.test(lineLower)) return { question: "¿Dónde sueles entrenar?", answer: line };
-    if (/\b(hipertrofia|fuerza|resistencia|perder peso|adelgazar|ganar m[uú]sculo)\b/i.test(lineLower)) return { question: "¿Cuál es tu objetivo principal de entrenamiento?", answer: line };
+    // Mapeos rápidos y comunes con field
+    if (/\b(kg|kilos|lb|libras)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuánto pesas?", answer: line, field: "peso" };
+    if (/\b(cm|m|metros|ft|pie)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuál es tu altura?", answer: line, field: "altura" };
+    if (/\b(min|minutos|hr|hora)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuánto tiempo puedes dedicar por sesión?", answer: line, field: "tiempo_sesion" };
+    if (/\b(d[ií]as|veces)\b/i.test(lineLower) && /\bsemana\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuántos días a la semana puedes entrenar?", answer: line, field: "dias_entrenamiento" };
+    if (/\b(años|edad)\b/i.test(lineLower) && /\d/.test(lineLower)) return { question: "¿Cuál es tu edad?", answer: line, field: "edad" };
+    if (/\b(hombre|mujer|masculino|femenino|no binario)\b/i.test(lineLower)) return { question: "¿Cuál es tu género?", answer: line, field: "genero" };
+    if (/\b(principiante|intermedio|avanzado)\b/i.test(lineLower)) return { question: "¿Cuál es tu nivel de experiencia con el entrenamiento?", answer: line, field: "nivel" };
+    if (/\b(casa|gimnasio|gym|parque)\b/i.test(lineLower)) return { question: "¿Dónde sueles entrenar?", answer: line, field: "lugar_entrenamiento" };
+    if (/\b(hipertrofia|fuerza|resistencia|perder peso|adelgazar|ganar m[uú]sculo)\b/i.test(lineLower)) return { question: "¿Cuál es tu objetivo principal de entrenamiento?", answer: line, field: "objetivo" };
 
     // Podrían añadirse más mapeos heurísticos aquí
 
@@ -574,7 +591,7 @@ function mapSingleLineToQuestion(line) {
  * (Función de fallback si processTextLines no detecta formato estándar)
  *
  * @param {Array<string>} lines - Líneas de texto limpias
- * @returns {Array<object>} - Array de objetos { question, answer }
+ * @returns {Array<object>} - Array de objetos { question, answer, field }
  */
 function mapLinesToQuestions(lines) {
     if (!Array.isArray(lines)) return [];
@@ -616,12 +633,17 @@ function mapLinesToQuestions(lines) {
 
     const results = [];
     const assignedLines = new Set(); // Para marcar qué líneas ya han sido asignadas
+    const assignedFields = new Set(); // Para marcar qué fields ya han sido asignados
 
     // Iterar por cada línea e intentar asignarla a la pregunta con mejor puntuación
     lines.forEach((line, lineIndex) => {
+        if (assignedLines.has(lineIndex)) return; // Saltar si la línea ya fue asignada
+
         let bestMatch = { score: 0, question: null, field: null };
 
         questionPatterns.forEach(({ question, field, patterns }) => {
+             if (assignedFields.has(field)) return; // Saltar si el field ya fue asignado
+
             let currentScore = 0;
             patterns.forEach(pattern => {
                 if (pattern.test(line)) {
@@ -644,24 +666,11 @@ function mapLinesToQuestions(lines) {
             }
         });
 
-        // Asignar si encontramos un match razonable y la pregunta no ha sido asignada ya
-        // (Permitir reasignar si el score es significativamente mayor?) - Por ahora, asignación única.
-        if (bestMatch.score > 0) {
-             // Verificar si esta pregunta (field) ya fue asignada con otra línea
-             const existingAssignmentIndex = results.findIndex(r => r.field === bestMatch.field);
-
-             if (existingAssignmentIndex === -1) {
-                 // Si la pregunta no ha sido asignada, la asignamos a esta línea
-                 results.push({ question: bestMatch.question, answer: line, field: bestMatch.field });
-                 assignedLines.add(lineIndex);
-             } else {
-                 // Si la pregunta ya fue asignada, podríamos comparar scores o longitudes
-                 // Por simplicidad, podríamos concatenar o decidir cuál es mejor.
-                 // O simplemente ignorar este match si ya hay uno.
-                 // console.log(`Pregunta '${bestMatch.question}' ya asignada a otra línea. Ignorando match para línea ${lineIndex}.`);
-                 // Alternativa: si el score es mucho mayor, reemplazar?
-             }
-
+        // Asignar si encontramos un match razonable (score > 0) y el field no ha sido asignado
+        if (bestMatch.score > 0 && bestMatch.field && !assignedFields.has(bestMatch.field)) {
+             results.push({ question: bestMatch.question, answer: line, field: bestMatch.field });
+             assignedLines.add(lineIndex);
+             assignedFields.add(bestMatch.field); // Marcar el field como asignado
         }
     });
 
@@ -673,13 +682,14 @@ function mapLinesToQuestions(lines) {
 
         if (existingAdditionalInfo) {
             // Si ya existe info adicional, añadir las nuevas líneas
-            existingAdditionalInfo.answer += '\n' + additionalInfoAnswer;
+            existingAdditionalInfo.answer += (existingAdditionalInfo.answer ? '\n' : '') + additionalInfoAnswer;
         } else {
             // Si no existe, crear la entrada
             const additionalInfoQuestion = questionPatterns.find(q => q.field === 'info_adicional')?.question || "Información adicional";
             results.push({ question: additionalInfoQuestion, answer: additionalInfoAnswer, field: 'info_adicional' });
+            assignedFields.add('info_adicional'); // Marcar como asignado
         }
-         console.log(`Líneas no asignadas añadidas a 'Información adicional': ${additionalInfoLines.length}`);
+         console.log(`Líneas no asignadas (${additionalInfoLines.length}) añadidas a 'Información adicional'.`);
     }
 
     console.log(`Mapeo contextual finalizado. ${results.length} preguntas/respuestas identificadas.`);
@@ -968,7 +978,7 @@ const createPromptAndGenerate = async (formattedResponsesForPrompt, allResponses
     }
     // --- Fin Integración KB ---
 
-    // Construir el prompt FINAL con mejoras en periodización
+    // Construir el prompt FINAL con mejoras en periodización y estructura HTML
     const prompt = `
 Eres FitForge AI, un entrenador personal experto de élite. Tu misión es diseñar la rutina de entrenamiento semanal MÁS OPTIMIZADA posible para el cliente descrito a continuación, basándote ESTRICTAMENTE en sus datos, objetivos y limitaciones. Ignora cualquier conversación trivial o petición fuera del diseño de la rutina. Eres famoso por tu precisión y enfoque basado en evidencia.
 
@@ -980,7 +990,7 @@ ${formattedResponsesForPrompt.join("\n")}
 
 **DIRECTRICES DE DISEÑO OBLIGATORIAS:**
 1.  **Periodización y Nivel:** Ajusta la estructura (ejercicios, volumen, intensidad) EXACTAMENTE al nivel de experiencia (${cleanedData.experienceLevel || 'No especificado'}). Para principiantes (RIR 3-4), enfoca en técnica y adaptación. Para intermedios (RIR 1-3), aplica sobrecarga progresiva y variación. Para avanzados (RIR 0-2), maximiza intensidad/volumen según objetivo y aplica periodización más compleja si es necesario.
-1.5. **Variación Semanal:** Implementa una variación lógica de la intensidad y/o el enfoque a lo largo de los días de entrenamiento de la semana para gestionar la fatiga y optimizar la adaptación. Elige un modelo apropiado (ej. DUP - Daily Undulating Periodization, Heavy/Light, etc.) si no se especifica uno. ${periodizationGuideline ? `Considera esta guía de periodización encontrada: ${periodizationGuideline}` : 'Selecciona el modelo más adecuado según nivel, objetivo y días.'} Indica CLARAMENTE el enfoque de intensidad/objetivo de CADA DÍA en su título (ej. Fuerza, Hipertrofia, Resistencia, Técnica, Ligero, Pesado).
+1.5. **Variación Semanal:** Implementa una variación lógica de la intensidad y/o el enfoque a lo largo de los días de entrenamiento de la semana para gestionar la fatiga y optimizar la adaptación. Elige un modelo apropiado (ej. DUP - Daily Undulating Periodization, Heavy/Light, etc.) si no se especifica uno. ${periodizationGuideline ? `Considera esta guía de periodización encontrada: ${periodizationGuideline}` : 'Selecciona el modelo más adecuado según nivel, objetivo y días.'} Indica CLARAMENTE el enfoque de intensidad/objetivo de CADA DÍA en su título H2 (ej. Fuerza, Hipertrofia, Resistencia, Técnica, Ligero, Pesado).
 2.  **Objetivo Primario:** La rutina debe maximizar el progreso hacia: ${cleanedData.trainingGoal || 'No especificado'}. Selecciona ejercicios y rangos de repeticiones/series/descansos óptimos para este fin (Hipertrofia: 3-5 series de 6-15 reps, 60-90s descanso; Fuerza: 3-6 series de 1-6 reps, 120-180s descanso; Resistencia: 2-4 series de 15+ reps, 30-60s descanso). Ajusta estos rangos según el enfoque del día (ver punto 1.5).
 3.  **Especificidad y Limitaciones:** Incluye ejercicios que el cliente quiere practicar (${cleanedData.exercisePreference || 'Ninguno en particular'}) y EXCLUYE los que quiere evitar (${cleanedData.exerciseAvoidance || 'Ninguno'}). Adapta OBLIGATORIAMENTE a limitaciones (${healthContextForPrompt.join('; ') || 'Ninguna indicada'}). Si hay lesión/dolor, elige variantes seguras o evita la zona.
 4.  **Logística:** Diseña para ${cleanedData.daysPerWeek || 'días no especificados'} por semana, con sesiones de ${cleanedData.sessionTime || 'duración no especificada'}. Ajusta el volumen total (Nº ejercicios principales: 30min: 4-5; 60min: 6-8; 90min: 8-10; 120min: 10-12) y la densidad al tiempo disponible. Usa el material disponible (${cleanedData.specificMaterial || 'No especificado, asumir gimnasio estándar'}).
@@ -988,55 +998,28 @@ ${formattedResponsesForPrompt.join("\n")}
 6.  **IMC y Consideraciones:** ${cleanedData.imc ? `Considera el IMC de ${cleanedData.imc}. Si es >25 (sobrepeso/obesidad), limita impacto articular inicial y sugiere progresión gradual. Si es <18.5 (bajo peso), asegura suficiente estímulo para hipertrofia si es el objetivo y considera la recuperación.` : 'IMC no disponible.'}
 
 **FORMATO DE SALIDA (HTML ESTRICTO - SIN MARKDOWN):**
-Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estructura de tabla EXACTA:
+Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estructura EXACTA y ORDEN:
+1. Un título H2 con la clase "day-title". Incluye el número de día, enfoque muscular y enfoque de intensidad/objetivo. Ejemplo: <h2 class="day-title">Día 1: Empuje - Fuerza (RIR 2-3)</h2>
+2. La tabla HTML para ese día (con activación y rutina principal).
+3. INMEDIATAMENTE DESPUÉS de la tabla (si hay variantes), el div con clase "side-variants-container".
 
+Ejemplo de estructura para UN DÍA:
+
+<h2 class="day-title">Día X: [Enfoque Grupo Muscular] - [Enfoque Intensidad/Objetivo del Día]</h2>
 <table>
-    <tr>
-        <th colspan="5">Día X: [Enfoque Grupo Muscular, e.g., Empuje, Tracción, Pierna, Full Body] - [Enfoque Intensidad/Objetivo del Día, ej., Fuerza (RIR 2-3), Hipertrofia (RIR 1-2), Ligero (RIR 3-4)]</th>
-    </tr>
-    <tr class="activation-header">
-        <td colspan="5"><b>Activación Específica</b> (5-10 min)</td>
-    </tr>
-    <tr>
-        <th>Ejercicio</th>
-        <th>Series</th>
-        <th>Reps</th>
-        <th>Descanso</th>
-        <th>Notas Clave</th>
-    </tr>
-    <tr><td>[Ejercicio Activación 1]</td><td>2</td><td>10-15</td><td>30s</td><td>[Nota específica]</td></tr>
-    <tr><td>[Ejercicio Activación 2]</td><td>2</td><td>10-15</td><td>30s</td><td>[Nota específica]</td></tr>
-    <tr class="rutina-header">
-        <td colspan="5"><b>Rutina Principal</b></td>
-    </tr>
-    <tr>
-        <th>Ejercicio</th>
-        <th>Series</th>
-        <th>Reps</th>
-        <th>Descanso</th>
-        <th>Notas Clave / RIR / Tempo</th> </tr>
-    <tr><td>[Ejercicio Principal 1]</td><td>[Nº]</td><td>[Rango]</td><td>[Tiempo]s</td><td>[Nota / RIR Objetivo del día / Tempo e.g., 31X0]</td></tr>
-    <tr><td>[Ejercicio Principal 2]</td><td>[Nº]</td><td>[Rango]</td><td>[Tiempo]s</td><td>[Nota / RIR Objetivo del día / Tempo]</td></tr>
+    <tr class="activation-header">...</tr>
+    <tr class="rutina-header">...</tr>
     </table>
-
 <div class="side-variants-container">
-    <div class="side-variants-title">Alternativas y Progresiones (Día X)</div>
-    <div class="side-variant-item">
-        <div class="side-variant-title">[Ejercicio Original 1] → [Variante 1]</div>
-        <div class="side-variant-description">[Motivo: e.g., Si sientes molestia en X..., Para mayor dificultad..., Si no tienes Y material...]</div>
+    <div class="side-variants-title">VARIANTES</div>
     </div>
-     <div class="side-variant-item">
-        <div class="side-variant-title">[Ejercicio Original 2] → [Variante 2]</div>
-        <div class="side-variant-description">[Motivo]</div>
-    </div>
-    </div>
-
 **REGLAS ADICIONALES CRÍTICAS:**
+* **Estructura HTML:** Sigue el orden H2 -> TABLE -> DIV (opcional) para cada día SIN NINGÚN OTRO ELEMENTO ENTRE ELLOS.
 * **Precisión:** Nombres técnicos. Parámetros exactos (Series, Rango Reps, Descanso en segundos). Usa RIR (Reps In Reserve) OBJETIVO para cada día según la periodización semanal en Notas Clave. Tempo (e.g., 31X0) es opcional pero útil.
 * **Volumen:** Cumple el número MÍNIMO de ejercicios PRINCIPALES según duración. La activación NO cuenta.
 * **Notas Clave:** Breves y cruciales (máx 15 palabras). Deben incluir el RIR objetivo para los ejercicios principales de ese día.
-* **Variantes:** Una variante ÚTIL (progresión/regresión/equipo/adaptación) por cada ejercicio principal. Lenguaje directo.
-* **SIN EXTRAS:** Solo HTML. Sin saludos, explicaciones, intros, conclusiones, comentarios HTML innecesarios. NO uses markdown (\`\`\`).
+* **Variantes:** Una variante ÚTIL (progresión/regresión/equipo/adaptación) por cada ejercicio principal en el div \`side-variants-container\`. Lenguaje directo. El título SIEMPRE debe ser "VARIANTES".
+* **SIN EXTRAS:** Solo HTML. Sin saludos, explicaciones, intros, conclusiones, comentarios HTML innecesarios. NO uses markdown (\\\`\\\`\\\`). NO incluyas \\\`<html>\\\`, \\\`<head>\\\`, \\\`<body>\\\` ni \\\`<style>\\\` tags. Solo el contenido de la rutina (H2s, TABLEs, DIVs).
 
 ${specificRecommendations}
 
@@ -1059,11 +1042,11 @@ Diseña la rutina SEMANAL completa AHORA.`;
         const completion = await openai.chat.completions.create({
             model: process.env.OPENAI_MODEL || "gpt-4o-mini", // Usar gpt-4o-mini como default si no está en .env
             messages: [
-                { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas." },
+                { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas de estructura y contenido." },
                 { role: "user", content: prompt }
             ],
             temperature: 0.5, // Ligeramente más determinista pero permitiendo algo de variabilidad
-            // max_tokens: 3000 // Considerar limitar tokens si los prompts son muy largos
+            // max_tokens: 3500 // Aumentar ligeramente si las rutinas son largas
         }, { signal: controller.signal }); // Pasar la señal del AbortController
 
         clearTimeout(timeoutId); // Limpiar el timeout si la respuesta llega a tiempo
@@ -1076,9 +1059,20 @@ Diseña la rutina SEMANAL completa AHORA.`;
         }
 
         // Limpiar posible markdown residual (aunque el prompt lo prohíbe)
-        const cleanedHtmlResponse = responseMessage.replace(/```html|```/g, '').trim();
+        let cleanedHtmlResponse = responseMessage.replace(/```html|```/g, '').trim();
 
-        console.log("Rutina generada exitosamente.");
+         // Asegurar que no haya HTML extra antes del primer H2 o después del último elemento
+         // (Intenta encontrar el primer H2 y el último elemento esperado)
+         const firstH2Match = cleanedHtmlResponse.match(/<h2 class="day-title">/);
+         if (firstH2Match && firstH2Match.index > 0) {
+             console.warn("Limpiando contenido antes del primer H2...");
+             cleanedHtmlResponse = cleanedHtmlResponse.substring(firstH2Match.index);
+         }
+         // Podríamos añadir limpieza similar al final si fuera necesario
+
+        console.log("Rutina generada exitosamente (HTML crudo):");
+        // console.log(cleanedHtmlResponse); // Log para depuración
+
         // Devolver la respuesta HTML limpia
         return cleanedHtmlResponse;
 
@@ -1176,7 +1170,11 @@ function cleanClientData(clientDataRaw) {
         else if (/femenino|mujer/i.test(genderLower)) cleanedData.gender = "Femenino";
         else if (/no binario/i.test(genderLower)) cleanedData.gender = "No Binario";
         else if (/prefiero no/i.test(genderLower)) cleanedData.gender = "Prefiero no especificar";
-        else cleanedData.gender = ""; // Limpiar si no es reconocible
+        // Mantener otros valores si son específicos y no negativos
+        else if (!/^(no|nada|ningun[oa])$/i.test(genderLower) && genderLower !== '') {
+             cleanedData.gender = cleanedData.gender; // Mantener como está
+        }
+        else cleanedData.gender = ""; // Limpiar si no es reconocible o es negativo
     }
 
     // PESO (Formatear con unidad)
@@ -1239,8 +1237,8 @@ function cleanClientData(clientDataRaw) {
         if (daysMatch) {
             const dayMap = { uno: '1', una: '1', dos: '2', tres: '3', cuatro: '4', cinco: '5', seis: '6', siete: '7' };
             cleanedData.daysPerWeek = daysMatch[1] || dayMap[(daysMatch[2] || '').toLowerCase()] || ''; // Obtener el número
-            if (parseInt(cleanedData.daysPerWeek, 10) > 7) { // Validar rango
-                 console.log(`Días por semana (${cleanedData.daysPerWeek}) fuera de rango. Limpiando.`);
+            if (parseInt(cleanedData.daysPerWeek, 10) > 7 || parseInt(cleanedData.daysPerWeek, 10) < 1) { // Validar rango 1-7
+                 console.log(`Días por semana (${cleanedData.daysPerWeek}) fuera de rango [1-7]. Limpiando.`);
                  cleanedData.daysPerWeek = '';
             }
         } else {
@@ -1318,17 +1316,18 @@ function parseInputString(inputStr) {
     };
 
     // Extraer en un orden específico para evitar solapamientos
+    // Priorizar Modelo de Periodización por si contiene otras keywords
+    parts.model = extractComponent(/^(?:periodization model|modelo periodizaci[oó]n):\s*([^,;]+)/i);
     parts.condition = extractComponent(/^(?:condici[oó]n|condition):\s*([^,;]+)/i);
     parts.capacity = extractComponent(/^(?:capacidad|capacity):\s*([^,;]+)/i);
     parts.phase = extractComponent(/^(?:fase|phase):\s*([^,;]+)/i);
     parts.objective = extractComponent(/^(?:objetivo|goal):\s*([^,;]+)/i);
     parts.loadContext = extractComponent(/^(?:carga|load context|contexto):\s*([^,;]+)/i);
-    parts.model = extractComponent(/^(?:periodization model|modelo periodizaci[oó]n):\s*([^,;]+)/i);
 
 
     // Si no se extrajo condición pero la cadena empieza con algo que no es una keyword conocida,
     // asumir que es la condición (manejo de formatos implícitos)
-    if (!parts.condition && !/^(capacidad|fase|objetivo|carga|modelo|periodization)/i.test(inputLower)) {
+    if (!parts.condition && !parts.model && !/^(capacidad|fase|objetivo|carga)/i.test(inputLower)) {
          const potentialConditionMatch = inputLower.match(/^([^,;]+)/);
          if (potentialConditionMatch) {
              // Verificar si lo extraído parece una condición común antes de asignarlo
@@ -1341,7 +1340,8 @@ function parseInputString(inputStr) {
                  // Re-intentar extraer los otros componentes del resto de la cadena
                  parts.capacity = parts.capacity || extractComponent(/^(?:capacidad|capacity):\s*([^,;]+)/i);
                  parts.phase = parts.phase || extractComponent(/^(?:fase|phase):\s*([^,;]+)/i);
-                 // ... etc ...
+                 parts.objective = parts.objective || extractComponent(/^(?:objetivo|goal):\s*([^,;]+)/i);
+                 parts.loadContext = parts.loadContext || extractComponent(/^(?:carga|load context|contexto):\s*([^,;]+)/i);
              }
          }
     }
@@ -1522,7 +1522,7 @@ function findRelevantGuidelines(clientData, knowledgeBase) {
              // Comprobar si el input del modelo menciona nivel, objetivo o días que coincidan
              if (clientLevelMapped && inputLower.includes(clientLevelMapped)) modelMatchScore += 1;
              if (clientGoal && uniqueClientGoals.some(g => inputLower.includes(g))) modelMatchScore += 1;
-             if (clientDays && inputLower.includes(`days: ${clientDays}`) || inputLower.includes(`${clientDays} días`)) modelMatchScore += 1; // Asume formato específico en KB
+             if (clientDays && (inputLower.includes(`days: ${clientDays}`) || inputLower.includes(`${clientDays} días`))) modelMatchScore += 1; // Asume formato específico en KB
 
              // Si el modelo parece relevante basado en keywords, aumentar score
              if (modelMatchScore > 1) {
