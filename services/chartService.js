@@ -1,4 +1,4 @@
-// chartService.js (Mejorado)
+// chartService.js (Mejorado v2)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -206,6 +206,7 @@ function calculateTrainingComponentScores(routineHtml) {
  * @returns {Object} - An object with muscle groups as keys and total weekly sets as values.
  */
 function calculateWeeklyVolume(routineHtml) {
+    console.log("[Volume Calculation] Starting..."); // DEBUG
     const volume = {
         Pecho: 0, Espalda: 0, Hombro: 0,
         Biceps: 0, Triceps: 0, Pierna: 0,
@@ -213,8 +214,8 @@ function calculateWeeklyVolume(routineHtml) {
     };
 
     if (!routineHtml || routineHtml.trim() === '') {
-        console.warn("No routine HTML provided for volume calculation.");
-        return volume; // Return empty volume if no HTML
+        console.warn("[Volume Calculation] No routine HTML provided.");
+        return {}; // Return empty object if no HTML
     }
 
     const muscleGroupKeywords = {
@@ -230,28 +231,35 @@ function calculateWeeklyVolume(routineHtml) {
     };
 
     // Regex to find exercise blocks (more robust)
-    // Looks for <li>, <tr>, or <p> tags containing 'X sets', 'X series', 'NxM', etc.
-    const exerciseBlockRegex = /<(li|tr|p)[^>]*>([\s\S]*?)<\/\1>/gi;
-    const setRepRegex = /(\d+)\s*(?:sets?|series?)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i; // e.g., 3 sets x 8-12 reps
-    const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i; // e.g., 3x10
-    const timeBasedRegex = /(\d+)\s*(?:min|seg|seconds?)/i; // e.g., 30 min, 60 sec
+    const exerciseBlockRegex = /<(li|tr|p|div)[^>]*>([\s\S]*?)<\/\1>/gi; // Added 'div'
+    const setRepRegex = /(\d+)\s*(?:sets?|series?)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
+    const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
+    const timeBasedRegex = /(\d+)\s*(?:min|seg|seconds?)/i;
 
     let match;
+    let blocksFound = 0; // DEBUG
     while ((match = exerciseBlockRegex.exec(routineHtml)) !== null) {
-        const blockContent = match[2]; // Content within the tag
+        blocksFound++; // DEBUG
+        const blockContent = match[2];
         let sets = 0;
         let isCardioSession = false;
+        // DEBUG: Log the block being processed
+        // console.log(`[Volume Debug] Processing Block ${blocksFound}: ${blockContent.substring(0, 150).replace(/\s+/g, ' ')}...`);
 
         // Try to find sets x reps patterns
         const setRepMatch = blockContent.match(setRepRegex) || blockContent.match(simpleSetRepRegex);
         if (setRepMatch && setRepMatch.length >= 2) {
             sets = parseInt(setRepMatch[1], 10) || 0;
+            // DEBUG: Log extracted sets
+            // console.log(`[Volume Debug] Found Set/Rep Match: ${setRepMatch[0]}, Extracted Sets: ${sets}`);
         }
 
-        // Check for time-based exercises (likely cardio) if no sets found
+        // Check for time-based exercises (likely cardio) only if no sets found yet
         if (sets === 0 && timeBasedRegex.test(blockContent)) {
            isCardioSession = true;
-           sets = 1; // Count as one session/set for volume chart simplicity
+           sets = 1; // Count as one session/set
+           // DEBUG: Log cardio session detection
+           // console.log(`[Volume Debug] Detected Time-Based (Cardio?) Session.`);
         }
 
 
@@ -260,30 +268,38 @@ function calculateWeeklyVolume(routineHtml) {
             for (const group in muscleGroupKeywords) {
                 for (const keyword of muscleGroupKeywords[group]) {
                     try {
+                        // Use word boundaries for keywords to avoid partial matches
                         const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
                         if (regex.test(blockContent)) {
-                            // If it's a cardio keyword OR a cardio session identified by time
-                            if (group === 'Cardio' || isCardioSession) {
-                                volume.Cardio += sets;
-                            } else {
-                                volume[group] += sets;
-                            }
+                            // Assign to Cardio if it's a cardio keyword OR a time-based session
+                            const targetGroup = (group === 'Cardio' || isCardioSession) ? 'Cardio' : group;
+                            volume[targetGroup] += sets;
                             assigned = true;
-                            break; // Assign to first matching group
+                             // DEBUG: Log assignment
+                            console.log(`[Volume Debug] Keyword '${keyword}' found. Assigning ${sets} sets to group: ${targetGroup}`);
+                            break; // Assign to first matching group for this block
                         }
                     } catch (e) {
-                        console.warn(`Invalid regex for volume keyword: ${keyword}`, e);
+                        console.warn(`[Volume Calculation] Invalid regex for volume keyword: ${keyword}`, e);
                     }
                 }
-                if (assigned) break;
+                if (assigned) break; // Move to next block once assigned
             }
-            if (!assigned && !isCardioSession) { // Don't assign pure time-based to 'Otro'
+            // Assign to 'Otro' only if it wasn't assigned and wasn't identified as a cardio session
+            if (!assigned && !isCardioSession) {
                 volume.Otro += sets;
+                 // DEBUG: Log assignment to 'Otro'
+                console.log(`[Volume Debug] No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
             }
+        } else {
+             // DEBUG: Log blocks where no sets were found
+             // console.log(`[Volume Debug] No sets found in Block ${blocksFound}.`);
         }
     }
+    console.log(`[Volume Calculation] Total blocks processed: ${blocksFound}`); // DEBUG
 
      // Simple count for overall cardio mentions if volume.Cardio is still 0
+     // This is a fallback and might overestimate/underestimate
      if (volume.Cardio === 0) {
          let cardioMentions = 0;
          muscleGroupKeywords.Cardio.forEach(keyword => {
@@ -294,27 +310,24 @@ function calculateWeeklyVolume(routineHtml) {
              } catch (e) { /* ignore */ }
          });
          if (cardioMentions > 0) {
-             // Estimate sessions based on mentions (very rough)
-             volume.Cardio = Math.max(1, Math.round(cardioMentions / 3));
+             volume.Cardio = Math.max(1, Math.round(cardioMentions / 3)); // Rough estimate
+             console.log(`[Volume Debug] Fallback: Estimated ${volume.Cardio} Cardio sets based on ${cardioMentions} mentions.`); // DEBUG
          }
      }
 
 
-    console.log("Calculated Weekly Volume (Sets per Group):", volume);
+    console.log("[Volume Calculation] Final Volume (Before Filter):", JSON.stringify(volume)); // DEBUG
 
     // Filter out groups with 0 sets for cleaner chart display
     const filteredVolume = {};
     for (const group in volume) {
+        // Include group if it has sets OR if it's 'Cardio' and has sets (even if added by fallback)
         if (volume[group] > 0) {
             filteredVolume[group] = volume[group];
         }
     }
-    // Ensure Cardio is present if it was calculated, even if 0 initially but added later
-    if (volume.Cardio > 0 && !filteredVolume.Cardio) {
-        filteredVolume.Cardio = volume.Cardio;
-    }
 
-
+    console.log("[Volume Calculation] Final Filtered Volume (for chart):", JSON.stringify(filteredVolume)); // DEBUG
     return filteredVolume;
 }
 
@@ -339,8 +352,6 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
     } else {
         description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado. ¡Disfruta del proceso!`;
     }
-
-    // Note: volumeTableHtmlContent is removed, replaced by volume chart canvas
 
     return `
     <div class="cover-page-new">
@@ -414,24 +425,24 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
 function getCoverPageStyles() {
     // Combined and refined styles for cover page elements
     return `
-    /* Estilos Mejorados Portada Completa v2 */
+    /* Estilos Mejorados Portada Completa v3 */
     :root {
         /* Define color variables */
-        --primary-color: #0a2a5e; /* Dark Blue */
-        --secondary-color: #1e477e; /* Medium Blue */
+        --primary-color: #2c3e50; /* Dark Blue-Gray for text */
+        --secondary-color: #34495e; /* Slightly lighter Blue-Gray */
         --accent-color: #3498db;   /* Bright Blue */
-        --light-blue-bg: #f0f4f8; /* Very light blue for chart background */
-        --text-light: #ffffff;
-        --text-medium: rgba(255, 255, 255, 0.85);
-        --text-dark: #333333; /* Darker text for charts */
-        --text-dark-medium: #555555;
-        --border-light: rgba(255, 255, 255, 0.15);
-        --border-medium: #e0e0e0; /* Border for chart containers */
-        --border-dark: rgba(0, 0, 0, 0.1);
-        --background-light-accent: rgba(255, 255, 255, 0.08); /* Slightly more visible */
+        --light-blue-bg: #e0f2f7; /* Light Sky Blue */
+        --medium-blue-bg: #b3e0f2; /* Medium Sky Blue */
+        --text-light: #ffffff;     /* White text (e.g., for buttons if added) */
+        --text-dark: #2c3e50;      /* Dark Blue-Gray for main text */
+        --text-medium-dark: #555;  /* Medium dark gray for less important text */
+        --text-light-gray: #95a5a6; /* Light gray for footer */
+        --border-light: rgba(0, 0, 0, 0.1);  /* Light border for dark on light */
+        --border-medium: #bdc3c7; /* Medium border */
+        --background-light-accent: rgba(0, 0, 0, 0.04); /* Subtle dark accent on light bg */
         --background-chart-container: #ffffff; /* White background for charts */
         --border-radius: 8px;
-        --border-radius-large: 12px; /* Slightly larger radius */
+        --border-radius-large: 12px;
         --box-shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
         --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
 
@@ -444,37 +455,49 @@ function getCoverPageStyles() {
         --cardio-color: #e67e22;
     }
 
+    /* Apply margin reset to body for PDF generation */
+    body {
+        margin: 0;
+        font-family: 'Inter', 'Arial', sans-serif; /* Ensure font is applied */
+        -webkit-print-color-adjust: exact; /* Important for background colors in PDF */
+         print-color-adjust: exact;
+    }
+
+
     .cover-page-new {
         position: relative;
         display: flex;
         flex-direction: column;
         min-height: 100vh; /* Ensure full page height */
+        height: 100vh; /* Try explicit height */
         width: 100%;
-        /* Softer Gradient Background */
-        background: linear-gradient(145deg, #1e477e 0%, #0a2a5e 100%);
-        color: var(--text-light);
+        /* Lighter Sky Blue Gradient Background */
+        background: linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
+        color: var(--text-dark); /* Main text color changed to dark */
         box-sizing: border-box;
-        font-family: 'Inter', 'Arial', sans-serif;
-        page-break-after: always; /* Ensure it's on its own page in PDF */
-        overflow: hidden; /* Prevent potential overflow issues */
-        padding: 40px 50px; /* Slightly adjusted padding */
+        page-break-after: always;
+        overflow: hidden;
+        padding: 40px 50px;
     }
 
     .cover-header-new {
         width: 100%;
         display: flex;
         justify-content: space-between;
-        align-items: center; /* Center items vertically */
-        margin-bottom: 40px; /* Increased margin */
-        border-bottom: 1px solid var(--border-light);
+        align-items: center;
+        margin-bottom: 35px; /* Adjusted margin */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Darker border on light bg */
         padding-bottom: 20px;
     }
 
     .cover-logo-new {
-        width: 120px; /* Slightly smaller */
+        width: 110px; /* Further adjusted size */
         height: auto;
-        filter: brightness(0) invert(1); /* Ensure logo is white */
-        opacity: 0.95;
+        /* Logo color needs adjustment if original is light */
+        /* filter: brightness(0.1); /* Example: Darken a light logo */
+        opacity: 0.9;
+         /* Assuming logo needs to be dark on light bg, remove invert */
+         /* filter: brightness(0) invert(1); */
     }
 
     .client-info-new {
@@ -482,37 +505,37 @@ function getCoverPageStyles() {
     }
 
     .client-info-new h1 {
-        font-size: 28px; /* Slightly smaller */
+        font-size: 26px; /* Adjusted size */
         font-weight: 700;
-        color: var(--text-light);
+        color: var(--primary-color); /* Use primary dark color */
         margin: 0 0 5px 0;
         line-height: 1.2;
     }
 
     .client-info-new p {
         margin: 0;
-        color: var(--text-medium);
-        font-size: 14px; /* Slightly smaller */
+        color: var(--text-medium-dark); /* Medium dark gray */
+        font-size: 14px;
         font-weight: 400;
     }
 
     .cover-main-new {
         flex-grow: 1;
         display: flex;
-        flex-direction: column; /* Stack text and visuals vertically */
-        gap: 35px; /* Space between text and visuals */
+        flex-direction: column;
+        gap: 30px; /* Adjusted gap */
         width: 100%;
-        margin-bottom: 30px; /* Space above footer */
+        margin-bottom: 30px;
     }
 
     .cover-text-content {
-        /* Takes full width in the new column layout */
+        /* Full width */
     }
 
     .cover-text-content h2 {
-        font-size: 26px; /* Adjusted size */
+        font-size: 24px; /* Adjusted size */
         font-weight: 700;
-        color: var(--text-light);
+        color: var(--primary-color);
         margin-bottom: 15px;
         line-height: 1.3;
         position: relative;
@@ -525,63 +548,63 @@ function getCoverPageStyles() {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 50px; /* Shorter underline */
+        width: 50px;
         height: 3px;
         background-color: var(--accent-color);
         border-radius: 3px;
     }
 
     .cover-description-new {
-        font-size: 15px; /* Adjusted size */
-        color: var(--text-medium);
-        line-height: 1.65;
-        margin-bottom: 30px;
+        font-size: 14.5px; /* Adjusted size */
+        color: var(--secondary-color); /* Use secondary dark color */
+        line-height: 1.6;
+        margin-bottom: 25px; /* Adjusted margin */
         font-weight: 400;
-        max-width: 90%; /* Limit width for better readability */
+        max-width: 100%; /* Allow full width */
     }
 
     .cover-description-new strong {
-        color: var(--text-light);
+        color: var(--primary-color);
         font-weight: 600;
     }
 
     .components-legend-new {
         background-color: var(--background-light-accent);
-        padding: 20px 25px;
+        padding: 18px 22px; /* Adjusted padding */
         border-radius: var(--border-radius);
         border: 1px solid var(--border-light);
     }
 
     .components-legend-new h3 {
-        font-size: 16px;
+        font-size: 15px; /* Adjusted size */
         font-weight: 600;
-        color: var(--text-light);
+        color: var(--primary-color);
         margin: 0 0 15px 0;
         text-align: left;
     }
 
     .legend-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr); /* Two columns */
-        gap: 10px 20px; /* Row gap, Column gap */
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
+        gap: 10px 20px;
     }
 
 
     .component-item-new {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px; /* Adjusted gap */
     }
 
     .component-dot-new {
-        width: 11px; /* Slightly larger dots */
-        height: 11px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(0, 0, 0, 0.3); /* Darker border for dots */
     }
 
-    /* Component Colors */
+    /* Component Colors remain the same */
     .fuerza-color { background-color: var(--fuerza-color); }
     .hipertrofia-color { background-color: var(--hipertrofia-color); }
     .movilidad-color { background-color: var(--movilidad-color); }
@@ -590,66 +613,62 @@ function getCoverPageStyles() {
     .cardio-color { background-color: var(--cardio-color); }
 
     .component-label-new {
-        font-size: 13.5px; /* Adjusted size */
+        font-size: 13px; /* Adjusted size */
         font-weight: 500;
-        color: var(--text-medium);
+        color: var(--secondary-color);
     }
 
     .component-label-new span {
         font-weight: 700;
-        color: var(--text-light);
+        color: var(--primary-color);
         margin-left: 4px;
     }
 
     .cover-visuals-content {
         display: flex;
-        gap: 30px; /* Space between the two charts */
+        flex-wrap: wrap; /* Allow wrapping on smaller screens if needed */
+        gap: 25px; /* Adjusted gap */
         width: 100%;
-        align-items: stretch; /* Make charts equal height */
+        align-items: stretch;
     }
 
     .chart-container-new {
-        flex: 1; /* Each chart takes equal space */
+        flex: 1 1 300px; /* Allow shrinking, base width 300px, allow growing */
         background-color: var(--background-chart-container);
         border-radius: var(--border-radius-large);
-        padding: 20px 25px 25px 25px; /* More padding */
+        padding: 20px 25px 25px 25px;
         box-shadow: var(--box-shadow-medium);
+        border: 1px solid var(--border-medium); /* Subtle border */
         display: flex;
         flex-direction: column;
-        min-width: 0; /* Prevent flex item overflow */
-        height: 380px; /* Fixed height for chart containers */
-        max-height: 380px;
+        min-width: 0;
+        height: 360px; /* Adjusted height */
+        max-height: 360px;
     }
 
      .chart-title {
-        font-size: 15px; /* Slightly smaller chart titles */
+        font-size: 14px; /* Adjusted size */
         font-weight: 600;
-        color: var(--text-dark-medium);
+        color: var(--text-dark);
         margin: 0 0 15px 0;
         text-align: center;
     }
 
-    .radar-chart-container-new,
-    .volume-chart-container-new {
-       /* Styles already defined in .chart-container-new */
-    }
-
-    /* Canvas elements need relative positioning potentially for Chart.js tooltips */
     #radarChart, #volumeLineChart {
         max-width: 100%;
-        max-height: calc(100% - 30px); /* Adjust based on title height and padding */
-        margin: auto; /* Center canvas if container is larger */
+        max-height: calc(100% - 30px); /* Account for title */
+        margin: auto;
         display: block;
     }
 
     .cover-footer-new {
         width: 100%;
         text-align: center;
-        padding-top: 20px;
+        padding-top: 15px; /* Adjusted padding */
         margin-top: auto; /* Push footer to bottom */
         border-top: 1px solid var(--border-light);
-        font-size: 12px;
-        color: var(--text-medium);
+        font-size: 11px; /* Adjusted size */
+        color: var(--text-light-gray);
     }
     `;
 }
@@ -690,10 +709,10 @@ function getRadarChartScript(scores) {
                 data: {
                     labels: ${JSON.stringify(labels)},
                     datasets: [{
-                        label: 'Enfoque (%)', // Updated label
+                        label: 'Enfoque (%)',
                         data: ${JSON.stringify(chartData)},
-                        backgroundColor: 'rgba(10, 42, 94, 0.3)', // Adjusted alpha
-                        borderColor: 'rgba(10, 42, 94, 0.9)',
+                        backgroundColor: 'rgba(10, 42, 94, 0.3)', // Keep dark fill for contrast
+                        borderColor: 'rgba(10, 42, 94, 0.9)',   // Keep dark border
                         borderWidth: 2,
                         pointBackgroundColor: 'rgba(10, 42, 94, 1)',
                         pointBorderColor: '#fff',
@@ -715,16 +734,16 @@ function getRadarChartScript(scores) {
                                 color: 'rgba(0, 0, 0, 0.6)',
                                 backdropColor: 'rgba(255, 255, 255, 0.75)',
                                 padding: 8,
-                                font: { size: 10 } // Smaller ticks
+                                font: { size: 10 }
                             },
                             pointLabels: { // Labels around the edge
-                                font: { size: 12, weight: '500' }, // Adjusted label size/weight
+                                font: { size: 12, weight: '500' },
                                 color: 'rgba(0, 0, 0, 0.85)'
                             }
                         }
                     },
                     plugins: {
-                        legend: { display: false }, // Legend is in HTML
+                        legend: { display: false },
                         tooltip: {
                             enabled: true,
                             backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -733,7 +752,7 @@ function getRadarChartScript(scores) {
                             padding: 10,
                             boxPadding: 4,
                             cornerRadius: 4,
-                            callbacks: { // Add % sign to tooltip
+                            callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     if (label) { label += ': '; }
@@ -746,7 +765,7 @@ function getRadarChartScript(scores) {
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false // Crucial for fitting container
+                    maintainAspectRatio: false
                 }
             });
         } catch (error) {
@@ -758,7 +777,8 @@ function getRadarChartScript(scores) {
       if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', initRadarChart);
       } else {
-          initRadarChart();
+          // Delay slightly if DOM is already loaded, might help rendering in some cases
+          setTimeout(initRadarChart, 100);
       }
     </script>
     `;
@@ -773,7 +793,10 @@ function getVolumeLineChartScript(volumeData) {
     const labels = Object.keys(volumeData);
     const data = Object.values(volumeData);
 
-    // Colores base para el gráfico de líneas (puedes personalizarlos)
+    // Check if data is empty and provide default if needed for display
+    const displayLabels = labels.length > 0 ? labels : ['No Data'];
+    const displayData = data.length > 0 ? data : [0];
+
     const lineChartColors = {
         backgroundColor: 'rgba(52, 152, 219, 0.2)', // Light blue area fill
         borderColor: 'rgba(52, 152, 219, 1)',     // Solid blue line
@@ -798,59 +821,72 @@ function getVolumeLineChartScript(volumeData) {
             return;
         }
 
+        // Display message if no data
+        const volumeLabels = ${JSON.stringify(displayLabels)};
+        const volumeDataPoints = ${JSON.stringify(displayData)};
+        if (volumeLabels.length === 1 && volumeLabels[0] === 'No Data') {
+            ctx.font = "16px 'Inter', sans-serif";
+            ctx.fillStyle = '#888';
+            ctx.textAlign = 'center';
+            ctx.fillText("No se pudo calcular el volumen.", canvasElement.width / 2, canvasElement.height / 2);
+            console.warn("No volume data to display in line chart.");
+            return; // Stop chart initialization
+        }
+
+
         // Chart.js Configuration
         try {
             const volumeChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ${JSON.stringify(labels)},
+                    labels: volumeLabels,
                     datasets: [{
                         label: 'Series Semanales',
-                        data: ${JSON.stringify(data)},
-                        fill: true, // Fill area under the line
+                        data: volumeDataPoints,
+                        fill: true,
                         backgroundColor: '${lineChartColors.backgroundColor}',
                         borderColor: '${lineChartColors.borderColor}',
-                        borderWidth: 2.5, // Slightly thicker line
+                        borderWidth: 2.5,
                         pointBackgroundColor: '${lineChartColors.pointBackgroundColor}',
                         pointBorderColor: '${lineChartColors.pointBorderColor}',
                         pointHoverBackgroundColor: '${lineChartColors.pointHoverBackgroundColor}',
                         pointHoverBorderColor: '${lineChartColors.pointHoverBorderColor}',
-                        pointRadius: 4, // Slightly larger points
+                        pointRadius: 4,
                         pointHoverRadius: 6,
-                        tension: 0.1 // Slight curve to the line
+                        tension: 0.1
                     }]
                 },
                 options: {
                     scales: {
-                        y: { // Y-axis (Number of Sets)
+                        y: {
                             beginAtZero: true,
                             title: {
                                 display: true,
                                 text: 'Número de Series',
                                 font: { size: 12 },
-                                color: '${'#666'}' // Darker gray for axis title
+                                color: '#666'
                             },
                             ticks: {
-                                color: 'rgba(0, 0, 0, 0.7)', // Darker gray for ticks
-                                precision: 0 // Ensure whole numbers for sets
+                                color: 'rgba(0, 0, 0, 0.7)',
+                                precision: 0
                             },
                              grid: {
-                                color: 'rgba(0, 0, 0, 0.08)' // Lighter grid lines
+                                color: 'rgba(0, 0, 0, 0.08)'
                             }
                         },
-                        x: { // X-axis (Muscle Groups)
+                        x: {
                              ticks: {
                                 color: 'rgba(0, 0, 0, 0.7)',
-                                font: { size: 11 } // Slightly smaller font if needed
+                                font: { size: 11 }
                             },
                              grid: {
-                                display: false // Hide vertical grid lines if desired
+                                display: false
                             }
                         }
                     },
                     plugins: {
                         legend: {
-                            display: true, // Show legend or set to false if title is enough
+                            display: true,
                             position: 'bottom',
                             labels: {
                                 font: { size: 12 },
@@ -890,7 +926,8 @@ function getVolumeLineChartScript(volumeData) {
       if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', initVolumeLineChart);
       } else {
-          initVolumeLineChart();
+           // Delay slightly if DOM is already loaded
+          setTimeout(initVolumeLineChart, 100);
       }
     </script>
     `;
@@ -909,7 +946,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     const scores = calculateTrainingComponentScores(routineHtml);
 
     // 2. Calculate weekly volume
-    const volumeData = calculateWeeklyVolume(routineHtml);
+    const volumeData = calculateWeeklyVolume(routineHtml); // Returns filtered data
 
     // 3. Generate cover page HTML (placeholders for charts)
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
@@ -927,9 +964,10 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
 
     // 6. Get Chart.js initialization scripts
     const radarScript = getRadarChartScript(scores);
+    // Pass the potentially empty filtered volume data to the script generator
     const volumeScript = getVolumeLineChartScript(volumeData);
 
-    // 7. Combine scripts
+    // 7. Combine scripts (including the main Chart.js library)
     const combinedScript = `
         <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
         ${radarScript}
@@ -938,19 +976,17 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
 
 
     return {
-        fullCoverPageHtml, // The complete HTML structure for the page
-        styles,            // CSS styles for the page
-        script: combinedScript, // Combined JavaScript for BOTH charts
-        scores,            // Calculated component scores
-        volumeData         // Calculated volume data (used for volume chart)
+        fullCoverPageHtml,
+        styles,
+        script: combinedScript,
+        scores,
+        volumeData // Return the calculated (possibly empty) volume data
     };
 }
 
-// Export the main function and potentially others if needed elsewhere
+// Export the main function
 module.exports = {
-    calculateTrainingComponentScores, // Keep if used independently
-    calculateWeeklyVolume,            // Keep if used independently
+    calculateTrainingComponentScores,
+    calculateWeeklyVolume,
     createCoverPage
 };
-
-
