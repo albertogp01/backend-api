@@ -1,4 +1,4 @@
-// chartService.js (Análisis Estructural Volumen por Día + Logging - CORREGIDO)
+// chartService.js (Análisis Estructural Volumen por Día + Logging - CORREGIDO v7)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -66,23 +66,29 @@ function calculateTrainingComponentScores(routineHtml) {
     setRepMatches.forEach(match => {
         const numbers = match.match(/\d+/g);
         if (numbers && numbers.length >= 2) {
-            const numSets = parseInt(numbers[0], 10);
-            const repRange = numbers[1].split('-').map(Number);
-            const maxReps = Math.max(...repRange);
-            if (!isNaN(numSets)) {
-                if (maxReps <= 6) lowRepSets += numSets;
-                else if (maxReps <= 15) midRepSets += numSets;
-                else highRepSets += numSets;
+            // Heuristic: Assume the first number is sets if it's reasonable (e.g., < 10)
+            // and the second number looks like reps (e.g., > 1 or a range).
+            // This is imperfect but tries to handle common "Sets x Reps" formats.
+            const potentialSets = parseInt(numbers[0], 10);
+            const potentialReps = numbers[1]; // Keep as string to check for range '-'
+            if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 10) { // Check if first number looks like sets
+                 const repRange = potentialReps.split('-').map(Number);
+                 const maxReps = Math.max(...repRange);
+                 if (!isNaN(maxReps)) {
+                    if (maxReps <= 6) lowRepSets += potentialSets;
+                    else if (maxReps <= 15) midRepSets += potentialSets;
+                    else highRepSets += potentialSets;
+                 }
             }
         }
     });
-    // Simple rep mentions
+    // Simple rep mentions (less reliable for sets, used for component scoring)
      const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
      simpleRepMatches.forEach(match => {
          const repNumbers = match.match(/\d+/g);
          if (repNumbers) {
              const maxReps = Math.max(...repNumbers.map(Number));
-             if (maxReps <= 6) lowRepSets += 0.5;
+             if (maxReps <= 6) lowRepSets += 0.5; // Add fractional count for scoring
              else if (maxReps <= 15) midRepSets += 0.5;
              else highRepSets += 0.5;
          }
@@ -90,7 +96,7 @@ function calculateTrainingComponentScores(routineHtml) {
 
     counts.fuerza += lowRepSets * 2;
     counts.hipertrofia += midRepSets * 1.5;
-    counts.cardio += highRepSets * 1;
+    counts.cardio += highRepSets * 1; // High reps contribute a bit to cardio score
 
     // 2. Specific Exercise Keywords
     const specificExercises = {
@@ -104,11 +110,10 @@ function calculateTrainingComponentScores(routineHtml) {
     Object.keys(specificExercises).forEach(component => {
         specificExercises[component].forEach(ex => {
             try {
-                // Regex más robusta para nombres de ejercicios con espacios
-                const safeEx = ex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escapar caracteres especiales
+                const safeEx = ex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                 const regex = new RegExp(safeEx.replace(/\s+/g, '\\s+'), 'gi');
                 const matches = routineHtml.match(regex) || [];
-                counts[component] += matches.length * 2.5;
+                counts[component] += matches.length * 2.5; // Weight specific exercises more
             } catch (e) {
                 console.warn(`[Scores Calculation] Invalid regex for exercise: ${ex}`, e);
             }
@@ -120,8 +125,8 @@ function calculateTrainingComponentScores(routineHtml) {
     if (routineHtml.match(/RIR\s+[3-4]/gi)) { counts.hipertrofia += 3; }
     if (routineHtml.match(/RPE\s+[8-9]/gi)) { counts.fuerza += 2; counts.hipertrofia += 4; }
     if (routineHtml.match(/RPE\s+[6-7]/gi)) { counts.hipertrofia += 2; }
-    if (routineHtml.match(/tempo.*[xX]/gi)) { counts.potencia += 6; }
-    if (routineHtml.match(/tempo\s+\d{4,}/gi)) { counts.tecnica += 3; counts.hipertrofia += 2; }
+    if (routineHtml.match(/tempo.*[xX]/gi)) { counts.potencia += 6; } // Explosive tempo
+    if (routineHtml.match(/tempo\s+\d{4,}/gi)) { counts.tecnica += 3; counts.hipertrofia += 2; } // Controlled tempo
     if (routineHtml.match(/descanso\s+(corto|30s|45s|60s)/gi)) { counts.hipertrofia += 1; counts.cardio += 1; }
     if (routineHtml.match(/descanso\s+(largo|90s|120s|2-3\s*min)/gi)) { counts.fuerza += 2; }
 
@@ -130,6 +135,7 @@ function calculateTrainingComponentScores(routineHtml) {
 
     if (totalCount === 0) {
         console.warn("[Scores Calculation] Total count for normalization is zero, returning default balanced scores.");
+        // Return default balanced scores if no keywords/heuristics matched
         return {
             fuerza: 50, hipertrofia: 50, movilidad: 50,
             potencia: 50, tecnica: 50, cardio: 50,
@@ -137,236 +143,254 @@ function calculateTrainingComponentScores(routineHtml) {
         };
     }
 
+    // Calculate initial percentage scores
     Object.keys(counts).forEach(component => {
         scores[component] = Math.round((Math.max(0, counts[component]) / totalCount) * 100);
     });
 
     // --- Smoothing and Thresholding ---
-    const minThreshold = 5;
+    const minThreshold = 5; // Minimum score if any count was found
     let totalScore = 0;
     Object.keys(scores).forEach(component => {
+        // If component had counts but score is below threshold, set to threshold
         if (counts[component] > 0 && scores[component] < minThreshold) {
             scores[component] = minThreshold;
         }
+        // Ensure score doesn't exceed 100
         scores[component] = Math.min(scores[component], 100);
         totalScore += scores[component];
     });
 
-    // Re-normalize if needed
-    if (totalScore > 0 && Math.abs(totalScore - 100) > 10) {
+    // Re-normalize if total score significantly deviates from 100 after thresholding
+    if (totalScore > 0 && Math.abs(totalScore - 100) > 10) { // Allow some tolerance
         const scaleFactor = 100 / totalScore;
         Object.keys(scores).forEach(component => {
             scores[component] = Math.round(scores[component] * scaleFactor);
+             // Re-apply threshold and cap at 100
             scores[component] = Math.max( (counts[component] > 0 ? minThreshold : 0) , Math.min(scores[component], 100));
         });
     }
 
-     // Final adjustment
+     // Final adjustment to ensure sum is exactly 100
      let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
      if (finalTotal !== 100 && finalTotal > 0) {
          let diff = 100 - finalTotal;
-         // Prioritize adding/subtracting from the largest components first
+         // Distribute difference starting from the component with the highest score
          let sortedComponents = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+
+         // Adjust the largest component(s) carefully
          scores[sortedComponents[0]] = Math.min(100, Math.max(0, scores[sortedComponents[0]] + diff));
-         // Recalculate total and adjust if necessary (rare edge case)
+
+         // Recalculate total and adjust second largest if still needed (rare)
          finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
          if (finalTotal !== 100) {
              let secondDiff = 100 - finalTotal;
-             scores[sortedComponents[1 % sortedComponents.length]] = Math.min(100, Math.max(0, scores[sortedComponents[1 % sortedComponents.length]] + secondDiff));
+             // Ensure there's a second component to adjust
+             if (sortedComponents.length > 1) {
+                scores[sortedComponents[1]] = Math.min(100, Math.max(0, scores[sortedComponents[1]] + secondDiff));
+             } else {
+                 // If only one component, force it to 100 (edge case)
+                 scores[sortedComponents[0]] = 100;
+             }
          }
      }
 
     // --- Determine Main Components ---
     let maxScore = 0;
     let mainComponents = [];
+    const significanceThreshold = 25; // Threshold to be considered a "main" component
     Object.entries(scores).forEach(([component, score]) => {
-         if (score >= 25) { // Threshold for significant component
+         if (score >= significanceThreshold) {
              if (score > maxScore) {
                  maxScore = score;
-                 mainComponents = [component];
-             } else if (score === maxScore && !mainComponents.includes(component)) { // Add ties
-                 mainComponents.push(component);
+                 mainComponents = [component]; // New max, reset list
+             } else if (score === maxScore && !mainComponents.includes(component)) {
+                 mainComponents.push(component); // Add ties
              }
          }
     });
-      // Ensure all components with max score are included if threshold wasn't met but max exists
-      if (mainComponents.length === 0 && maxScore > 0) {
-       Object.entries(scores).forEach(([component, score]) => {
-             if (score === maxScore) {
-                 mainComponents.push(component);
-             }
-       });
+      // If no component reached the threshold, find the highest score(s) anyway
+      if (mainComponents.length === 0) {
+          maxScore = Math.max(...Object.values(scores));
+          if (maxScore > 0) { // Only if there are non-zero scores
+            Object.entries(scores).forEach(([component, score]) => {
+                if (score === maxScore) {
+                    mainComponents.push(component);
+                }
+            });
+          }
       }
 
 
     scores.mainComponents = mainComponents;
     scores.mainComponentsDisplay = mainComponents.length > 0
         ? mainComponents.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
-        : 'Equilibrado';
+        : 'Equilibrado'; // Default if no clear focus
 
-    console.log("[Scores Calculation] Calculated Scores:", scores);
+    console.log("[Scores Calculation] Final Calculated Scores:", scores);
     return scores;
 }
 
 
 /**
  * Calculates approximate daily volume (total sets) from routine HTML using structural analysis.
- * VERSION 6: Calculates total sets per day by parsing table structure (REVISED SET EXTRACTION).
+ * VERSION 7: More robust parsing, flexible regex, enhanced logging.
  * @param {string} routineHtml - The HTML content of the generated routine.
  * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
  */
 function calculateDailyVolume(routineHtml) {
-    console.log("[Volume Calculation v6 - Structural Revised] Starting...");
-
-    const dailyVolume = {}; // Example: { 'Día 1': 20, 'Día 2': 18 }
+    console.log("[Volume Calc v7] Starting...");
+    const dailyVolume = {};
 
     if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
-        console.warn("[Volume Calculation v6] No valid routine HTML provided.");
+        console.warn("[Volume Calc v7] No valid routine HTML provided.");
         return {};
     }
+    // Log a snippet of the input HTML for debugging
+    // console.log("[Volume Calc v7] Input HTML (snippet):", routineHtml.substring(0, 500));
 
-    // --- Regex Patterns ---
-    const dayHeaderRegex = /<th[^>]*colspan="5"[^>]*>.*?(Día\s*\d+).*?<\/th>/i;
-    // Regex for time-based activities (used as fallback for cardio)
+    // --- More Flexible Regex Patterns ---
+    // Allow th or td, be less strict about attributes, capture day number robustly
+    const dayHeaderRegex = /<(?:th|td)[^>]*>.*?(\bD[Íí]a\s*\d+\b).*?<\/(?:th|td)>/i; // Match "Día N" specifically
     const timeBasedRegex = /(\d+)\s*(?:seg|sec|min|seconds?|minutes?)/i;
     const cardioKeywords = ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'aeróbico'];
     const cardioKeywordRegex = new RegExp(`\\b(${cardioKeywords.join('|')})\\b`, 'i');
+    // Regex to find potential set numbers (prioritize explicit mentions)
+    const potentialSetPatterns = [
+        /(\d+)\s+(?:series|sets)\b/i, // "N series/sets" (most reliable)
+        /(\d+)\s*x\s+\d+(?:-\d+)?/i    // "N x reps" (common pattern)
+    ];
 
     // --- HTML Parsing ---
     const tableRegex = /<table[\s\S]*?<\/table>/gi;
     const tableMatches = routineHtml.match(tableRegex);
 
     if (!tableMatches || tableMatches.length === 0) {
-        console.warn("[Volume Calculation v6] No tables found in routine HTML.");
+        console.warn("[Volume Calc v7] No tables found in routine HTML.");
         return {};
     }
-
-    console.log(`[Volume Calculation v6] Found ${tableMatches.length} table(s).`);
+    console.log(`[Volume Calc v7] Found ${tableMatches.length} table(s).`);
 
     tableMatches.forEach((tableHtml, tableIndex) => {
-        console.log(`[Volume Debug v6] Processing Table ${tableIndex + 1}`);
+        console.log(`\n[Volume Debug v7] Processing Table ${tableIndex + 1}`);
+        // console.log(`[Volume Debug v7] Table HTML (snippet): ${tableHtml.substring(0, 300)}`);
         let currentDay = null;
 
         const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
         const rowMatches = tableHtml.match(rowRegex);
 
         if (!rowMatches) {
-            console.log(`[Volume Debug v6] No rows found in Table ${tableIndex + 1}.`);
-            return; // Skip this table if it has no rows
+            console.log(`[Volume Debug v7] No rows found in Table ${tableIndex + 1}.`);
+            return;
         }
 
         rowMatches.forEach((rowHtml, rowIndex) => {
-            // 1. Check if this row is a Day Header
+             // console.log(`\n[Volume Debug v7] Processing Row ${rowIndex + 1}: ${rowHtml.substring(0,150)}`); // Log row HTML
+
+            // 1. Check if this row is a Day Header (using flexible regex)
             const dayMatch = rowHtml.match(dayHeaderRegex);
             if (dayMatch && dayMatch[1]) {
-                // Normalize day identifier (e.g., "Día 1")
-                currentDay = dayMatch[1].replace(/:\s*.*$/, '').trim();
-                if (!dailyVolume[currentDay]) {
+                currentDay = dayMatch[1].trim(); // Directly use the captured "Día N"
+                 if (!dailyVolume[currentDay]) {
                     dailyVolume[currentDay] = 0;
                 }
-                console.log(`[Volume Debug v6] Table ${tableIndex + 1}, Row ${rowIndex + 1}: Found Day Header "${currentDay}"`);
-                return; // Move to the next row after finding header
+                console.log(`[Volume Debug v7] Found Day Header: "${currentDay}" in Row ${rowIndex + 1}`);
+                return; // Move to the next row
             }
 
-            // 2. If we are inside a day, process the row for sets/time
+            // 2. If inside a day, process row for sets/time
             if (currentDay) {
-                // Extract text content from all cells (td) in this row
-                const cellRegex = /<td[\s\S]*?<\/td>/gi;
-                const cellMatches = rowHtml.match(cellRegex);
                 let rowTextContent = "";
-                if (cellMatches) {
-                    rowTextContent = cellMatches.map(cellHtml => {
-                        // Clean cell content: remove HTML tags, decode entities like &nbsp;
-                        return cellHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
-                    }).join(' ').replace(/\s+/g, ' ').trim(); // Collapse multiple spaces
+                try {
+                    // Extract text content from all cells (td) in this row more carefully
+                    const cellRegex = /<td[\s\S]*?<\/td>/gi;
+                    const cellMatches = rowHtml.match(cellRegex);
+                    if (cellMatches) {
+                        // Join content of all cells in the row
+                        rowTextContent = cellMatches.map(cellHtml => {
+                            // Basic cleaning: remove tags, decode common entities
+                            return cellHtml
+                                .replace(/<style[\s\S]*?<\/style>/gi, '') // Remove style blocks
+                                .replace(/<script[\s\S]*?<\/script>/gi, '') // Remove script blocks
+                                .replace(/<[^>]+>/g, ' ') // Remove remaining HTML tags
+                                .replace(/&nbsp;/g, ' ') // Replace non-breaking space
+                                .replace(/&amp;/g, '&') // Decode ampersand
+                                .replace(/&lt;/g, '<')
+                                .replace(/&gt;/g, '>');
+                        }).join(' ').replace(/\s+/g, ' ').trim(); // Collapse multiple spaces
+                    }
+                } catch (parseError) {
+                    console.error(`[Volume Error v7] Error parsing cells in Row ${rowIndex + 1}:`, parseError);
+                    return; // Skip this row on error
                 }
 
-                // Skip rows that are likely subheaders or empty after cleaning
-                if (!rowTextContent || /<b>.*?<\/b>|Ejercicio|Series|Reps|Descanso|Notas Clave/i.test(rowHtml)) {
-                     // console.log(`[Volume Debug v6] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Skipping row (likely header or empty). Content: "${rowTextContent}"`);
+                // Skip rows that are likely subheaders or empty/irrelevant AFTER cleaning
+                 const headerKeywords = ['Ejercicio', 'Series', 'Reps', 'Descanso', 'Notas', 'Activación', 'Rutina Principal'];
+                 // Check if the raw HTML contains bold tags often used for headers, or if text content matches keywords
+                 if (!rowTextContent || /<b>.*?<\/b>/i.test(rowHtml) || headerKeywords.some(kw => new RegExp(`^${kw}$`, 'i').test(rowTextContent.trim()))) {
+                     // console.log(`[Volume Debug v7] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row (empty or likely header). Content: "${rowTextContent}"`);
                     return;
-                }
+                 }
 
-                console.log(`[Volume Debug v6] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Analyzing text "${rowTextContent.substring(0, 100)}..."`);
+                console.log(`[Volume Debug v7] Row ${rowIndex + 1} (Day ${currentDay}): Analyzing Text: "${rowTextContent}"`);
 
                 let setsFound = 0;
-                let isCardioSet = false;
 
-                // --- Revised Set Extraction Logic ---
-                // Try to find explicit "N series" or "N sets" first within the text content of the row
-                const explicitSetsMatch = rowTextContent.match(/(\d+)\s+(?:series|sets)\b/i); // Added word boundary \b
-                if (explicitSetsMatch && explicitSetsMatch[1]) {
-                    let potentialSets = parseInt(explicitSetsMatch[1], 10);
-                     if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check: >0 and <50 sets
-                         setsFound = potentialSets;
-                         console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found explicit Set pattern "${explicitSetsMatch[0]}". Extracted Sets: ${setsFound}`);
-                    } else {
-                         console.warn(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Explicit Set pattern found but value invalid (${explicitSetsMatch[1]}).`);
-                         setsFound = 0; // Reset if parsing failed or value is unreasonable
-                    }
-                }
-
-                // If no explicit sets found, try "N x Reps" or "N x Y" patterns
-                // Looks for a number, followed by 'x', followed by another number (potentially a range)
-                if (setsFound === 0) {
-                    // Prioritize matching the number directly before 'x'
-                    const xSetsMatch = rowTextContent.match(/(\d+)\s*x\s+\d+(?:-\d+)?/i);
-                    if (xSetsMatch && xSetsMatch[1]) {
-                        let potentialSets = parseInt(xSetsMatch[1], 10);
-                         if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check
-                            setsFound = potentialSets;
-                            console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found "N x Reps" pattern "${xSetsMatch[0]}". Extracted Sets: ${setsFound}`);
-                        } else {
-                             console.warn(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: "N x Reps" pattern found but value invalid (${xSetsMatch[1]}).`);
-                             setsFound = 0; // Reset
+                // --- Attempt to find sets using patterns ---
+                for (const pattern of potentialSetPatterns) {
+                    try {
+                        const match = rowTextContent.match(pattern);
+                        if (match && match[1]) {
+                            let potentialSets = parseInt(match[1], 10);
+                            // Increased sanity check range slightly
+                            if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) {
+                                setsFound = potentialSets;
+                                console.log(`[Volume Debug v7] Matched pattern ${pattern} -> Sets: ${setsFound}`);
+                                break; // Found sets, stop checking patterns for this row
+                            } else {
+                                 console.log(`[Volume Debug v7] Pattern ${pattern} matched but value (${match[1]}) invalid/out of range.`);
+                            }
                         }
+                    } catch (regexError) {
+                         console.error(`[Volume Error v7] Regex error for pattern ${pattern} on row ${rowIndex + 1}:`, regexError);
                     }
                 }
-                // --- End Revised Set Extraction Logic ---
 
-
-                // Search for Time (Cardio) - ONLY if no sets found via revised logic
+                // --- Fallback: Check for Time-Based Cardio ---
                 if (setsFound === 0) {
-                    let timeMatch = rowTextContent.match(timeBasedRegex);
-                    if (timeMatch) {
-                        // Check for cardio keyword in the same row text
-                        if (cardioKeywordRegex.test(rowTextContent)) {
+                    try {
+                        const timeMatch = rowTextContent.match(timeBasedRegex);
+                        if (timeMatch && cardioKeywordRegex.test(rowTextContent)) {
                             setsFound = 1; // Count time-based cardio as 1 set
-                            isCardioSet = true;
-                            console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" and Cardio keyword. Counting as 1 set.`);
-                        } else {
-                            console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" but NO Cardio keyword.`);
+                            console.log(`[Volume Debug v7] Found Time/Cardio pattern -> Sets: 1`);
                         }
+                    } catch (regexError) {
+                         console.error(`[Volume Error v7] Regex error during cardio check on row ${rowIndex + 1}:`, regexError);
                     }
                 }
 
-                // Add sets to the current day's total
+                // --- Add to Daily Total ---
                 if (setsFound > 0) {
-                    // Ensure the number is valid before adding
-                    if (!isNaN(setsFound)) {
-                        dailyVolume[currentDay] += setsFound;
-                        console.log(`[Volume Assignment v6 - Rev] Row ${rowIndex + 1}: Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
-                    } else {
-                        // This case should be rare now due to checks above, but good to keep
-                        console.warn(`[Volume Assignment v6 - Rev] Row ${rowIndex + 1}: Invalid setsFound value was not caught earlier (${setsFound}). Skipping addition.`);
-                        setsFound = 0; // Ensure it's reset if invalid
-                    }
-                }
-
-                // Log only if truly nothing was identified for this data row
-                if (setsFound === 0) {
-                    console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: No sets or qualifying cardio identified in this row.`);
+                     // Final check isNaN
+                     if (!isNaN(setsFound)) {
+                         dailyVolume[currentDay] += setsFound;
+                         console.log(`[Volume Assignment v7] Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
+                     } else {
+                          console.warn(`[Volume Assignment v7] Row ${rowIndex + 1}: Invalid setsFound value detected before adding (${setsFound}).`);
+                     }
+                } else {
+                    // Log only if it was a data row but no sets were found
+                    console.log(`[Volume Debug v7] Row ${rowIndex + 1}: No valid sets or cardio pattern identified in this data row.`);
                 }
             } // end if(currentDay)
         }); // End loop through rows
     }); // End loop through tables
 
-    console.log("[Volume Calculation v6 - Structural Revised] Final Daily Volume:", JSON.stringify(dailyVolume));
+    console.log("[Volume Calc v7] Final Daily Volume:", JSON.stringify(dailyVolume));
 
-    // Return empty object if no sets were calculated for any day
     if (Object.keys(dailyVolume).length === 0 || Object.values(dailyVolume).every(v => v === 0)) {
-        console.warn("[Volume Calculation v6] No sets were calculated for any day. Returning empty object.");
-        return {};
+        console.warn("[Volume Calc v7] No sets were calculated for any day. Returning empty object.");
+        return {}; // Return empty if no days found or all days have 0 sets
     }
 
     return dailyVolume;
@@ -737,7 +761,6 @@ function getCoverPageStyles() {
     `;
 }
 
-
 /**
  * Genera el script de inicialización de Chart.js para el gráfico radar.
  * @param {Object} scores - Puntuaciones de componentes de entrenamiento.
@@ -1053,7 +1076,6 @@ function getVolumeLineChartScript(dailyVolumeData) {
     `;
 }
 
-
 /**
  * Creates a complete cover page including radar and volume charts.
  * @param {string} routineHtml - The HTML content of the routine.
@@ -1066,7 +1088,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     const scores = calculateTrainingComponentScores(routineHtml);
 
     // 2. Calculate DAILY volume using the revised function
-    const dailyVolumeData = calculateDailyVolume(routineHtml);
+    const dailyVolumeData = calculateDailyVolume(routineHtml); // Use the updated function (v7)
     console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
@@ -1106,10 +1128,11 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     };
 }
 
+
 // Export the main function and the revised volume function name
 module.exports = {
     calculateTrainingComponentScores,
-    calculateDailyVolume, // Export the revised function name
+    calculateDailyVolume, // Export the revised function name (v7)
     createCoverPage,
     // Keep other exports if they were needed for testing/other modules
     generateCoverPageHtml,
@@ -1117,6 +1140,7 @@ module.exports = {
     getRadarChartScript,
     getVolumeLineChartScript
 };
+
 
 
 
