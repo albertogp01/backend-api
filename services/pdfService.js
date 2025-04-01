@@ -680,7 +680,9 @@ th[colspan]::after {
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
-          "--disable-gpu"
+          "--disable-gpu",
+          "--js-flags=--max-old-space-size=2048", // Aumentar memoria disponible
+          "--disable-web-security"                // Evitar problemas CORS
         ]
       });
 
@@ -698,13 +700,22 @@ th[colspan]::after {
         waitUntil: "networkidle0"
       });
      
-      // Estableciendo contenido COMPLETO en Puppeteer...
-      console.log("Estableciendo contenido COMPLETO en Puppeteer...");
-      await page.setContent(fullPdfHtml, { 
-        waitUntil: 'networkidle0',
-        timeout: 60000 // Aumentar a 60 segundos
-    }); // Usar 'networkidle0' o 'load'
-      console.log("Contenido establecido.");
+      // Estableciendo contenido usando estrategia alternativa
+      console.log("Estableciendo contenido en Puppeteer usando estrategia alternativa...");
+      // 1. Primero establecer un documento HTML básico
+      await page.setContent('<html><head><meta charset="UTF-8"></head><body></body></html>', { timeout: 30000 });
+
+      // 2. Luego inyectar el contenido completo usando page.evaluate()
+      await page.evaluate((html) => {
+        document.body.innerHTML = html;
+      }, fullPdfHtml);
+
+      // 3. Esperar explícitamente a que el DOM esté listo
+      await page.waitForFunction(() => {
+        return document.readyState === 'complete';
+      }, { timeout: 60000 });
+      
+      console.log("Contenido establecido mediante estrategia alternativa.");
 
       // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
       console.log("Ejecutando script de evaluación en la página...");
@@ -900,22 +911,38 @@ document.querySelectorAll('.variants-container, .side-variants-container').forEa
           container.appendChild(spacer);
         });
       });
-      // Generar PDF
-      const pdfBuffer = await page.pdf({
-        path: filePath,
-        format: 'A4',
-        margin: { top: '0', right: '0', bottom: '0', left: '0' },
-        printBackground: true,
-        preferCSSPageSize: true,
-        timeout: 60000 // Aumentar timeout a 60 segundos para archivos grandes
-      });
-      await browser.close();
-      console.log("PDF generado correctamente en:", filePath);
-      resolve(filePath);
-    } catch (error) {
-      console.error("Error en generatePDF:", error);
-      reject(error);
-    }
+          try {
+            // Generar PDF
+            const pdfBuffer = await page.pdf({
+            path: filePath,
+            format: 'A4',
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            printBackground: true,
+            preferCSSPageSize: true,
+            timeout: 90000 // Aumentar a 90 segundos
+            });
+            console.log("PDF generado correctamente en:", filePath);
+            await browser.close();
+            console.log("Navegador cerrado correctamente");
+            resolve(filePath);
+        } catch (pdfError) {
+            console.error("Error específico al generar PDF:", pdfError.message);
+            await browser.close();
+            console.log("Navegador cerrado después de error");
+            reject(pdfError);
+        }
+        } catch (error) {
+        console.error("Error en generatePDF:", error);
+        if (browser) {
+            try {
+            await browser.close();
+            console.log("Navegador cerrado después de error general");
+            } catch (closeError) {
+            console.error("Error al cerrar el navegador:", closeError.message);
+            }
+        }
+        reject(error);
+        }
   });
 }
 
