@@ -847,19 +847,6 @@ ${formattedResponsesForPrompt.join("\n")}
 5.  **Estructura Preferida:** Respeta la preferencia (${cleanedData.trainingPreference || 'No especificada'}). Si no, elige la más adecuada (Principiante: Full Body; Intermedio/Avanzado: Split según días/objetivo, e.g., Empuje/Tire/Pierna, Torso/Pierna, Dividida por grupos).
 6.  **IMC y Consideraciones:** ${cleanedData.imc ? `Considera el IMC de ${cleanedData.imc}. Si es >25, limita impacto articular inicial. Si es <18.5, asegura suficiente estímulo y nutrición (aunque no das consejos de nutrición).` : 'IMC no disponible.'}
 
-**PERIODIZACIÓN SEMANAL OBLIGATORIA:**
-1. **Variación Diaria:** Cada día de entrenamiento DEBE tener una declaración clara de ENFOQUE (principal) e INTENSIDAD (alta/media/baja).
-2. **Distribución de Intensidad:** 
-   - Si entrena 2-3 días: Alterna alta-baja o alta-media-baja intensidad.
-   - Si entrena 4-5 días: Estructura semanal como: Alta-Baja-Media-Alta-Baja O Alta-Media-Baja-Media-Alta.
-   - Si entrena 6-7 días: Incluye al menos 2 días de baja intensidad para recuperación.
-3. **Enfoque de Variación:** Para cada tipo de objetivo principal:
-   - Hipertrofia/Fuerza: Varía entre días de volumen (más series/reps, menor intensidad) y días de intensidad (menos series/reps, mayor carga/esfuerzo).
-   - Resistencia/Cardio: Alterna entre trabajo continuo, intervalos y recuperación activa.
-   - Pérdida de peso: Combina días de fuerza, cardio de alto gasto calórico y cardio moderado.
-4. **Especificación de RIR y Tempo:** PARA CADA DÍA, especifica el RIR (Reps In Reserve) objetivo y patrones de tempo recomendados (e.g., 2-0-X-0) coherentes con el enfoque del día.
-5. **Etiquetado Explícito:** Etiqueta cada día en la tabla con su intensidad y enfoque, por ejemplo: "Día 1: Alta Intensidad - Empuje" o "Día 3: Baja Intensidad - Recuperación Activa".
-
 **FORMATO DE SALIDA (HTML ESTRICTO - SIN MARKDOWN):**
 Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estructura de tabla EXACTA:
 
@@ -918,14 +905,15 @@ Diseña la rutina SEMANAL completa AHORA.`;
   let timeoutId; // <<<--- Declarado con let fuera del try para que sea accesible en catch
   try {
     
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini", // Usar un modelo potente es recomendable
-      messages: [
-          { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas de un entrenador senior." },
-          { role: "user", content: prompt }
-      ],
-      temperature: 0.4, // Temperatura baja para seguir instrucciones precisas
-      max_tokens: 15000, // Aumentado según solicitud (¡puede ser muy alto para algunos modelos!)
+      console.log("Enviando solicitud a OpenAI con prompt final...");
+  const completion = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas." },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.5,
+    max_tokens: 15000 
   });
   
     const responseMessage = completion.choices[0]?.message?.content;
