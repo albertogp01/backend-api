@@ -1,4 +1,4 @@
-// chartService.js (Mejorado v2)
+// chartService.js (Mejorado v3)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -218,88 +218,104 @@ function calculateWeeklyVolume(routineHtml) {
         return {}; // Return empty object if no HTML
     }
 
+    // --- IMPORTANT: Review and adjust keywords/regex based on your actual HTML ---
     const muscleGroupKeywords = {
-        Pecho: ['pecho', 'chest', 'press de banca', 'bench press', 'aperturas', 'flyes', 'flexiones', 'push-up'],
-        Espalda: ['espalda', 'back', 'remo', 'row', 'dominadas', 'pull-up', 'chin-up', 'pulldown', 'peso muerto', 'deadlift', 'dorsal'],
-        Hombro: ['hombro', 'shoulder', 'press militar', 'overhead press', 'elevaciones laterales', 'lateral raise', 'elevaciones frontales', 'front raise', 'pájaros', 'rear delt fly'],
+        Pecho: ['pecho', 'chest', 'press de banca', 'bench press', 'aperturas', 'flyes', 'flexiones', 'push-up', 'pectoral'],
+        Espalda: ['espalda', 'back', 'remo', 'row', 'dominadas', 'pull-up', 'chin-up', 'pulldown', 'peso muerto', 'deadlift', 'dorsal', 'jalon'],
+        Hombro: ['hombro', 'shoulder', 'press militar', 'overhead press', 'elevaciones laterales', 'lateral raise', 'elevaciones frontales', 'front raise', 'pájaros', 'rear delt fly', 'deltoides'],
         Biceps: ['biceps', 'bíceps', 'curl'],
-        Triceps: ['triceps', 'tríceps', 'extensiones', 'extension', 'fondos', 'dips', 'press francés', 'french press'],
-        Pierna: ['pierna', 'leg', 'cuádriceps', 'quadriceps', 'femoral', 'hamstring', 'gemelo', 'calf', 'sentadilla', 'squat', 'prensa', 'leg press', 'zancadas', 'lunges', 'leg curl', 'leg extension'],
-        Gluteo: ['glúteo', 'glute', 'hip thrust', 'puente de glúteo', 'glute bridge', 'patada de glúteo', 'kickback'],
-        Abdomen: ['abdomen', 'abdominales', 'abs', 'core', 'plancha', 'plank', 'crunches', 'elevaciones de piernas', 'leg raise'],
-        Cardio: ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos']
+        Triceps: ['triceps', 'tríceps', 'extensiones', 'extension', 'fondos', 'dips', 'press francés', 'french press', 'skullcrusher'],
+        Pierna: ['pierna', 'leg', 'cuádriceps', 'quadriceps', 'femoral', 'hamstring', 'gemelo', 'calf', 'soleo', 'sentadilla', 'squat', 'prensa', 'leg press', 'zancadas', 'lunges', 'leg curl', 'leg extension', 'gemelos'],
+        Gluteo: ['glúteo', 'glute', 'hip thrust', 'puente de glúteo', 'glute bridge', 'patada de glúteo', 'kickback', 'abducción'],
+        Abdomen: ['abdomen', 'abdominales', 'abs', 'core', 'plancha', 'plank', 'crunches', 'elevaciones de piernas', 'leg raise', 'oblicuos', 'russian twist'],
+        Cardio: ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'assault bike']
     };
 
-    // Regex to find exercise blocks (more robust)
-    const exerciseBlockRegex = /<(li|tr|p|div)[^>]*>([\s\S]*?)<\/\1>/gi; // Added 'div'
-    const setRepRegex = /(\d+)\s*(?:sets?|series?)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
-    const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
+    // Regex to find potential exercise blocks (li, tr, p, div)
+    const exerciseBlockRegex = /<(li|tr|p|div)[^>]*>([\s\S]*?)<\/\1>/gi;
+    // Regex to find sets and reps (adjust based on your HTML format!)
+    // Example 1: "3 sets x 10 reps", "4 series x 8-12 repeticiones"
+    const setRepRegex1 = /(\d+)\s*(?:sets?|series?)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
+    // Example 2: "3x10", "4x8-12"
+    const setRepRegex2 = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
+    // Example 3: "Sets: 3", "Series: 4" (assuming reps are nearby but not needed for set count)
+    const setOnlyRegex = /(?:sets?|series?)\s*:\s*(\d+)/i;
+    // Example 4: Time-based (Cardio)
     const timeBasedRegex = /(\d+)\s*(?:min|seg|seconds?)/i;
 
     let match;
-    let blocksFound = 0; // DEBUG
+    let blocksFound = 0;
     while ((match = exerciseBlockRegex.exec(routineHtml)) !== null) {
-        blocksFound++; // DEBUG
+        blocksFound++;
         const blockContent = match[2];
         let sets = 0;
         let isCardioSession = false;
-        // DEBUG: Log the block being processed
-        // console.log(`[Volume Debug] Processing Block ${blocksFound}: ${blockContent.substring(0, 150).replace(/\s+/g, ' ')}...`);
 
-        // Try to find sets x reps patterns
-        const setRepMatch = blockContent.match(setRepRegex) || blockContent.match(simpleSetRepRegex);
-        if (setRepMatch && setRepMatch.length >= 2) {
-            sets = parseInt(setRepMatch[1], 10) || 0;
-            // DEBUG: Log extracted sets
-            // console.log(`[Volume Debug] Found Set/Rep Match: ${setRepMatch[0]}, Extracted Sets: ${sets}`);
+        // --- REGEX CHECKING ORDER (Crucial!) ---
+        // Try most specific first (sets x reps)
+        let setMatch = blockContent.match(setRepRegex1);
+        if (setMatch) {
+            sets = parseInt(setMatch[1], 10) || 0;
+             console.log(`[Volume Debug] Block ${blocksFound}: Found setRepRegex1: ${setMatch[0]}, Sets: ${sets}`);
+        } else {
+            // Try simpler sets x reps
+            setMatch = blockContent.match(setRepRegex2);
+            if (setMatch) {
+                sets = parseInt(setMatch[1], 10) || 0;
+                 console.log(`[Volume Debug] Block ${blocksFound}: Found setRepRegex2: ${setMatch[0]}, Sets: ${sets}`);
+            } else {
+                // Try finding only "Sets: N" or "Series: N"
+                setMatch = blockContent.match(setOnlyRegex);
+                if (setMatch) {
+                    sets = parseInt(setMatch[1], 10) || 0;
+                     console.log(`[Volume Debug] Block ${blocksFound}: Found setOnlyRegex: ${setMatch[0]}, Sets: ${sets}`);
+                }
+            }
         }
 
-        // Check for time-based exercises (likely cardio) only if no sets found yet
+        // Check for time-based cardio only if NO sets were found
         if (sets === 0 && timeBasedRegex.test(blockContent)) {
            isCardioSession = true;
-           sets = 1; // Count as one session/set
-           // DEBUG: Log cardio session detection
-           // console.log(`[Volume Debug] Detected Time-Based (Cardio?) Session.`);
+           sets = 1; // Count as one "set" or session
+           console.log(`[Volume Debug] Block ${blocksFound}: Detected Time-Based (Cardio?) Session.`);
         }
 
-
+        // --- ASSIGNMENT LOGIC ---
         if (sets > 0) {
             let assigned = false;
             for (const group in muscleGroupKeywords) {
                 for (const keyword of muscleGroupKeywords[group]) {
                     try {
-                        // Use word boundaries for keywords to avoid partial matches
                         const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
                         if (regex.test(blockContent)) {
-                            // Assign to Cardio if it's a cardio keyword OR a time-based session
                             const targetGroup = (group === 'Cardio' || isCardioSession) ? 'Cardio' : group;
                             volume[targetGroup] += sets;
                             assigned = true;
-                             // DEBUG: Log assignment
-                            console.log(`[Volume Debug] Keyword '${keyword}' found. Assigning ${sets} sets to group: ${targetGroup}`);
-                            break; // Assign to first matching group for this block
+                            console.log(`[Volume Debug] Block ${blocksFound}: Keyword '${keyword}' found. Assigning ${sets} sets to group: ${targetGroup}`);
+                            // Optimization: If cardio session detected AND assigned to Cardio, stop checking other groups
+                            if (targetGroup === 'Cardio') break;
+                            // If assigned to a non-cardio group, stop checking keywords for *this* group
+                            break;
                         }
                     } catch (e) {
                         console.warn(`[Volume Calculation] Invalid regex for volume keyword: ${keyword}`, e);
                     }
                 }
-                if (assigned) break; // Move to next block once assigned
+                 // If assigned (to Cardio or other), stop checking other muscle groups for this block
+                if (assigned) break;
             }
-            // Assign to 'Otro' only if it wasn't assigned and wasn't identified as a cardio session
+            // Assign to 'Otro' only if not assigned and not explicitly a cardio session
             if (!assigned && !isCardioSession) {
                 volume.Otro += sets;
-                 // DEBUG: Log assignment to 'Otro'
-                console.log(`[Volume Debug] No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
+                console.log(`[Volume Debug] Block ${blocksFound}: No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
             }
         } else {
-             // DEBUG: Log blocks where no sets were found
-             // console.log(`[Volume Debug] No sets found in Block ${blocksFound}.`);
+             // console.log(`[Volume Debug] Block ${blocksFound}: No sets found.`); // Optional: Log blocks with 0 sets
         }
     }
-    console.log(`[Volume Calculation] Total blocks processed: ${blocksFound}`); // DEBUG
+    console.log(`[Volume Calculation] Total blocks processed: ${blocksFound}`);
 
-     // Simple count for overall cardio mentions if volume.Cardio is still 0
-     // This is a fallback and might overestimate/underestimate
+     // Fallback for Cardio mentions (if still 0)
      if (volume.Cardio === 0) {
          let cardioMentions = 0;
          muscleGroupKeywords.Cardio.forEach(keyword => {
@@ -310,24 +326,23 @@ function calculateWeeklyVolume(routineHtml) {
              } catch (e) { /* ignore */ }
          });
          if (cardioMentions > 0) {
-             volume.Cardio = Math.max(1, Math.round(cardioMentions / 3)); // Rough estimate
-             console.log(`[Volume Debug] Fallback: Estimated ${volume.Cardio} Cardio sets based on ${cardioMentions} mentions.`); // DEBUG
+             volume.Cardio = Math.max(1, Math.round(cardioMentions / 3));
+             console.log(`[Volume Debug] Fallback: Estimated ${volume.Cardio} Cardio sets based on ${cardioMentions} mentions.`);
          }
      }
 
 
-    console.log("[Volume Calculation] Final Volume (Before Filter):", JSON.stringify(volume)); // DEBUG
+    console.log("[Volume Calculation] Final Volume (Before Filter):", JSON.stringify(volume));
 
-    // Filter out groups with 0 sets for cleaner chart display
+    // Filter out groups with 0 sets
     const filteredVolume = {};
     for (const group in volume) {
-        // Include group if it has sets OR if it's 'Cardio' and has sets (even if added by fallback)
         if (volume[group] > 0) {
             filteredVolume[group] = volume[group];
         }
     }
 
-    console.log("[Volume Calculation] Final Filtered Volume (for chart):", JSON.stringify(filteredVolume)); // DEBUG
+    console.log("[Volume Calculation] Final Filtered Volume (for chart):", JSON.stringify(filteredVolume));
     return filteredVolume;
 }
 
@@ -425,7 +440,7 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
 function getCoverPageStyles() {
     // Combined and refined styles for cover page elements
     return `
-    /* Estilos Mejorados Portada Completa v3 */
+    /* Estilos Mejorados Portada Completa v4 */
     :root {
         /* Define color variables */
         --primary-color: #2c3e50; /* Dark Blue-Gray for text */
@@ -438,13 +453,13 @@ function getCoverPageStyles() {
         --text-medium-dark: #555;  /* Medium dark gray for less important text */
         --text-light-gray: #95a5a6; /* Light gray for footer */
         --border-light: rgba(0, 0, 0, 0.1);  /* Light border for dark on light */
-        --border-medium: #bdc3c7; /* Medium border */
+        --border-medium: #dce4e8; /* Lighter border for charts */
         --background-light-accent: rgba(0, 0, 0, 0.04); /* Subtle dark accent on light bg */
         --background-chart-container: #ffffff; /* White background for charts */
         --border-radius: 8px;
         --border-radius-large: 12px;
         --box-shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
-        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
+        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.07); /* Slightly softer shadow */
 
         /* Component Colors */
         --fuerza-color: #3498db;
@@ -469,15 +484,22 @@ function getCoverPageStyles() {
         display: flex;
         flex-direction: column;
         min-height: 100vh; /* Ensure full page height */
-        height: 100vh; /* Try explicit height */
+        /* height: 100vh; /* Avoid explicit height, min-height is safer */
         width: 100%;
-        /* Lighter Sky Blue Gradient Background */
-        background: linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
+        /* Lighter Sky Blue Gradient Background with Cloud Effect */
+        background:
+            /* Subtle white radial gradients for cloud effect */
+            radial-gradient(ellipse at 15% 25%, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
+            radial-gradient(ellipse at 70% 40%, rgba(255, 255, 255, 0.15) 0%, transparent 55%),
+            radial-gradient(ellipse at 40% 85%, rgba(255, 255, 255, 0.18) 0%, transparent 70%),
+            /* Base linear gradient */
+            linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
+        /* background-blend-mode: overlay; /* Experiment with blend modes */
         color: var(--text-dark); /* Main text color changed to dark */
         box-sizing: border-box;
         page-break-after: always;
-        overflow: hidden;
-        padding: 40px 50px;
+        overflow: hidden; /* Prevent content spilling */
+        padding: 35px 45px; /* Adjusted padding */
     }
 
     .cover-header-new {
@@ -485,19 +507,16 @@ function getCoverPageStyles() {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 35px; /* Adjusted margin */
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Darker border on light bg */
-        padding-bottom: 20px;
+        margin-bottom: 30px; /* Adjusted margin */
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 18px; /* Adjusted padding */
     }
 
     .cover-logo-new {
-        width: 110px; /* Further adjusted size */
+        width: 100px; /* Adjusted size */
         height: auto;
-        /* Logo color needs adjustment if original is light */
-        /* filter: brightness(0.1); /* Example: Darken a light logo */
         opacity: 0.9;
-         /* Assuming logo needs to be dark on light bg, remove invert */
-         /* filter: brightness(0) invert(1); */
+        /* filter: contrast(1.1) brightness(0.9); /* Example filter for dark logo on light bg */
     }
 
     .client-info-new {
@@ -505,42 +524,42 @@ function getCoverPageStyles() {
     }
 
     .client-info-new h1 {
-        font-size: 26px; /* Adjusted size */
+        font-size: 24px; /* Adjusted size */
         font-weight: 700;
-        color: var(--primary-color); /* Use primary dark color */
-        margin: 0 0 5px 0;
+        color: var(--primary-color);
+        margin: 0 0 4px 0;
         line-height: 1.2;
     }
 
     .client-info-new p {
         margin: 0;
-        color: var(--text-medium-dark); /* Medium dark gray */
-        font-size: 14px;
+        color: var(--text-medium-dark);
+        font-size: 13.5px; /* Adjusted size */
         font-weight: 400;
     }
 
     .cover-main-new {
-        flex-grow: 1;
+        flex-grow: 1; /* Allow main content to fill vertical space */
         display: flex;
         flex-direction: column;
-        gap: 30px; /* Adjusted gap */
+        gap: 25px; /* Adjusted gap */
         width: 100%;
-        margin-bottom: 30px;
+        margin-bottom: 25px; /* Space above footer */
     }
 
     .cover-text-content {
-        /* Full width */
+        /* Takes full width */
     }
 
     .cover-text-content h2 {
-        font-size: 24px; /* Adjusted size */
+        font-size: 22px; /* Adjusted size */
         font-weight: 700;
         color: var(--primary-color);
-        margin-bottom: 15px;
+        margin-bottom: 12px; /* Adjusted margin */
         line-height: 1.3;
         position: relative;
         display: inline-block;
-        padding-bottom: 8px;
+        padding-bottom: 6px; /* Adjusted padding */
     }
 
     .cover-text-content h2::after {
@@ -548,19 +567,19 @@ function getCoverPageStyles() {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 50px;
-        height: 3px;
+        width: 45px; /* Adjusted size */
+        height: 2.5px; /* Adjusted size */
         background-color: var(--accent-color);
         border-radius: 3px;
     }
 
     .cover-description-new {
-        font-size: 14.5px; /* Adjusted size */
-        color: var(--secondary-color); /* Use secondary dark color */
-        line-height: 1.6;
-        margin-bottom: 25px; /* Adjusted margin */
+        font-size: 14px; /* Adjusted size */
+        color: var(--secondary-color);
+        line-height: 1.55; /* Adjusted line height */
+        margin-bottom: 20px; /* Adjusted margin */
         font-weight: 400;
-        max-width: 100%; /* Allow full width */
+        max-width: 100%;
     }
 
     .cover-description-new strong {
@@ -570,30 +589,30 @@ function getCoverPageStyles() {
 
     .components-legend-new {
         background-color: var(--background-light-accent);
-        padding: 18px 22px; /* Adjusted padding */
+        padding: 15px 20px; /* Adjusted padding */
         border-radius: var(--border-radius);
         border: 1px solid var(--border-light);
     }
 
     .components-legend-new h3 {
-        font-size: 15px; /* Adjusted size */
+        font-size: 14px; /* Adjusted size */
         font-weight: 600;
         color: var(--primary-color);
-        margin: 0 0 15px 0;
+        margin: 0 0 12px 0; /* Adjusted margin */
         text-align: left;
     }
 
     .legend-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
-        gap: 10px 20px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); /* Responsive columns */
+        gap: 8px 18px; /* Adjusted gap */
     }
 
 
     .component-item-new {
         display: flex;
         align-items: center;
-        gap: 8px; /* Adjusted gap */
+        gap: 8px;
     }
 
     .component-dot-new {
@@ -601,7 +620,7 @@ function getCoverPageStyles() {
         height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
-        border: 1px solid rgba(0, 0, 0, 0.3); /* Darker border for dots */
+        border: 1px solid rgba(0, 0, 0, 0.3);
     }
 
     /* Component Colors remain the same */
@@ -613,7 +632,7 @@ function getCoverPageStyles() {
     .cardio-color { background-color: var(--cardio-color); }
 
     .component-label-new {
-        font-size: 13px; /* Adjusted size */
+        font-size: 12.5px; /* Adjusted size */
         font-weight: 500;
         color: var(--secondary-color);
     }
@@ -621,54 +640,61 @@ function getCoverPageStyles() {
     .component-label-new span {
         font-weight: 700;
         color: var(--primary-color);
-        margin-left: 4px;
+        margin-left: 3px; /* Adjusted margin */
     }
 
     .cover-visuals-content {
         display: flex;
-        flex-wrap: wrap; /* Allow wrapping on smaller screens if needed */
-        gap: 25px; /* Adjusted gap */
+        flex-wrap: wrap;
+        gap: 20px; /* Adjusted gap */
         width: 100%;
-        align-items: stretch;
+        align-items: stretch; /* Make containers same height if they wrap */
     }
 
     .chart-container-new {
-        flex: 1 1 300px; /* Allow shrinking, base width 300px, allow growing */
+        flex: 1 1 300px;
         background-color: var(--background-chart-container);
         border-radius: var(--border-radius-large);
-        padding: 20px 25px 25px 25px;
+        padding: 18px 22px 22px 22px; /* Adjusted padding */
         box-shadow: var(--box-shadow-medium);
-        border: 1px solid var(--border-medium); /* Subtle border */
+        border: 1px solid var(--border-medium);
         display: flex;
         flex-direction: column;
         min-width: 0;
-        height: 360px; /* Adjusted height */
-        max-height: 360px;
+        /* REMOVED fixed height to prevent overflow */
+        /* height: 360px; */
+        /* max-height: 360px; */
+        min-height: 300px; /* Minimum height for visual balance */
     }
 
      .chart-title {
-        font-size: 14px; /* Adjusted size */
+        font-size: 13.5px; /* Adjusted size */
         font-weight: 600;
         color: var(--text-dark);
-        margin: 0 0 15px 0;
+        margin: 0 0 12px 0; /* Adjusted margin */
         text-align: center;
+        flex-shrink: 0; /* Prevent title from shrinking */
     }
 
     #radarChart, #volumeLineChart {
         max-width: 100%;
-        max-height: calc(100% - 30px); /* Account for title */
+        /* REMOVED max-height to let chart determine size */
+        /* max-height: calc(100% - 30px); */
         margin: auto;
         display: block;
+        flex-grow: 1; /* Allow canvas wrapper (if any) or canvas itself to grow */
+        min-height: 200px; /* Ensure canvas has some minimum height */
     }
 
     .cover-footer-new {
         width: 100%;
         text-align: center;
-        padding-top: 15px; /* Adjusted padding */
+        padding-top: 15px;
         margin-top: auto; /* Push footer to bottom */
         border-top: 1px solid var(--border-light);
-        font-size: 11px; /* Adjusted size */
+        font-size: 11px;
         color: var(--text-light-gray);
+        flex-shrink: 0; /* Prevent footer from shrinking */
     }
     `;
 }
@@ -711,8 +737,8 @@ function getRadarChartScript(scores) {
                     datasets: [{
                         label: 'Enfoque (%)',
                         data: ${JSON.stringify(chartData)},
-                        backgroundColor: 'rgba(10, 42, 94, 0.3)', // Keep dark fill for contrast
-                        borderColor: 'rgba(10, 42, 94, 0.9)',   // Keep dark border
+                        backgroundColor: 'rgba(10, 42, 94, 0.3)',
+                        borderColor: 'rgba(10, 42, 94, 0.9)',
                         borderWidth: 2,
                         pointBackgroundColor: 'rgba(10, 42, 94, 1)',
                         pointBorderColor: '#fff',
@@ -737,7 +763,7 @@ function getRadarChartScript(scores) {
                                 font: { size: 10 }
                             },
                             pointLabels: { // Labels around the edge
-                                font: { size: 12, weight: '500' },
+                                font: { size: 11.5, weight: '500' }, // Slightly smaller
                                 color: 'rgba(0, 0, 0, 0.85)'
                             }
                         }
@@ -765,7 +791,7 @@ function getRadarChartScript(scores) {
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false // Important: Let container control size
                 }
             });
         } catch (error) {
@@ -778,7 +804,7 @@ function getRadarChartScript(scores) {
           document.addEventListener('DOMContentLoaded', initRadarChart);
       } else {
           // Delay slightly if DOM is already loaded, might help rendering in some cases
-          setTimeout(initRadarChart, 100);
+          setTimeout(initRadarChart, 150); // Increased delay slightly
       }
     </script>
     `;
@@ -846,13 +872,13 @@ function getVolumeLineChartScript(volumeData) {
                         fill: true,
                         backgroundColor: '${lineChartColors.backgroundColor}',
                         borderColor: '${lineChartColors.borderColor}',
-                        borderWidth: 2.5,
+                        borderWidth: 2, // Adjusted thickness
                         pointBackgroundColor: '${lineChartColors.pointBackgroundColor}',
                         pointBorderColor: '${lineChartColors.pointBorderColor}',
                         pointHoverBackgroundColor: '${lineChartColors.pointHoverBackgroundColor}',
                         pointHoverBorderColor: '${lineChartColors.pointHoverBorderColor}',
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
+                        pointRadius: 3.5, // Adjusted size
+                        pointHoverRadius: 5.5, // Adjusted size
                         tension: 0.1
                     }]
                 },
@@ -863,12 +889,13 @@ function getVolumeLineChartScript(volumeData) {
                             title: {
                                 display: true,
                                 text: 'Número de Series',
-                                font: { size: 12 },
+                                font: { size: 11.5 }, // Adjusted size
                                 color: '#666'
                             },
                             ticks: {
                                 color: 'rgba(0, 0, 0, 0.7)',
-                                precision: 0
+                                precision: 0,
+                                font: { size: 10 } // Adjusted size
                             },
                              grid: {
                                 color: 'rgba(0, 0, 0, 0.08)'
@@ -877,7 +904,7 @@ function getVolumeLineChartScript(volumeData) {
                         x: {
                              ticks: {
                                 color: 'rgba(0, 0, 0, 0.7)',
-                                font: { size: 11 }
+                                font: { size: 10.5 } // Adjusted size
                             },
                              grid: {
                                 display: false
@@ -889,8 +916,10 @@ function getVolumeLineChartScript(volumeData) {
                             display: true,
                             position: 'bottom',
                             labels: {
-                                font: { size: 12 },
-                                color: 'rgba(0, 0, 0, 0.8)'
+                                font: { size: 11.5 }, // Adjusted size
+                                color: 'rgba(0, 0, 0, 0.8)',
+                                boxWidth: 15, // Adjust legend box size
+                                padding: 15 // Adjust legend padding
                             }
                         },
                         tooltip: {
@@ -914,7 +943,7 @@ function getVolumeLineChartScript(volumeData) {
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false // Important: Let container control size
                 }
             });
         } catch (error) {
@@ -927,7 +956,7 @@ function getVolumeLineChartScript(volumeData) {
           document.addEventListener('DOMContentLoaded', initVolumeLineChart);
       } else {
            // Delay slightly if DOM is already loaded
-          setTimeout(initVolumeLineChart, 100);
+          setTimeout(initVolumeLineChart, 150); // Increased delay slightly
       }
     </script>
     `;
