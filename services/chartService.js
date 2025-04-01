@@ -586,9 +586,9 @@ function getRadarChartScript(scores) {
  */
 function createRadarChartCoverPage(routineHtml, clientName, logoBase64) {
   // Calcular puntuaciones basadas en el contenido de la rutina
-  const scores = calculateTrainingComponentScores(routineHtml); // scores ahora incluye mainComponentsDisplay
+  const scores = calculateTrainingComponentScores(routineHtml);
 
-  // Generar HTML para la portada usando la función mejorada
+  /// Generar HTML para la portada usando la función mejorada
   let coverPageHtml = generateRadarChartHtml(scores, clientName);
 
   // Reemplazar el marcador de posición del logo con la imagen base64 real
@@ -611,3 +611,5 @@ module.exports = {
   calculateTrainingComponentScores, // Exportar si se necesita en otro lugar
   createRadarChartCoverPage
 };
+
+
