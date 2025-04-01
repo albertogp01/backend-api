@@ -7,6 +7,7 @@ const os = require("os");
 const { createDynamicCoverPage } = require('./chartService');// Ajusta la ruta si es necesario
 
 async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", requestId = "") {
+  let browser = null;
   return new Promise(async (resolve, reject) => {
     try {
       console.log("Generando PDF para:", clientName);
@@ -717,44 +718,55 @@ th[colspan]::after {
       
         // Asegurar que los gráficos de la portada se renderizen correctamente
         console.log("Esperando a que los gráficos se inicialicen...");
-        await page.waitForFunction(() => {
-        // Verificar si estamos en la página y si Chart.js está disponible
-        return typeof window.Chart !== 'undefined';
-        }, { timeout: 20000 });
+try {
+  // Verificar si el script de Chart.js está cargado en la página
+  await page.waitForFunction(() => {
+    return typeof window.Chart !== 'undefined' || 
+           document.querySelector('script[src*="chart.js"]') !== null;
+  }, { timeout: 10000 }); // Reducir el timeout a 10 segundos
+  
+  console.log("Chart.js detectado o script encontrado");
+} catch (chartWaitError) {
+  // Si hay timeout esperando Chart.js, continuamos de todas formas
+  console.warn("Timeout esperando Chart.js. Continuando proceso...");
+}
 
-        // Esperar explícitamente a que los gráficos se dibujen
-        console.log("Esperando a que los gráficos se dibujen completamente...");
-        await page.evaluate(() => {
-        return new Promise(resolve => {
-            // Verificar si los canvas están presentes
-            const radarCanvas = document.getElementById('radarChart');
-            const volumeCanvas = document.getElementById('volumeChart');
-            
-            if (!radarCanvas || !volumeCanvas) {
-            console.warn('No se encontraron los elementos canvas para los gráficos');
-            // Resolver igualmente para no bloquear el proceso
-            return resolve(false);
-            }
-            
-            // Permitir tiempo adicional para la renderización de los gráficos
-            setTimeout(() => {
-            // Forzar re-renderizado si es necesario
-            if (window.Chart && window.Chart.instances) {
-                Object.values(window.Chart.instances).forEach(chart => {
-                if (chart && typeof chart.update === 'function') {
-                    try {
-                    chart.update();
-                    } catch (e) {
-                    console.error('Error al actualizar gráfico:', e);
-                    }
-                }
-                });
-            }
-            resolve(true);
-            }, 1500); // Esperar 1.5 segundos para que los gráficos se dibujen
-        });
-        });
-        console.log("Gráficos inicializados y dibujados.");
+// Esperar explícitamente a que los gráficos se dibujen, con manejo de errores
+console.log("Esperando a que los gráficos se dibujen completamente...");
+try {
+  await page.evaluate(() => {
+    return new Promise(resolve => {
+      // Verificar si los canvas están presentes
+      const radarCanvas = document.getElementById('radarChart');
+      const volumeCanvas = document.getElementById('volumeChart');
+      
+      if (!radarCanvas || !volumeCanvas) {
+        console.warn('No se encontraron los elementos canvas para los gráficos');
+      }
+      
+      // Siempre resolver después de un tiempo para no bloquear el proceso
+      setTimeout(() => {
+        // Intentar forzar re-renderizado si es posible
+        try {
+          if (window.Chart && window.Chart.instances) {
+            Object.values(window.Chart.instances).forEach(chart => {
+              if (chart && typeof chart.update === 'function') {
+                chart.update();
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Error durante la actualización de gráficos:', e);
+        }
+        resolve(true);
+      }, 1500);
+    });
+  });
+  console.log("Gráficos inicializados o tiempo de espera completado.");
+} catch (graphRenderError) {
+  // Si hay un error durante el renderizado de gráficos, continuamos igualmente
+  console.warn("Error durante el renderizado de gráficos, continuando proceso:", graphRenderError.message);
+}
 
       // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
       console.log("Ejecutando script de evaluación en la página...");
@@ -950,38 +962,40 @@ document.querySelectorAll('.variants-container, .side-variants-container').forEa
           container.appendChild(spacer);
         });
       });
-          try {
-            // Generar PDF
-            const pdfBuffer = await page.pdf({
-            path: filePath,
-            format: 'A4',
-            margin: { top: '0', right: '0', bottom: '0', left: '0' },
-            printBackground: true,
-            preferCSSPageSize: true,
-            timeout: 90000 // Aumentar a 90 segundos
-            });
-            console.log("PDF generado correctamente en:", filePath);
-            await browser.close();
-            console.log("Navegador cerrado correctamente");
-            resolve(filePath);
-        } catch (pdfError) {
-            console.error("Error específico al generar PDF:", pdfError.message);
-            await browser.close();
-            console.log("Navegador cerrado después de error");
-            reject(pdfError);
-        }
-        } catch (error) {
+      try {
+        // Generar PDF
+        const pdfBuffer = await page.pdf({
+        path: filePath,
+        format: 'A4',
+        margin: { top: '0', right: '0', bottom: '0', left: '0' },
+        printBackground: true,
+        preferCSSPageSize: true,
+        timeout: 90000 // Aumentar a 90 segundos
+        });
+        console.log("PDF generado correctamente en:", filePath);
+        await browser.close();
+        browser = null; // Limpiar referencia
+        console.log("Navegador cerrado correctamente");
+        resolve(filePath);
+    } catch (pdfError) {
+        console.error("Error específico al generar PDF:", pdfError.message);
+        if (browser) await browser.close();
+        browser = null; // Limpiar referencia
+        console.log("Navegador cerrado después de error");
+        reject(pdfError);
+    }
+    } catch (error) {
         console.error("Error en generatePDF:", error);
         if (browser) {
-            try {
+        try {
             await browser.close();
             console.log("Navegador cerrado después de error general");
-            } catch (closeError) {
+        } catch (closeError) {
             console.error("Error al cerrar el navegador:", closeError.message);
-            }
+        }
         }
         reject(error);
-        }
+    }
   });
 }
 

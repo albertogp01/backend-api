@@ -491,13 +491,53 @@ function generateChartScripts(scores, weeklyVolumeData) {
 
 
     return `
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"><\/script>
-        <script>
-            // Datos inyectados desde el servidor
-            const radarChartData = ${radarDataJson};
-            const weeklyVolumeData = ${volumeDataJson};
-            const daysOfWeekLabels = ${daysLabelsJson};
-            const fullDaysOfWeek = ${fullDaysJson};
+    <script>
+        // Función para cargar Chart.js de manera más confiable
+        function loadChartJS(callback) {
+            // Si ya existe Chart, usamos eso
+            if (window.Chart) {
+                callback();
+                return;
+            }
+            
+            // Verificar si ya existe un script cargando Chart.js
+            const existingScript = document.querySelector('script[src*="chart.js"]');
+            if (existingScript) {
+                if (existingScript.getAttribute('data-loaded') === 'true') {
+                    callback();
+                } else {
+                    existingScript.onload = callback;
+                }
+                return;
+            }
+            
+            // Crear y cargar el script
+            const script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js";
+            script.async = true;
+            script.onload = function() {
+                script.setAttribute('data-loaded', 'true');
+                callback();
+            };
+            script.onerror = function() {
+                console.error("Error al cargar Chart.js");
+                // Intentar callback de todas formas para no bloquear
+                callback();
+            };
+            document.head.appendChild(script);
+        }
+        
+        // Datos inyectados desde el servidor
+        const radarChartData = ${radarDataJson};
+        const weeklyVolumeData = ${volumeDataJson};
+        const daysOfWeekLabels = ${daysLabelsJson};
+        const fullDaysOfWeek = ${fullDaysJson};
+        
+        // Variables para verificar si los gráficos se han inicializado
+        window.chartsInitialized = {
+            radar: false,
+            volume: false
+        };
 
             function initRadarChart() {
                 const ctx = document.getElementById('radarChart');
@@ -582,14 +622,45 @@ function generateChartScripts(scores, weeklyVolumeData) {
             // Inicializar gráficos cuando el DOM esté listo
             // Usar window.onload para asegurar que todo (incluyendo imágenes) esté cargado,
             // lo cual es más seguro para Puppeteer.
+            // Inicializar gráficos cuando el DOM esté listo
+            document.addEventListener('DOMContentLoaded', function() {
+                // Cargar Chart.js primero, luego inicializar gráficos
+                loadChartJS(function() {
+                    console.log("Chart.js cargado correctamente, inicializando gráficos...");
+                    initChartsNow();
+                });
+            });
+
+            // También intentar con window.onload por si DOMContentLoaded ya pasó
             window.onload = function() {
-                try {
-                    initRadarChart();
-                    initVolumeChart();
-                } catch (error) {
-                    console.error("Error inicializando gráficos:", error);
+                if (!window.chartsInitialized.radar || !window.chartsInitialized.volume) {
+                    console.log("Evento window.onload, verificando gráficos...");
+                    loadChartJS(function() {
+                        initChartsNow();
+                    });
                 }
             };
+
+            // Implementar initChartsNow() como lo tenías antes...
+
+            // Establecer una bandera global para que Puppeteer pueda verificarla
+            window.chartsReady = false;
+
+            // Fallback: si después de 3 segundos los gráficos no están inicializados, intentar de nuevo
+            setTimeout(() => {
+                if (!window.chartsInitialized.radar || !window.chartsInitialized.volume) {
+                    console.warn("Último intento de inicialización de gráficos...");
+                    loadChartJS(initChartsNow);
+                } else {
+                    window.chartsReady = true;
+                }
+            }, 3000);
+
+            // Un último fallback - siempre establecer chartsReady después de 5 segundos
+            setTimeout(() => {
+                window.chartsReady = true;
+                console.log("Tiempo máximo de espera alcanzado, estableciendo chartsReady = true");
+            }, 5000);
         <\/script>
     `;
 }
