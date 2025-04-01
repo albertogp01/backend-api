@@ -56,10 +56,13 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
       // --- Generar HTML de la Portada Dinámica ---
       console.log("Generando HTML de la portada...");
       // Pasamos htmlContent (la rutina) para análisis interno en chartService
-      console.log(`[DEBUG PDF] Llamando a createRadarCoverChart con clientName: ${clientName}, htmlContent length: ${htmlContent?.length || 0}, logoBase64 disponible: ${!!logoBase64}`);
-      const coverPageHtmlString = createRadarCoverChart(clientName, htmlContent, logoBase64);
-      console.log(`[DEBUG PDF] createRadarCoverChart devolvió un string de longitud: ${coverPageHtmlString?.length || 0}`);
-
+      console.log(`[DEBUG PDF] Llamando a createRadarChartCoverPage con clientName: ${clientName}, htmlContent length: ${htmlContent?.length || 0}, logoBase64 disponible: ${!!logoBase64}`);
+        const { coverPageHtml, styles, script } = createRadarChartCoverPage(htmlContent, clientName, logoBase64);
+        const coverPageHtmlString = `
+        <style>${styles}</style>
+        ${coverPageHtml}
+        ${script}
+        `;
       // --- Ensamblar el HTML COMPLETO para TODO el PDF ---
       const fullPdfHtml = `
 ${coverPageHtmlString}
