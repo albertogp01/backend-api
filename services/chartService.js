@@ -1,4 +1,4 @@
-// chartService.js (Análisis Estructural Volumen por Día + Logging - CORREGIDO v7)
+// chartService.js (Análisis Estructural Volumen por Día + Logging - CORREGIDO v8)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -234,163 +234,172 @@ function calculateTrainingComponentScores(routineHtml) {
 
 /**
  * Calculates approximate daily volume (total sets) from routine HTML using structural analysis.
- * VERSION 7: More robust parsing, flexible regex, enhanced logging.
+ * VERSION 8: Added initial table check, refined day regex, enhanced logging focus.
  * @param {string} routineHtml - The HTML content of the generated routine.
  * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
  */
 function calculateDailyVolume(routineHtml) {
-    console.log("[Volume Calc v7] Starting...");
+    console.log("[Volume Calc v8] Starting...");
     const dailyVolume = {};
 
     if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
-        console.warn("[Volume Calc v7] No valid routine HTML provided.");
+        console.warn("[Volume Calc v8] No valid routine HTML provided (empty or not string).");
         return {};
     }
-    // Log a snippet of the input HTML for debugging
-    // console.log("[Volume Calc v7] Input HTML (snippet):", routineHtml.substring(0, 500));
 
-    // --- More Flexible Regex Patterns ---
-    // Allow th or td, be less strict about attributes, capture day number robustly
-    const dayHeaderRegex = /<(?:th|td)[^>]*>.*?(\bD[Íí]a\s*\d+\b).*?<\/(?:th|td)>/i; // Match "Día N" specifically
+    // **** ADDED CHECK: Ensure HTML contains at least one table ****
+    if (!/<table/i.test(routineHtml)) {
+        console.warn("[Volume Calc v8] Input HTML does not contain any '<table>' tags. Cannot calculate volume.");
+        // console.log("[Volume Calc v8] Received HTML (first 500 chars):", routineHtml.substring(0, 500)); // Log if needed
+        return {};
+    }
+     // Log snippet only if tables are present but parsing might still fail
+     // console.log("[Volume Calc v8] Input HTML contains tables. Snippet:", routineHtml.substring(0, 500));
+
+
+    // --- Regex Patterns ---
+    // More specific Day Header: Looks for Día followed by number, within th/td
+    const dayHeaderRegex = /<(?:th|td)[^>]*>.*?(\bD[Íí]a\s+\d+\b).*?<\/(?:th|td)>/i; // Added space after Día, require number
     const timeBasedRegex = /(\d+)\s*(?:seg|sec|min|seconds?|minutes?)/i;
     const cardioKeywords = ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'aeróbico'];
     const cardioKeywordRegex = new RegExp(`\\b(${cardioKeywords.join('|')})\\b`, 'i');
-    // Regex to find potential set numbers (prioritize explicit mentions)
     const potentialSetPatterns = [
-        /(\d+)\s+(?:series|sets)\b/i, // "N series/sets" (most reliable)
-        /(\d+)\s*x\s+\d+(?:-\d+)?/i    // "N x reps" (common pattern)
+        /(\d+)\s+(?:series|sets)\b/i, // "N series/sets"
+        /(\d+)\s*x\s+\d+(?:-\d+)?/i    // "N x reps"
     ];
 
     // --- HTML Parsing ---
     const tableRegex = /<table[\s\S]*?<\/table>/gi;
-    const tableMatches = routineHtml.match(tableRegex);
+    const tableMatches = routineHtml.match(tableRegex); // Already checked that tables exist
 
-    if (!tableMatches || tableMatches.length === 0) {
-        console.warn("[Volume Calc v7] No tables found in routine HTML.");
-        return {};
-    }
-    console.log(`[Volume Calc v7] Found ${tableMatches.length} table(s).`);
+    console.log(`[Volume Calc v8] Found ${tableMatches.length} table(s).`);
 
     tableMatches.forEach((tableHtml, tableIndex) => {
-        console.log(`\n[Volume Debug v7] Processing Table ${tableIndex + 1}`);
-        // console.log(`[Volume Debug v7] Table HTML (snippet): ${tableHtml.substring(0, 300)}`);
+        console.log(`\n[Volume Debug v8] Processing Table ${tableIndex + 1}`);
         let currentDay = null;
+        let foundDayHeaderInTable = false; // Flag per table
 
         const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
         const rowMatches = tableHtml.match(rowRegex);
 
         if (!rowMatches) {
-            console.log(`[Volume Debug v7] No rows found in Table ${tableIndex + 1}.`);
-            return;
+            console.log(`[Volume Debug v8] No rows found in Table ${tableIndex + 1}.`);
+            return; // Continue to next table
         }
 
         rowMatches.forEach((rowHtml, rowIndex) => {
-             // console.log(`\n[Volume Debug v7] Processing Row ${rowIndex + 1}: ${rowHtml.substring(0,150)}`); // Log row HTML
-
-            // 1. Check if this row is a Day Header (using flexible regex)
-            const dayMatch = rowHtml.match(dayHeaderRegex);
-            if (dayMatch && dayMatch[1]) {
-                currentDay = dayMatch[1].trim(); // Directly use the captured "Día N"
-                 if (!dailyVolume[currentDay]) {
-                    dailyVolume[currentDay] = 0;
+            // 1. Check for Day Header
+            try {
+                const dayMatch = rowHtml.match(dayHeaderRegex);
+                if (dayMatch && dayMatch[1]) {
+                    currentDay = dayMatch[1].trim(); // e.g., "Día 1"
+                    if (!dailyVolume[currentDay]) {
+                        dailyVolume[currentDay] = 0;
+                    }
+                    foundDayHeaderInTable = true; // Mark that we found a header in this table
+                    console.log(`[Volume Debug v8] Found Day Header: "${currentDay}" in Row ${rowIndex + 1}`);
+                    return; // Skip the rest of processing for this header row
                 }
-                console.log(`[Volume Debug v7] Found Day Header: "${currentDay}" in Row ${rowIndex + 1}`);
-                return; // Move to the next row
+            } catch (regexError) {
+                 console.error(`[Volume Error v8] Regex error during Day Header check on row ${rowIndex + 1}:`, regexError);
+                 // Continue processing row just in case, but day might be wrong
             }
 
-            // 2. If inside a day, process row for sets/time
-            if (currentDay) {
-                let rowTextContent = "";
+            // If we haven't found a day header *in this specific table* yet, skip row processing
+            if (!foundDayHeaderInTable) {
+                 // console.log(`[Volume Debug v8] Row ${rowIndex + 1}: Skipping row, no day header found yet in this table.`);
+                 return;
+            }
+            // If currentDay became null unexpectedly (shouldn't happen with above check, but defensive)
+            if (!currentDay) {
+                 console.warn(`[Volume Warn v8] Row ${rowIndex + 1}: currentDay is null unexpectedly. Skipping row.`);
+                 return;
+            }
+
+
+            // 2. Process row for sets/time (only if inside a valid day)
+            let rowTextContent = "";
+            try {
+                const cellRegex = /<td[\s\S]*?<\/td>/gi;
+                const cellMatches = rowHtml.match(cellRegex);
+                if (cellMatches) {
+                    rowTextContent = cellMatches.map(cellHtml => {
+                        return cellHtml
+                            .replace(/<style[\s\S]*?<\/style>/gi, '')
+                            .replace(/<script[\s\S]*?<\/script>/gi, '')
+                            .replace(/<[^>]+>/g, ' ')
+                            .replace(/&nbsp;/g, ' ')
+                            .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                    }).join(' ').replace(/\s+/g, ' ').trim();
+                }
+            } catch (parseError) {
+                console.error(`[Volume Error v8] Error parsing cells in Row ${rowIndex + 1} for Day ${currentDay}:`, parseError);
+                return; // Skip row
+            }
+
+            // Skip common header text patterns or empty rows
+             const headerKeywords = ['Ejercicio', 'Series', 'Reps', 'Descanso', 'Notas', 'Activación', 'Rutina Principal'];
+             if (!rowTextContent || /<b>.*?<\/b>/i.test(rowHtml) || headerKeywords.some(kw => new RegExp(`^${kw}$`, 'i').test(rowTextContent.trim()))) {
+                 // console.log(`[Volume Debug v8] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row (empty or likely header).`);
+                return;
+             }
+
+            // console.log(`[Volume Debug v8] Row ${rowIndex + 1} (Day ${currentDay}): Analyzing Text: "${rowTextContent}"`);
+
+            let setsFound = 0;
+            // --- Attempt to find sets using patterns ---
+            for (const pattern of potentialSetPatterns) {
                 try {
-                    // Extract text content from all cells (td) in this row more carefully
-                    const cellRegex = /<td[\s\S]*?<\/td>/gi;
-                    const cellMatches = rowHtml.match(cellRegex);
-                    if (cellMatches) {
-                        // Join content of all cells in the row
-                        rowTextContent = cellMatches.map(cellHtml => {
-                            // Basic cleaning: remove tags, decode common entities
-                            return cellHtml
-                                .replace(/<style[\s\S]*?<\/style>/gi, '') // Remove style blocks
-                                .replace(/<script[\s\S]*?<\/script>/gi, '') // Remove script blocks
-                                .replace(/<[^>]+>/g, ' ') // Remove remaining HTML tags
-                                .replace(/&nbsp;/g, ' ') // Replace non-breaking space
-                                .replace(/&amp;/g, '&') // Decode ampersand
-                                .replace(/&lt;/g, '<')
-                                .replace(/&gt;/g, '>');
-                        }).join(' ').replace(/\s+/g, ' ').trim(); // Collapse multiple spaces
-                    }
-                } catch (parseError) {
-                    console.error(`[Volume Error v7] Error parsing cells in Row ${rowIndex + 1}:`, parseError);
-                    return; // Skip this row on error
-                }
-
-                // Skip rows that are likely subheaders or empty/irrelevant AFTER cleaning
-                 const headerKeywords = ['Ejercicio', 'Series', 'Reps', 'Descanso', 'Notas', 'Activación', 'Rutina Principal'];
-                 // Check if the raw HTML contains bold tags often used for headers, or if text content matches keywords
-                 if (!rowTextContent || /<b>.*?<\/b>/i.test(rowHtml) || headerKeywords.some(kw => new RegExp(`^${kw}$`, 'i').test(rowTextContent.trim()))) {
-                     // console.log(`[Volume Debug v7] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row (empty or likely header). Content: "${rowTextContent}"`);
-                    return;
-                 }
-
-                console.log(`[Volume Debug v7] Row ${rowIndex + 1} (Day ${currentDay}): Analyzing Text: "${rowTextContent}"`);
-
-                let setsFound = 0;
-
-                // --- Attempt to find sets using patterns ---
-                for (const pattern of potentialSetPatterns) {
-                    try {
-                        const match = rowTextContent.match(pattern);
-                        if (match && match[1]) {
-                            let potentialSets = parseInt(match[1], 10);
-                            // Increased sanity check range slightly
-                            if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) {
-                                setsFound = potentialSets;
-                                console.log(`[Volume Debug v7] Matched pattern ${pattern} -> Sets: ${setsFound}`);
-                                break; // Found sets, stop checking patterns for this row
-                            } else {
-                                 console.log(`[Volume Debug v7] Pattern ${pattern} matched but value (${match[1]}) invalid/out of range.`);
-                            }
+                    const match = rowTextContent.match(pattern);
+                    if (match && match[1]) {
+                        let potentialSets = parseInt(match[1], 10);
+                        if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) {
+                            setsFound = potentialSets;
+                            // console.log(`[Volume Debug v8] Matched pattern ${pattern} -> Sets: ${setsFound}`);
+                            break;
                         }
-                    } catch (regexError) {
-                         console.error(`[Volume Error v7] Regex error for pattern ${pattern} on row ${rowIndex + 1}:`, regexError);
                     }
+                } catch (regexError) {
+                     console.error(`[Volume Error v8] Regex error for pattern ${pattern} on row ${rowIndex + 1}:`, regexError);
                 }
+            }
 
-                // --- Fallback: Check for Time-Based Cardio ---
-                if (setsFound === 0) {
-                    try {
-                        const timeMatch = rowTextContent.match(timeBasedRegex);
-                        if (timeMatch && cardioKeywordRegex.test(rowTextContent)) {
-                            setsFound = 1; // Count time-based cardio as 1 set
-                            console.log(`[Volume Debug v7] Found Time/Cardio pattern -> Sets: 1`);
-                        }
-                    } catch (regexError) {
-                         console.error(`[Volume Error v7] Regex error during cardio check on row ${rowIndex + 1}:`, regexError);
+            // --- Fallback: Check for Time-Based Cardio ---
+            if (setsFound === 0) {
+                try {
+                    const timeMatch = rowTextContent.match(timeBasedRegex);
+                    if (timeMatch && cardioKeywordRegex.test(rowTextContent)) {
+                        setsFound = 1;
+                        // console.log(`[Volume Debug v8] Found Time/Cardio pattern -> Sets: 1`);
                     }
+                } catch (regexError) {
+                     console.error(`[Volume Error v8] Regex error during cardio check on row ${rowIndex + 1}:`, regexError);
                 }
+            }
 
-                // --- Add to Daily Total ---
-                if (setsFound > 0) {
-                     // Final check isNaN
-                     if (!isNaN(setsFound)) {
-                         dailyVolume[currentDay] += setsFound;
-                         console.log(`[Volume Assignment v7] Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
-                     } else {
-                          console.warn(`[Volume Assignment v7] Row ${rowIndex + 1}: Invalid setsFound value detected before adding (${setsFound}).`);
-                     }
-                } else {
-                    // Log only if it was a data row but no sets were found
-                    console.log(`[Volume Debug v7] Row ${rowIndex + 1}: No valid sets or cardio pattern identified in this data row.`);
-                }
-            } // end if(currentDay)
+            // --- Add to Daily Total ---
+            if (setsFound > 0 && !isNaN(setsFound)) {
+                 dailyVolume[currentDay] += setsFound;
+                 // console.log(`[Volume Assignment v8] Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
+            } else if (setsFound === 0) {
+                 // console.log(`[Volume Debug v8] Row ${rowIndex + 1}: No valid sets or cardio pattern identified.`);
+            }
         }); // End loop through rows
+
+        // Log total for the day at the end of the table if a day was found
+        if (currentDay) {
+             console.log(`[Volume Debug v8] Finished Table ${tableIndex + 1}. Total sets for ${currentDay}: ${dailyVolume[currentDay] || 0}`);
+        } else {
+             console.log(`[Volume Debug v8] Finished Table ${tableIndex + 1}. No 'Día N' header found in this table.`);
+        }
+
     }); // End loop through tables
 
-    console.log("[Volume Calc v7] Final Daily Volume:", JSON.stringify(dailyVolume));
+    console.log("[Volume Calc v8] Final Daily Volume Object:", JSON.stringify(dailyVolume));
 
     if (Object.keys(dailyVolume).length === 0 || Object.values(dailyVolume).every(v => v === 0)) {
-        console.warn("[Volume Calc v7] No sets were calculated for any day. Returning empty object.");
-        return {}; // Return empty if no days found or all days have 0 sets
+        console.warn("[Volume Calc v8] No sets were calculated for any day OR all days have zero sets. Returning empty object.");
+        return {};
     }
 
     return dailyVolume;
@@ -1088,7 +1097,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     const scores = calculateTrainingComponentScores(routineHtml);
 
     // 2. Calculate DAILY volume using the revised function
-    const dailyVolumeData = calculateDailyVolume(routineHtml); // Use the updated function (v7)
+    const dailyVolumeData = calculateDailyVolume(routineHtml); // Use the updated function (v8)
     console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
@@ -1132,7 +1141,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
 // Export the main function and the revised volume function name
 module.exports = {
     calculateTrainingComponentScores,
-    calculateDailyVolume, // Export the revised function name (v7)
+    calculateDailyVolume, // Export the revised function name (v8)
     createCoverPage,
     // Keep other exports if they were needed for testing/other modules
     generateCoverPageHtml,
@@ -1140,6 +1149,7 @@ module.exports = {
     getRadarChartScript,
     getVolumeLineChartScript
 };
+
 
 
 
