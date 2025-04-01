@@ -715,7 +715,46 @@ th[colspan]::after {
         return document.readyState === 'complete';
       }, { timeout: 60000 });
       
-      console.log("Contenido establecido mediante estrategia alternativa.");
+        // Asegurar que los gráficos de la portada se renderizen correctamente
+        console.log("Esperando a que los gráficos se inicialicen...");
+        await page.waitForFunction(() => {
+        // Verificar si estamos en la página y si Chart.js está disponible
+        return typeof window.Chart !== 'undefined';
+        }, { timeout: 20000 });
+
+        // Esperar explícitamente a que los gráficos se dibujen
+        console.log("Esperando a que los gráficos se dibujen completamente...");
+        await page.evaluate(() => {
+        return new Promise(resolve => {
+            // Verificar si los canvas están presentes
+            const radarCanvas = document.getElementById('radarChart');
+            const volumeCanvas = document.getElementById('volumeChart');
+            
+            if (!radarCanvas || !volumeCanvas) {
+            console.warn('No se encontraron los elementos canvas para los gráficos');
+            // Resolver igualmente para no bloquear el proceso
+            return resolve(false);
+            }
+            
+            // Permitir tiempo adicional para la renderización de los gráficos
+            setTimeout(() => {
+            // Forzar re-renderizado si es necesario
+            if (window.Chart && window.Chart.instances) {
+                Object.values(window.Chart.instances).forEach(chart => {
+                if (chart && typeof chart.update === 'function') {
+                    try {
+                    chart.update();
+                    } catch (e) {
+                    console.error('Error al actualizar gráfico:', e);
+                    }
+                }
+                });
+            }
+            resolve(true);
+            }, 1500); // Esperar 1.5 segundos para que los gráficos se dibujen
+        });
+        });
+        console.log("Gráficos inicializados y dibujados.");
 
       // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
       console.log("Ejecutando script de evaluación en la página...");

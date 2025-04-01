@@ -431,6 +431,40 @@ function generateCoverPageStyles() {
              .volume-chart-section h2 { font-size: 22px; }
              .volume-chart-container { height: 250px; }
          }
+
+        /* Estilos adicionales para asegurar que la portada ocupe solo una página */
+        .cover-page-new {
+            page-break-after: always;
+            min-height: 100vh;
+            height: 100vh;
+            max-height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Ajustar tamaño de contenedores de gráficos */
+        .radar-chart-container-new {
+            height: 320px; /* Fijar altura exacta */
+            margin-bottom: 20px;
+        }
+        
+        .volume-chart-container {
+            height: 280px; /* Fijar altura exacta */
+        }
+        
+        /* Ocultar scroll */
+        html, body {
+            overflow: hidden;
+            max-height: 100vh;
+        }
+        
+        /* Forzar salto de página después de la portada */
+        .page-break-after-cover {
+            page-break-before: always;
+            display: block;
+            height: 0;
+        }
     `;
 }
 
