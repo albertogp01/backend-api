@@ -1,4 +1,4 @@
-// chartService.js (Calcula Volumen por Día + Logging)
+// chartService.js (Análisis Estructural Volumen por Día + Logging)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -210,125 +210,148 @@ function calculateTrainingComponentScores(routineHtml) {
 
 
 /**
- * Calculates approximate daily volume (total sets) from routine HTML.
- * VERSION 4: Calculates total sets per day.
+ * Calculates approximate daily volume (total sets) from routine HTML using structural analysis.
+ * VERSION 5: Calculates total sets per day by parsing table structure.
  * @param {string} routineHtml - The HTML content of the generated routine.
  * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
  */
 function calculateDailyVolume(routineHtml) {
-    console.log("[Volume Calculation v4 - Daily] Starting...");
+    console.log("[Volume Calculation v5 - Structural] Starting...");
 
     const dailyVolume = {}; // Example: { 'Día 1': 20, 'Día 2': 18 }
 
     if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
-        console.warn("[Volume Calculation v4 - Daily] No valid routine HTML provided.");
-        return {}; // Return empty object if no valid HTML
+        console.warn("[Volume Calculation v5] No valid routine HTML provided.");
+        return {};
     }
 
     // --- Regex Patterns ---
-    // Regex para identificar encabezados de día (captura "Día X")
     const dayHeaderRegex = /<th[^>]*colspan="5"[^>]*>.*?(Día\s*\d+).*?<\/th>/i;
-    // Regex más flexible para sets x reps
     const setRepRegex = /(\d+)\s*(?:series|sets|x)\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
-    // Regex simple N x N
     const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
-    // Regex para tiempo (para contar cardio como 1 set)
     const timeBasedRegex = /(\d+)\s*(?:seg|sec|min|seconds?|minutes?)/i;
-    // Regex para keywords de cardio (para confirmar que el tiempo es de cardio)
     const cardioKeywords = ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'aeróbico'];
     const cardioKeywordRegex = new RegExp(`\\b(${cardioKeywords.join('|')})\\b`, 'i');
 
+    // --- HTML Parsing ---
+    // Find all table blocks
+    const tableRegex = /<table[\s\S]*?<\/table>/gi;
+    const tableMatches = routineHtml.match(tableRegex);
 
-    // --- Preprocessing ---
-    // Limpiar HTML y dividir en líneas significativas
-    const textContent = routineHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
-    const lines = textContent.split('\n')
-                         .map(line => line.replace(/\s+/g, ' ').trim())
-                         .filter(line => line.length > 3);
+    if (!tableMatches || tableMatches.length === 0) {
+        console.warn("[Volume Calculation v5] No tables found in routine HTML.");
+        return {};
+    }
 
-    console.log(`[Volume Calculation v4 - Daily] Total lines extracted for analysis: ${lines.length}`);
+    console.log(`[Volume Calculation v5] Found ${tableMatches.length} table(s).`);
 
-    // --- Analysis Loop ---
-    let currentDay = null;
-    let exerciseContext = ""; // Línea anterior (posible nombre de ejercicio)
+    tableMatches.forEach((tableHtml, tableIndex) => {
+        console.log(`[Volume Debug v5] Processing Table ${tableIndex + 1}`);
+        let currentDay = null;
 
-    for (let i = 0; i < lines.length; i++) {
-        const currentLine = lines[i];
-        console.log(`[Volume Debug v4] Analyzing Line ${i + 1}: "${currentLine}"`);
+        // Find rows within the current table
+        const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
+        const rowMatches = tableHtml.match(rowRegex);
 
-        // 1. Comprobar si es un encabezado de día
-        const dayMatch = currentLine.match(dayHeaderRegex);
-        if (dayMatch && dayMatch[1]) {
-            // Normalizar el identificador del día (ej. "Día 1")
-            currentDay = dayMatch[1].replace(/:\s*.*$/, '').trim(); // Quita el texto después de ':'
-            if (!dailyVolume[currentDay]) {
-                dailyVolume[currentDay] = 0; // Inicializar si es la primera vez que vemos este día
-            }
-            console.log(`[Volume Debug v4] Found Day Header: "${currentDay}"`);
-            exerciseContext = ""; // Resetear contexto al cambiar de día
-            continue; // Pasar a la siguiente línea después de encontrar encabezado
+        if (!rowMatches) {
+            console.log(`[Volume Debug v5] No rows found in Table ${tableIndex + 1}.`);
+            return; // Skip this table if it has no rows
         }
 
-        // 2. Si estamos dentro de un día, buscar sets/tiempo
-        if (currentDay) {
-            let setsFound = 0;
-            let isCardioSet = false;
-
-            // Buscar Sets x Reps
-            let setRepMatch = currentLine.match(setRepRegex) || currentLine.match(simpleSetRepRegex);
-            if (setRepMatch && setRepMatch.length >= 2) {
-                setsFound = parseInt(setRepMatch[1], 10) || 0;
-                console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): Found Set/Rep pattern "${setRepMatch[0]}". Sets: ${setsFound}`);
+        rowMatches.forEach((rowHtml, rowIndex) => {
+            // 1. Check if this row is a Day Header
+            const dayMatch = rowHtml.match(dayHeaderRegex);
+            if (dayMatch && dayMatch[1]) {
+                // Normalize day identifier (e.g., "Día 1")
+                currentDay = dayMatch[1].replace(/:\s*.*$/, '').trim();
+                if (!dailyVolume[currentDay]) {
+                    dailyVolume[currentDay] = 0;
+                }
+                console.log(`[Volume Debug v5] Table ${tableIndex + 1}, Row ${rowIndex + 1}: Found Day Header "${currentDay}"`);
+                return; // Move to the next row after finding header
             }
 
-            // Buscar Tiempo (Cardio) - SOLO si NO se encontraron sets/reps
-            if (setsFound === 0) {
-                let timeMatch = currentLine.match(timeBasedRegex);
-                if (timeMatch) {
-                    // Verificar si es cardio buscando keyword en línea actual o anterior
-                    let searchContext = (exerciseContext + " " + currentLine).toLowerCase();
-                    if (cardioKeywordRegex.test(searchContext)) {
-                        setsFound = 1; // Contar como 1 set de cardio
-                        isCardioSet = true;
-                        console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): Found Time pattern "${timeMatch[0]}" and Cardio keyword. Counting as 1 set.`);
-                    } else {
-                         console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): Found Time pattern "${timeMatch[0]}" but NO Cardio keyword in context.`);
+            // 2. If we are inside a day, process the row for sets/time
+            if (currentDay) {
+                // Extract text content from all cells (td) in this row
+                const cellRegex = /<td[\s\S]*?<\/td>/gi;
+                const cellMatches = rowHtml.match(cellRegex);
+                let rowTextContent = "";
+                if (cellMatches) {
+                    rowTextContent = cellMatches.map(cellHtml => {
+                        return cellHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' '); // Clean cell content
+                    }).join(' ').replace(/\s+/g, ' ').trim();
+                }
+
+                if (!rowTextContent) {
+                    // console.log(`[Volume Debug v5] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Skipping row with no text content.`);
+                    return; // Skip rows without content
+                }
+
+                console.log(`[Volume Debug v5] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Analyzing text "${rowTextContent.substring(0, 100)}..."`);
+
+                let setsFound = 0;
+                let isCardioSet = false;
+
+                // Search for Sets x Reps in the row's text
+                let setRepMatch = rowTextContent.match(setRepRegex) || rowTextContent.match(simpleSetRepRegex);
+                if (setRepMatch && setRepMatch.length >= 2) {
+                    // Prioritize the second number if it looks like sets (e.g., "Ejercicio 3 x 10")
+                    let potentialSetsIndex1 = parseInt(setRepMatch[1], 10);
+                    let potentialSetsIndex2 = NaN;
+                    // Check if there's a number before 'x' or 'series'/'sets'
+                     const setsPrefixMatch = rowTextContent.match(/(\d+)\s*(?:series|sets|x)/i);
+                     if(setsPrefixMatch && setsPrefixMatch[1]){
+                        potentialSetsIndex2 = parseInt(setsPrefixMatch[1], 10);
+                     }
+
+                     // Heuristic: If one number is significantly smaller (e.g., < 6) and the other is larger, assume smaller is sets.
+                     // Or if a specific "sets/series" keyword is found before a number.
+                     if (!isNaN(potentialSetsIndex2)) {
+                         setsFound = potentialSetsIndex2;
+                     } else if (!isNaN(potentialSetsIndex1)) {
+                         setsFound = potentialSetsIndex1;
+                     } else {
+                         setsFound = 0;
+                     }
+
+                    if (setsFound > 0) {
+                        console.log(`[Volume Debug v5] Row ${rowIndex + 1}: Found Set/Rep pattern "${setRepMatch[0]}". Extracted Sets: ${setsFound}`);
                     }
                 }
+
+                // Search for Time (Cardio) - ONLY if no sets/reps found
+                if (setsFound === 0) {
+                    let timeMatch = rowTextContent.match(timeBasedRegex);
+                    if (timeMatch) {
+                        // Check for cardio keyword in the same row text
+                        if (cardioKeywordRegex.test(rowTextContent)) {
+                            setsFound = 1; // Count as 1 set
+                            isCardioSet = true;
+                            console.log(`[Volume Debug v5] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" and Cardio keyword. Counting as 1 set.`);
+                        } else {
+                            console.log(`[Volume Debug v5] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" but NO Cardio keyword.`);
+                        }
+                    }
+                }
+
+                // Add sets to the current day's total
+                if (setsFound > 0) {
+                    dailyVolume[currentDay] += setsFound;
+                    console.log(`[Volume Assignment v5] Row ${rowIndex + 1}: Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
+                } else {
+                    console.log(`[Volume Debug v5] Row ${rowIndex + 1}: No sets or cardio identified in this row.`);
+                }
             }
+        }); // End loop through rows
+    }); // End loop through tables
 
-            // Añadir sets al total del día
-            if (setsFound > 0) {
-                dailyVolume[currentDay] += setsFound;
-                console.log(`[Volume Assignment v4] Line ${i + 1}: Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
-            } else {
-                 console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): No sets identified.`);
-            }
+    console.log("[Volume Calculation v5 - Structural] Final Daily Volume:", JSON.stringify(dailyVolume));
 
-             // Actualizar contexto para la siguiente línea (si no tenía sets/tiempo y no es cabecera)
-             if (setsFound === 0 && !timeMatch && !/Ejercicio|Series|Reps|Descanso|Notas/i.test(currentLine)) {
-                 exerciseContext = currentLine;
-             } else {
-                 exerciseContext = ""; // Resetear si la línea actual tenía sets/tiempo o era cabecera
-             }
-
-        } else {
-             console.log(`[Volume Debug v4] Line ${i + 1}: Skipping line as no current day context is set.`);
-             // Actualizar contexto por si la línea es un nombre de ejercicio antes del primer día (poco probable)
-             if (!/Ejercicio|Series|Reps|Descanso|Notas/i.test(currentLine)) {
-                  exerciseContext = currentLine;
-             } else {
-                  exerciseContext = "";
-             }
-        }
-    } // Fin del bucle de líneas
-
-    console.log("[Volume Calculation v4 - Daily] Final Daily Volume:", JSON.stringify(dailyVolume));
-
-    // Devolver objeto vacío si no se calculó NINGÚN set en absoluto
+    // Return empty object if no sets were calculated for any day
     if (Object.keys(dailyVolume).length === 0 || Object.values(dailyVolume).every(v => v === 0)) {
-         console.warn("[Volume Calculation v4 - Daily] No sets were calculated for any day. Returning empty object.");
-         return {};
+        console.warn("[Volume Calculation v5] No sets were calculated for any day. Returning empty object.");
+        return {};
     }
 
     return dailyVolume;
@@ -1074,5 +1097,6 @@ module.exports = {
     createCoverPage
     // Keep other exports if they were needed for testing
 };
+
 
 
