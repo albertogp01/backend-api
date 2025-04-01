@@ -1,4 +1,7 @@
-// chartService.js (Mejorado v3)
+/**
+ * chartService.js (v3 - Layout Fix)
+ * Modificado para asegurar que el contenido quepa en una página y corregir el gráfico de volumen.
+ */
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -6,7 +9,6 @@
  * @returns {Object} - Scores for each training component (0-100) and main components.
  */
 function calculateTrainingComponentScores(routineHtml) {
-    // Initialize scores
     const scores = {
         fuerza: 0,
         hipertrofia: 0,
@@ -16,7 +18,6 @@ function calculateTrainingComponentScores(routineHtml) {
         cardio: 0
     };
 
-    // Default balanced profile if no HTML is provided
     if (!routineHtml || routineHtml.trim() === '') {
         console.warn("No routine HTML provided, returning default balanced scores.");
         return {
@@ -26,7 +27,6 @@ function calculateTrainingComponentScores(routineHtml) {
         };
     }
 
-    // Keywords for each training component
     const keywords = {
         fuerza: ['fuerza', 'strength', 'carga', 'peso', 'resistencia', 'weight', 'sentadilla', 'squat', 'press', 'deadlift', 'peso muerto', 'power', 'potencia', 'rm', '1rm', 'máxima', 'maximales', 'intensidad alta', 'pesado', 'heavy'],
         hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'volume', 'muscle', 'músculo', 'muscular', 'growth', 'crecimiento', 'tamaño', 'size', 'bodybuilding', 'culturismo', 'series', 'repeticiones', 'reps', 'rir'],
@@ -36,13 +36,11 @@ function calculateTrainingComponentScores(routineHtml) {
         cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'stamina', 'interval', 'intervalos', 'hiit', 'heart', 'rate', 'ritmo', 'cardiac', 'cardíaco', 'vo2', 'máximo', 'correr', 'run', 'nadar', 'swim', 'bicicleta', 'bike', 'cinta', 'eliptica']
     };
 
-    // Counts for keyword occurrences
     const counts = {
         fuerza: 0, hipertrofia: 0, movilidad: 0,
         potencia: 0, tecnica: 0, cardio: 0
     };
 
-    // --- Keyword Analysis ---
     Object.keys(keywords).forEach(component => {
         keywords[component].forEach(keyword => {
             try {
@@ -55,9 +53,6 @@ function calculateTrainingComponentScores(routineHtml) {
         });
     });
 
-    // --- Additional Heuristics ---
-
-    // 1. Rep Range Analysis
     const setRepMatches = routineHtml.match(/(\d+)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps|repeticiones|sets)?/gi) || [];
     let lowRepSets = 0;
     let midRepSets = 0;
@@ -76,23 +71,23 @@ function calculateTrainingComponentScores(routineHtml) {
             }
         }
     });
-    // Simple rep mentions
-     const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
-     simpleRepMatches.forEach(match => {
-         const repNumbers = match.match(/\d+/g);
-         if (repNumbers) {
-             const maxReps = Math.max(...repNumbers.map(Number));
-             if (maxReps <= 6) lowRepSets += 0.5;
+
+    const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
+    simpleRepMatches.forEach(match => {
+        const repNumbers = match.match(/\d+/g);
+        if (repNumbers) {
+            const maxReps = Math.max(...repNumbers.map(Number));
+             if (maxReps <= 6) lowRepSets += 0.5; // Add fractional counts for simple rep mentions
              else if (maxReps <= 15) midRepSets += 0.5;
              else highRepSets += 0.5;
-         }
-     });
+        }
+    });
+
 
     counts.fuerza += lowRepSets * 2;
     counts.hipertrofia += midRepSets * 1.5;
     counts.cardio += highRepSets * 1;
 
-    // 2. Specific Exercise Keywords
     const specificExercises = {
         fuerza: ['press de banca', 'bench press', 'sentadilla', 'squat', 'peso muerto', 'deadlift', 'press militar', 'overhead press', 'remo con barra', 'barbell row'],
         hipertrofia: ['curl', 'elevaciones laterales', 'lateral raise', 'extensiones de triceps', 'tricep extension', 'remo con mancuernas', 'dumbbell row', 'aperturas', 'flyes', 'pulldown'],
@@ -113,7 +108,6 @@ function calculateTrainingComponentScores(routineHtml) {
         });
     });
 
-    // 3. Intensity/Tempo Indicators
     if (routineHtml.match(/RIR\s+[0-2]/gi)) { counts.fuerza += 3; counts.hipertrofia += 5; }
     if (routineHtml.match(/RIR\s+[3-4]/gi)) { counts.hipertrofia += 3; }
     if (routineHtml.match(/RPE\s+[8-9]/gi)) { counts.fuerza += 2; counts.hipertrofia += 4; }
@@ -123,7 +117,6 @@ function calculateTrainingComponentScores(routineHtml) {
     if (routineHtml.match(/descanso\s+(corto|30s|45s|60s)/gi)) { counts.hipertrofia += 1; counts.cardio += 1; }
     if (routineHtml.match(/descanso\s+(largo|90s|120s|2-3\s*min)/gi)) { counts.fuerza += 2; }
 
-    // --- Normalization ---
     const totalCount = Object.values(counts).reduce((sum, count) => sum + Math.max(0, count), 0);
 
     if (totalCount === 0) {
@@ -139,7 +132,6 @@ function calculateTrainingComponentScores(routineHtml) {
         scores[component] = Math.round((Math.max(0, counts[component]) / totalCount) * 100);
     });
 
-    // --- Smoothing and Thresholding ---
     const minThreshold = 5;
     let totalScore = 0;
     Object.keys(scores).forEach(component => {
@@ -150,45 +142,41 @@ function calculateTrainingComponentScores(routineHtml) {
         totalScore += scores[component];
     });
 
-    // Re-normalize if needed
     if (totalScore > 0 && Math.abs(totalScore - 100) > 10) {
         const scaleFactor = 100 / totalScore;
         Object.keys(scores).forEach(component => {
             scores[component] = Math.round(scores[component] * scaleFactor);
-            scores[component] = Math.max( (counts[component] > 0 ? minThreshold : 0) , Math.min(scores[component], 100));
+             scores[component] = Math.max( (counts[component] > 0 ? minThreshold : 0) , Math.min(scores[component], 100));
         });
     }
 
-     // Final adjustment
-     let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
-     if (finalTotal !== 100 && finalTotal > 0) {
-         let diff = 100 - finalTotal;
-         let maxComp = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-         scores[maxComp] = Math.min(100, Math.max(0, scores[maxComp] + diff));
-     }
+    let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    if (finalTotal !== 100 && finalTotal > 0) {
+        let diff = 100 - finalTotal;
+        let maxComp = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+        scores[maxComp] = Math.min(100, Math.max(0, scores[maxComp] + diff));
+    }
 
-    // --- Determine Main Components ---
     let maxScore = 0;
     let mainComponents = [];
     Object.entries(scores).forEach(([component, score]) => {
-        if (score >= 25) { // Threshold for significant component
-             if (score > maxScore) {
-                 maxScore = score;
-                 mainComponents = [component];
-             } else if (score === maxScore && !mainComponents.includes(component)) { // Add ties
-                 mainComponents.push(component);
-             }
-         }
+        if (score >= 25) {
+            if (score > maxScore) {
+                maxScore = score;
+                mainComponents = [component];
+            } else if (score === maxScore && !mainComponents.includes(component)) {
+                mainComponents.push(component);
+            }
+        }
     });
-     // Ensure all components with max score are included if threshold wasn't met but max exists
-     if (mainComponents.length === 0 && maxScore > 0) {
-         Object.entries(scores).forEach(([component, score]) => {
-             if (score === maxScore) {
-                 mainComponents.push(component);
-             }
-         });
-     }
 
+    if (mainComponents.length === 0 && maxScore > 0) {
+        Object.entries(scores).forEach(([component, score]) => {
+            if (score === maxScore) {
+                mainComponents.push(component);
+            }
+        });
+    }
 
     scores.mainComponents = mainComponents;
     scores.mainComponentsDisplay = mainComponents.length > 0
@@ -206,7 +194,7 @@ function calculateTrainingComponentScores(routineHtml) {
  * @returns {Object} - An object with muscle groups as keys and total weekly sets as values.
  */
 function calculateWeeklyVolume(routineHtml) {
-    console.log("[Volume Calculation] Starting..."); // DEBUG
+    console.log("[Volume Calculation] Starting...");
     const volume = {
         Pecho: 0, Espalda: 0, Hombro: 0,
         Biceps: 0, Triceps: 0, Pierna: 0,
@@ -215,32 +203,24 @@ function calculateWeeklyVolume(routineHtml) {
 
     if (!routineHtml || routineHtml.trim() === '') {
         console.warn("[Volume Calculation] No routine HTML provided.");
-        return {}; // Return empty object if no HTML
+        return {};
     }
 
-    // --- IMPORTANT: Review and adjust keywords/regex based on your actual HTML ---
     const muscleGroupKeywords = {
-        Pecho: ['pecho', 'chest', 'press de banca', 'bench press', 'aperturas', 'flyes', 'flexiones', 'push-up', 'pectoral'],
-        Espalda: ['espalda', 'back', 'remo', 'row', 'dominadas', 'pull-up', 'chin-up', 'pulldown', 'peso muerto', 'deadlift', 'dorsal', 'jalon'],
-        Hombro: ['hombro', 'shoulder', 'press militar', 'overhead press', 'elevaciones laterales', 'lateral raise', 'elevaciones frontales', 'front raise', 'pájaros', 'rear delt fly', 'deltoides'],
+        Pecho: ['pecho', 'chest', 'press de banca', 'bench press', 'aperturas', 'flyes', 'flexiones', 'push-up'],
+        Espalda: ['espalda', 'back', 'remo', 'row', 'dominadas', 'pull-up', 'chin-up', 'pulldown', 'peso muerto', 'deadlift', 'dorsal'],
+        Hombro: ['hombro', 'shoulder', 'press militar', 'overhead press', 'elevaciones laterales', 'lateral raise', 'elevaciones frontales', 'front raise', 'pájaros', 'rear delt fly'],
         Biceps: ['biceps', 'bíceps', 'curl'],
-        Triceps: ['triceps', 'tríceps', 'extensiones', 'extension', 'fondos', 'dips', 'press francés', 'french press', 'skullcrusher'],
-        Pierna: ['pierna', 'leg', 'cuádriceps', 'quadriceps', 'femoral', 'hamstring', 'gemelo', 'calf', 'soleo', 'sentadilla', 'squat', 'prensa', 'leg press', 'zancadas', 'lunges', 'leg curl', 'leg extension', 'gemelos'],
-        Gluteo: ['glúteo', 'glute', 'hip thrust', 'puente de glúteo', 'glute bridge', 'patada de glúteo', 'kickback', 'abducción'],
-        Abdomen: ['abdomen', 'abdominales', 'abs', 'core', 'plancha', 'plank', 'crunches', 'elevaciones de piernas', 'leg raise', 'oblicuos', 'russian twist'],
-        Cardio: ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'assault bike']
+        Triceps: ['triceps', 'tríceps', 'extensiones', 'extension', 'fondos', 'dips', 'press francés', 'french press'],
+        Pierna: ['pierna', 'leg', 'cuádriceps', 'quadriceps', 'femoral', 'hamstring', 'gemelo', 'calf', 'sentadilla', 'squat', 'prensa', 'leg press', 'zancadas', 'lunges', 'leg curl', 'leg extension'],
+        Gluteo: ['glúteo', 'glute', 'hip thrust', 'puente de glúteo', 'glute bridge', 'patada de glúteo', 'kickback'],
+        Abdomen: ['abdomen', 'abdominales', 'abs', 'core', 'plancha', 'plank', 'crunches', 'elevaciones de piernas', 'leg raise'],
+        Cardio: ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos']
     };
 
-    // Regex to find potential exercise blocks (li, tr, p, div)
     const exerciseBlockRegex = /<(li|tr|p|div)[^>]*>([\s\S]*?)<\/\1>/gi;
-    // Regex to find sets and reps (adjust based on your HTML format!)
-    // Example 1: "3 sets x 10 reps", "4 series x 8-12 repeticiones"
-    const setRepRegex1 = /(\d+)\s*(?:sets?|series?)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
-    // Example 2: "3x10", "4x8-12"
-    const setRepRegex2 = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
-    // Example 3: "Sets: 3", "Series: 4" (assuming reps are nearby but not needed for set count)
-    const setOnlyRegex = /(?:sets?|series?)\s*:\s*(\d+)/i;
-    // Example 4: Time-based (Cardio)
+    const setRepRegex = /(\d+)\s*(?:sets?|series?)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
+    const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
     const timeBasedRegex = /(\d+)\s*(?:min|seg|seconds?)/i;
 
     let match;
@@ -251,36 +231,16 @@ function calculateWeeklyVolume(routineHtml) {
         let sets = 0;
         let isCardioSession = false;
 
-        // --- REGEX CHECKING ORDER (Crucial!) ---
-        // Try most specific first (sets x reps)
-        let setMatch = blockContent.match(setRepRegex1);
-        if (setMatch) {
-            sets = parseInt(setMatch[1], 10) || 0;
-             console.log(`[Volume Debug] Block ${blocksFound}: Found setRepRegex1: ${setMatch[0]}, Sets: ${sets}`);
-        } else {
-            // Try simpler sets x reps
-            setMatch = blockContent.match(setRepRegex2);
-            if (setMatch) {
-                sets = parseInt(setMatch[1], 10) || 0;
-                 console.log(`[Volume Debug] Block ${blocksFound}: Found setRepRegex2: ${setMatch[0]}, Sets: ${sets}`);
-            } else {
-                // Try finding only "Sets: N" or "Series: N"
-                setMatch = blockContent.match(setOnlyRegex);
-                if (setMatch) {
-                    sets = parseInt(setMatch[1], 10) || 0;
-                     console.log(`[Volume Debug] Block ${blocksFound}: Found setOnlyRegex: ${setMatch[0]}, Sets: ${sets}`);
-                }
-            }
+        const setRepMatch = blockContent.match(setRepRegex) || blockContent.match(simpleSetRepRegex);
+        if (setRepMatch && setRepMatch.length >= 2) {
+            sets = parseInt(setRepMatch[1], 10) || 0;
         }
 
-        // Check for time-based cardio only if NO sets were found
         if (sets === 0 && timeBasedRegex.test(blockContent)) {
            isCardioSession = true;
-           sets = 1; // Count as one "set" or session
-           console.log(`[Volume Debug] Block ${blocksFound}: Detected Time-Based (Cardio?) Session.`);
+           sets = 1;
         }
 
-        // --- ASSIGNMENT LOGIC ---
         if (sets > 0) {
             let assigned = false;
             for (const group in muscleGroupKeywords) {
@@ -291,50 +251,40 @@ function calculateWeeklyVolume(routineHtml) {
                             const targetGroup = (group === 'Cardio' || isCardioSession) ? 'Cardio' : group;
                             volume[targetGroup] += sets;
                             assigned = true;
-                            console.log(`[Volume Debug] Block ${blocksFound}: Keyword '${keyword}' found. Assigning ${sets} sets to group: ${targetGroup}`);
-                            // Optimization: If cardio session detected AND assigned to Cardio, stop checking other groups
-                            if (targetGroup === 'Cardio') break;
-                            // If assigned to a non-cardio group, stop checking keywords for *this* group
+                            console.log(`[Volume Debug] Keyword '${keyword}' found. Assigning ${sets} sets to group: ${targetGroup}`);
                             break;
                         }
                     } catch (e) {
                         console.warn(`[Volume Calculation] Invalid regex for volume keyword: ${keyword}`, e);
                     }
                 }
-                 // If assigned (to Cardio or other), stop checking other muscle groups for this block
                 if (assigned) break;
             }
-            // Assign to 'Otro' only if not assigned and not explicitly a cardio session
             if (!assigned && !isCardioSession) {
                 volume.Otro += sets;
-                console.log(`[Volume Debug] Block ${blocksFound}: No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
+                console.log(`[Volume Debug] No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
             }
-        } else {
-             // console.log(`[Volume Debug] Block ${blocksFound}: No sets found.`); // Optional: Log blocks with 0 sets
         }
     }
     console.log(`[Volume Calculation] Total blocks processed: ${blocksFound}`);
 
-     // Fallback for Cardio mentions (if still 0)
-     if (volume.Cardio === 0) {
-         let cardioMentions = 0;
-         muscleGroupKeywords.Cardio.forEach(keyword => {
-             try {
-                 const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                 const matches = routineHtml.match(regex) || [];
-                 cardioMentions += matches.length;
-             } catch (e) { /* ignore */ }
-         });
-         if (cardioMentions > 0) {
-             volume.Cardio = Math.max(1, Math.round(cardioMentions / 3));
-             console.log(`[Volume Debug] Fallback: Estimated ${volume.Cardio} Cardio sets based on ${cardioMentions} mentions.`);
-         }
-     }
-
+    if (volume.Cardio === 0) {
+        let cardioMentions = 0;
+        muscleGroupKeywords.Cardio.forEach(keyword => {
+            try {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                const matches = routineHtml.match(regex) || [];
+                cardioMentions += matches.length;
+            } catch (e) { /* ignore */ }
+        });
+        if (cardioMentions > 0) {
+            volume.Cardio = Math.max(1, Math.round(cardioMentions / 3));
+            console.log(`[Volume Debug] Fallback: Estimated ${volume.Cardio} Cardio sets based on ${cardioMentions} mentions.`);
+        }
+    }
 
     console.log("[Volume Calculation] Final Volume (Before Filter):", JSON.stringify(volume));
 
-    // Filter out groups with 0 sets
     const filteredVolume = {};
     for (const group in volume) {
         if (volume[group] > 0) {
@@ -360,7 +310,6 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
         day: 'numeric'
     });
 
-    // Dynamic description based on main components
     let description = `¡Hola ${clientName}! Aquí tienes un resumen visual de tu nuevo plan de entrenamiento. `;
     if (scores.mainComponents && scores.mainComponents.length > 0) {
         description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por grupo muscular. ¡A darle con todo!`;
@@ -381,46 +330,46 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
       <div class="cover-main-new">
         <div class="cover-text-content">
           <h2>Tu Hoja de Ruta Fitness</h2>
-          <p class="cover-description-new">${description}</p>
+          <p class="cover-description-new">${description.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p> {/* Replace markdown bold */}
           <div class="components-legend-new">
             <h3>Enfoque del Entrenamiento (%)</h3>
             <div class="legend-grid">
-                <div class="component-item-new">
-                    <div class="component-dot-new fuerza-color"></div>
-                    <div class="component-label-new">Fuerza: <span>${scores.fuerza}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new potencia-color"></div>
-                    <div class="component-label-new">Potencia: <span>${scores.potencia}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new hipertrofia-color"></div>
-                    <div class="component-label-new">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
-                </div>
-                 <div class="component-item-new">
-                    <div class="component-dot-new tecnica-color"></div>
-                    <div class="component-label-new">Técnica: <span>${scores.tecnica}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new movilidad-color"></div>
-                    <div class="component-label-new">Movilidad: <span>${scores.movilidad}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new cardio-color"></div>
-                    <div class="component-label-new">Cardio: <span>${scores.cardio}%</span></div>
-                </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new fuerza-color"></div>
+                  <div class="component-label-new">Fuerza: <span>${scores.fuerza}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new potencia-color"></div>
+                  <div class="component-label-new">Potencia: <span>${scores.potencia}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new hipertrofia-color"></div>
+                  <div class="component-label-new">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
+              </div>
+               <div class="component-item-new">
+                  <div class="component-dot-new tecnica-color"></div>
+                  <div class="component-label-new">Técnica: <span>${scores.tecnica}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new movilidad-color"></div>
+                  <div class="component-label-new">Movilidad: <span>${scores.movilidad}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new cardio-color"></div>
+                  <div class="component-label-new">Cardio: <span>${scores.cardio}%</span></div>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="cover-visuals-content">
           <div class="chart-container-new radar-chart-container-new">
-             <h3 class="chart-title">Distribución del Enfoque</h3>
-             <canvas id="radarChart"></canvas>
+              <h3 class="chart-title">Distribución del Enfoque</h3>
+              <canvas id="radarChart"></canvas>
           </div>
           <div class="chart-container-new volume-chart-container-new">
-             <h3 class="chart-title">Volumen Semanal Estimado (Series)</h3>
-             <canvas id="volumeLineChart"></canvas>
+              <h3 class="chart-title">Volumen Semanal Estimado (Series)</h3>
+              <canvas id="volumeBarChart"></canvas> {/* Changed ID */}
           </div>
         </div>
       </div>
@@ -438,28 +387,26 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
  * @returns {string} - Estilos CSS.
  */
 function getCoverPageStyles() {
-    // Combined and refined styles for cover page elements
     return `
-    /* Estilos Mejorados Portada Completa v4 */
+    /* Estilos Mejorados Portada Completa v4 - Layout Fix */
     :root {
-        /* Define color variables */
-        --primary-color: #2c3e50; /* Dark Blue-Gray for text */
-        --secondary-color: #34495e; /* Slightly lighter Blue-Gray */
-        --accent-color: #3498db;   /* Bright Blue */
-        --light-blue-bg: #e0f2f7; /* Light Sky Blue */
-        --medium-blue-bg: #b3e0f2; /* Medium Sky Blue */
-        --text-light: #ffffff;     /* White text (e.g., for buttons if added) */
-        --text-dark: #2c3e50;      /* Dark Blue-Gray for main text */
-        --text-medium-dark: #555;  /* Medium dark gray for less important text */
-        --text-light-gray: #95a5a6; /* Light gray for footer */
-        --border-light: rgba(0, 0, 0, 0.1);  /* Light border for dark on light */
-        --border-medium: #dce4e8; /* Lighter border for charts */
-        --background-light-accent: rgba(0, 0, 0, 0.04); /* Subtle dark accent on light bg */
-        --background-chart-container: #ffffff; /* White background for charts */
+        --primary-color: #2c3e50;
+        --secondary-color: #34495e;
+        --accent-color: #3498db;
+        --light-blue-bg: #e0f2f7;
+        --medium-blue-bg: #b3e0f2;
+        --text-light: #ffffff;
+        --text-dark: #2c3e50;
+        --text-medium-dark: #555;
+        --text-light-gray: #95a5a6;
+        --border-light: rgba(0, 0, 0, 0.1);
+        --border-medium: #bdc3c7;
+        --background-light-accent: rgba(0, 0, 0, 0.04);
+        --background-chart-container: #ffffff;
         --border-radius: 8px;
         --border-radius-large: 12px;
         --box-shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
-        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.07); /* Slightly softer shadow */
+        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
 
         /* Component Colors */
         --fuerza-color: #3498db;
@@ -468,13 +415,14 @@ function getCoverPageStyles() {
         --potencia-color: #e74c3c;
         --tecnica-color: #9b59b6;
         --cardio-color: #e67e22;
+        --otro-color: #7f8c8d; /* Added color for 'Otro' */
     }
 
     /* Apply margin reset to body for PDF generation */
     body {
         margin: 0;
-        font-family: 'Inter', 'Arial', sans-serif; /* Ensure font is applied */
-        -webkit-print-color-adjust: exact; /* Important for background colors in PDF */
+        font-family: 'Inter', 'Arial', sans-serif;
+        -webkit-print-color-adjust: exact;
          print-color-adjust: exact;
     }
 
@@ -483,23 +431,15 @@ function getCoverPageStyles() {
         position: relative;
         display: flex;
         flex-direction: column;
-        min-height: 100vh; /* Ensure full page height */
-        /* height: 100vh; /* Avoid explicit height, min-height is safer */
+        min-height: 98vh; /* Use min-height instead of fixed height */
+        height: auto; /* Allow content to define height */
         width: 100%;
-        /* Lighter Sky Blue Gradient Background with Cloud Effect */
-        background:
-            /* Subtle white radial gradients for cloud effect */
-            radial-gradient(ellipse at 15% 25%, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
-            radial-gradient(ellipse at 70% 40%, rgba(255, 255, 255, 0.15) 0%, transparent 55%),
-            radial-gradient(ellipse at 40% 85%, rgba(255, 255, 255, 0.18) 0%, transparent 70%),
-            /* Base linear gradient */
-            linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
-        /* background-blend-mode: overlay; /* Experiment with blend modes */
-        color: var(--text-dark); /* Main text color changed to dark */
+        background: linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
+        color: var(--text-dark);
         box-sizing: border-box;
         page-break-after: always;
-        overflow: hidden; /* Prevent content spilling */
-        padding: 35px 45px; /* Adjusted padding */
+        /* overflow: hidden; REMOVED overflow hidden */
+        padding: 30px 40px; /* Slightly reduced padding */
     }
 
     .cover-header-new {
@@ -507,16 +447,16 @@ function getCoverPageStyles() {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px; /* Adjusted margin */
-        border-bottom: 1px solid var(--border-light);
-        padding-bottom: 18px; /* Adjusted padding */
+        margin-bottom: 25px; /* Reduced margin */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 15px; /* Reduced padding */
+        flex-shrink: 0; /* Prevent header from shrinking */
     }
 
     .cover-logo-new {
-        width: 100px; /* Adjusted size */
+        width: 100px; /* Reduced size */
         height: auto;
         opacity: 0.9;
-        /* filter: contrast(1.1) brightness(0.9); /* Example filter for dark logo on light bg */
     }
 
     .client-info-new {
@@ -524,7 +464,7 @@ function getCoverPageStyles() {
     }
 
     .client-info-new h1 {
-        font-size: 24px; /* Adjusted size */
+        font-size: 24px; /* Reduced size */
         font-weight: 700;
         color: var(--primary-color);
         margin: 0 0 4px 0;
@@ -534,17 +474,17 @@ function getCoverPageStyles() {
     .client-info-new p {
         margin: 0;
         color: var(--text-medium-dark);
-        font-size: 13.5px; /* Adjusted size */
+        font-size: 13px; /* Reduced size */
         font-weight: 400;
     }
 
     .cover-main-new {
-        flex-grow: 1; /* Allow main content to fill vertical space */
+        flex-grow: 1; /* Allow main content to take available space */
         display: flex;
         flex-direction: column;
-        gap: 25px; /* Adjusted gap */
+        gap: 20px; /* Reduced gap */
         width: 100%;
-        margin-bottom: 25px; /* Space above footer */
+        margin-bottom: 20px; /* Reduced margin */
     }
 
     .cover-text-content {
@@ -552,14 +492,14 @@ function getCoverPageStyles() {
     }
 
     .cover-text-content h2 {
-        font-size: 22px; /* Adjusted size */
+        font-size: 22px; /* Reduced size */
         font-weight: 700;
         color: var(--primary-color);
-        margin-bottom: 12px; /* Adjusted margin */
+        margin-bottom: 12px; /* Reduced margin */
         line-height: 1.3;
         position: relative;
         display: inline-block;
-        padding-bottom: 6px; /* Adjusted padding */
+        padding-bottom: 6px; /* Reduced padding */
     }
 
     .cover-text-content h2::after {
@@ -567,63 +507,63 @@ function getCoverPageStyles() {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 45px; /* Adjusted size */
-        height: 2.5px; /* Adjusted size */
+        width: 45px; /* Reduced size */
+        height: 3px;
         background-color: var(--accent-color);
         border-radius: 3px;
     }
 
     .cover-description-new {
-        font-size: 14px; /* Adjusted size */
+        font-size: 14px; /* Reduced size */
         color: var(--secondary-color);
         line-height: 1.55; /* Adjusted line height */
-        margin-bottom: 20px; /* Adjusted margin */
+        margin-bottom: 20px; /* Reduced margin */
         font-weight: 400;
         max-width: 100%;
     }
 
-    .cover-description-new strong {
+     .cover-description-new strong {
         color: var(--primary-color);
         font-weight: 600;
     }
 
+
     .components-legend-new {
         background-color: var(--background-light-accent);
-        padding: 15px 20px; /* Adjusted padding */
+        padding: 15px 20px; /* Reduced padding */
         border-radius: var(--border-radius);
         border: 1px solid var(--border-light);
     }
 
     .components-legend-new h3 {
-        font-size: 14px; /* Adjusted size */
+        font-size: 14px; /* Reduced size */
         font-weight: 600;
         color: var(--primary-color);
-        margin: 0 0 12px 0; /* Adjusted margin */
+        margin: 0 0 12px 0; /* Reduced margin */
         text-align: left;
     }
 
     .legend-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); /* Responsive columns */
-        gap: 8px 18px; /* Adjusted gap */
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Adjusted minmax */
+        gap: 8px 15px; /* Reduced gap */
     }
 
 
     .component-item-new {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 7px; /* Reduced gap */
     }
 
     .component-dot-new {
-        width: 10px;
-        height: 10px;
+        width: 9px; /* Reduced size */
+        height: 9px; /* Reduced size */
         border-radius: 50%;
         flex-shrink: 0;
         border: 1px solid rgba(0, 0, 0, 0.3);
     }
 
-    /* Component Colors remain the same */
     .fuerza-color { background-color: var(--fuerza-color); }
     .hipertrofia-color { background-color: var(--hipertrofia-color); }
     .movilidad-color { background-color: var(--movilidad-color); }
@@ -632,7 +572,7 @@ function getCoverPageStyles() {
     .cardio-color { background-color: var(--cardio-color); }
 
     .component-label-new {
-        font-size: 12.5px; /* Adjusted size */
+        font-size: 12.5px; /* Reduced size */
         font-weight: 500;
         color: var(--secondary-color);
     }
@@ -640,59 +580,61 @@ function getCoverPageStyles() {
     .component-label-new span {
         font-weight: 700;
         color: var(--primary-color);
-        margin-left: 3px; /* Adjusted margin */
+        margin-left: 4px;
     }
 
     .cover-visuals-content {
         display: flex;
-        flex-wrap: wrap;
-        gap: 20px; /* Adjusted gap */
+        flex-wrap: wrap; /* Allow wrapping */
+        gap: 20px; /* Reduced gap */
         width: 100%;
-        align-items: stretch; /* Make containers same height if they wrap */
+        align-items: stretch; /* Make containers same height if on same row */
+        flex-grow: 1; /* Allow this section to grow */
     }
 
     .chart-container-new {
-        flex: 1 1 300px;
+        flex: 1 1 320px; /* Allow growing and shrinking, base width */
         background-color: var(--background-chart-container);
         border-radius: var(--border-radius-large);
-        padding: 18px 22px 22px 22px; /* Adjusted padding */
+        padding: 15px 20px 20px 20px; /* Reduced padding */
         box-shadow: var(--box-shadow-medium);
         border: 1px solid var(--border-medium);
         display: flex;
         flex-direction: column;
-        min-width: 0;
-        /* REMOVED fixed height to prevent overflow */
-        /* height: 360px; */
-        /* max-height: 360px; */
-        min-height: 300px; /* Minimum height for visual balance */
+        min-width: 0; /* Prevent flex overflow */
+        /* height: 360px; REMOVED fixed height */
+        /* max-height: 360px; REMOVED fixed height */
+        min-height: 280px; /* Add a minimum height */
     }
 
-     .chart-title {
-        font-size: 13.5px; /* Adjusted size */
+    .chart-title {
+        font-size: 13.5px; /* Reduced size */
         font-weight: 600;
         color: var(--text-dark);
-        margin: 0 0 12px 0; /* Adjusted margin */
+        margin: 0 0 10px 0; /* Reduced margin */
         text-align: center;
-        flex-shrink: 0; /* Prevent title from shrinking */
+        flex-shrink: 0; /* Prevent title shrinking */
     }
 
-    #radarChart, #volumeLineChart {
+    /* Ensure canvas parent takes remaining space */
+     .chart-container-new > canvas {
+        position: relative; /* Needed for Chart.js responsiveness */
+        flex-grow: 1; /* Allow canvas to grow */
         max-width: 100%;
-        /* REMOVED max-height to let chart determine size */
-        /* max-height: calc(100% - 30px); */
+        /* max-height: calc(100% - 30px); REMOVED max-height */
         margin: auto;
         display: block;
-        flex-grow: 1; /* Allow canvas wrapper (if any) or canvas itself to grow */
-        min-height: 200px; /* Ensure canvas has some minimum height */
+        min-height: 200px; /* Minimum canvas height */
     }
+
 
     .cover-footer-new {
         width: 100%;
         text-align: center;
-        padding-top: 15px;
+        padding-top: 10px; /* Reduced padding */
         margin-top: auto; /* Push footer to bottom */
         border-top: 1px solid var(--border-light);
-        font-size: 11px;
+        font-size: 10.5px; /* Reduced size */
         color: var(--text-light-gray);
         flex-shrink: 0; /* Prevent footer from shrinking */
     }
@@ -712,10 +654,8 @@ function getRadarChartScript(scores) {
     ];
     const labels = ['Fuerza', 'Hipertrofia', 'Movilidad', 'Potencia', 'Técnica', 'Cardio'];
 
-    // Chart.js initialization script
     return `
     <script>
-      // Function to initialize the radar chart
       function initRadarChart() {
         const canvasElement = document.getElementById('radarChart');
         if (!canvasElement) {
@@ -728,7 +668,6 @@ function getRadarChartScript(scores) {
             return;
         }
 
-        // Chart.js Configuration
         try {
             const radarChart = new Chart(ctx, {
                 type: 'radar',
@@ -744,26 +683,26 @@ function getRadarChartScript(scores) {
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
                         pointHoverBorderColor: 'rgba(10, 42, 94, 1)',
-                        pointRadius: 3.5,
-                        pointHoverRadius: 5.5
+                        pointRadius: 3, // Slightly smaller points
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
                     scales: {
-                        r: { // Radial axis
+                        r: {
                             angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' },
                             suggestedMin: 0,
                             suggestedMax: 100,
                             grid: { color: 'rgba(0, 0, 0, 0.1)' },
                             ticks: {
-                                stepSize: 20,
+                                stepSize: 25, // Adjusted step size
                                 color: 'rgba(0, 0, 0, 0.6)',
                                 backdropColor: 'rgba(255, 255, 255, 0.75)',
-                                padding: 8,
-                                font: { size: 10 }
+                                padding: 6, // Reduced padding
+                                font: { size: 9 } // Smaller font
                             },
-                            pointLabels: { // Labels around the edge
-                                font: { size: 11.5, weight: '500' }, // Slightly smaller
+                            pointLabels: {
+                                font: { size: 11, weight: '500' }, // Adjusted font size
                                 color: 'rgba(0, 0, 0, 0.85)'
                             }
                         }
@@ -773,9 +712,9 @@ function getRadarChartScript(scores) {
                         tooltip: {
                             enabled: true,
                             backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            padding: 10,
+                            titleFont: { size: 12, weight: 'bold' }, // Adjusted size
+                            bodyFont: { size: 11 }, // Adjusted size
+                            padding: 8, // Adjusted padding
                             boxPadding: 4,
                             cornerRadius: 4,
                             callbacks: {
@@ -791,7 +730,7 @@ function getRadarChartScript(scores) {
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false // Important: Let container control size
+                    maintainAspectRatio: false
                 }
             });
         } catch (error) {
@@ -799,46 +738,50 @@ function getRadarChartScript(scores) {
         }
       }
 
-      // Initialize chart when the DOM is ready
       if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', initRadarChart);
       } else {
-          // Delay slightly if DOM is already loaded, might help rendering in some cases
-          setTimeout(initRadarChart, 150); // Increased delay slightly
+          setTimeout(initRadarChart, 50); // Reduced timeout
       }
     </script>
     `;
 }
 
 /**
- * Genera el script de inicialización de Chart.js para el gráfico de líneas de volumen.
+ * Genera el script de inicialización de Chart.js para el gráfico de BARRAS de volumen.
  * @param {Object} volumeData - Datos de volumen semanal por grupo muscular.
- * @returns {string} - Código JavaScript para inicializar el gráfico de líneas.
+ * @returns {string} - Código JavaScript para inicializar el gráfico de barras.
  */
-function getVolumeLineChartScript(volumeData) {
+function getVolumeBarChartScript(volumeData) { // Renamed function
     const labels = Object.keys(volumeData);
     const data = Object.values(volumeData);
 
-    // Check if data is empty and provide default if needed for display
     const displayLabels = labels.length > 0 ? labels : ['No Data'];
     const displayData = data.length > 0 ? data : [0];
 
-    const lineChartColors = {
-        backgroundColor: 'rgba(52, 152, 219, 0.2)', // Light blue area fill
-        borderColor: 'rgba(52, 152, 219, 1)',     // Solid blue line
-        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
-    };
+    // Define colors for bars (using CSS variables)
+    const barColors = labels.map(label => {
+        switch(label.toLowerCase()) {
+            case 'pecho': return 'var(--fuerza-color)';
+            case 'espalda': return 'var(--hipertrofia-color)';
+            case 'hombro': return 'var(--potencia-color)';
+            case 'biceps': return 'var(--tecnica-color)';
+            case 'triceps': return 'var(--tecnica-color)'; // Same as biceps for arm grouping
+            case 'pierna': return 'var(--movilidad-color)'; // Reusing colors
+            case 'gluteo': return 'var(--movilidad-color)'; // Reusing colors
+            case 'abdomen': return 'var(--accent-color)'; // Use accent
+            case 'cardio': return 'var(--cardio-color)';
+            case 'otro': return 'var(--otro-color)';
+            default: return 'var(--secondary-color)';
+        }
+    });
 
     return `
     <script>
-      // Function to initialize the volume line chart
-      function initVolumeLineChart() {
-        const canvasElement = document.getElementById('volumeLineChart');
+      function initVolumeBarChart() { // Renamed function
+        const canvasElement = document.getElementById('volumeBarChart'); // Changed ID
         if (!canvasElement) {
-          console.error("Canvas element #volumeLineChart not found.");
+          console.error("Canvas element #volumeBarChart not found.");
           return;
         }
         const ctx = canvasElement.getContext('2d');
@@ -847,39 +790,28 @@ function getVolumeLineChartScript(volumeData) {
             return;
         }
 
-        // Display message if no data
         const volumeLabels = ${JSON.stringify(displayLabels)};
         const volumeDataPoints = ${JSON.stringify(displayData)};
         if (volumeLabels.length === 1 && volumeLabels[0] === 'No Data') {
-            ctx.font = "16px 'Inter', sans-serif";
+            ctx.font = "14px 'Inter', sans-serif"; // Adjusted size
             ctx.fillStyle = '#888';
             ctx.textAlign = 'center';
             ctx.fillText("No se pudo calcular el volumen.", canvasElement.width / 2, canvasElement.height / 2);
-            console.warn("No volume data to display in line chart.");
-            return; // Stop chart initialization
+            console.warn("No volume data to display in bar chart.");
+            return;
         }
 
-
-        // Chart.js Configuration
         try {
             const volumeChart = new Chart(ctx, {
-                type: 'line',
+                type: 'bar', // Changed type to 'bar'
                 data: {
                     labels: volumeLabels,
                     datasets: [{
                         label: 'Series Semanales',
                         data: volumeDataPoints,
-                        fill: true,
-                        backgroundColor: '${lineChartColors.backgroundColor}',
-                        borderColor: '${lineChartColors.borderColor}',
-                        borderWidth: 2, // Adjusted thickness
-                        pointBackgroundColor: '${lineChartColors.pointBackgroundColor}',
-                        pointBorderColor: '${lineChartColors.pointBorderColor}',
-                        pointHoverBackgroundColor: '${lineChartColors.pointHoverBackgroundColor}',
-                        pointHoverBorderColor: '${lineChartColors.pointHoverBorderColor}',
-                        pointRadius: 3.5, // Adjusted size
-                        pointHoverRadius: 5.5, // Adjusted size
-                        tension: 0.1
+                        backgroundColor: ${JSON.stringify(barColors)}, // Use dynamic colors
+                        borderColor: 'rgba(0, 0, 0, 0.1)', // Optional: light border
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -889,7 +821,7 @@ function getVolumeLineChartScript(volumeData) {
                             title: {
                                 display: true,
                                 text: 'Número de Series',
-                                font: { size: 11.5 }, // Adjusted size
+                                font: { size: 11 }, // Adjusted size
                                 color: '#666'
                             },
                             ticks: {
@@ -904,7 +836,7 @@ function getVolumeLineChartScript(volumeData) {
                         x: {
                              ticks: {
                                 color: 'rgba(0, 0, 0, 0.7)',
-                                font: { size: 10.5 } // Adjusted size
+                                font: { size: 10 } // Adjusted size
                             },
                              grid: {
                                 display: false
@@ -913,21 +845,14 @@ function getVolumeLineChartScript(volumeData) {
                     },
                     plugins: {
                         legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                font: { size: 11.5 }, // Adjusted size
-                                color: 'rgba(0, 0, 0, 0.8)',
-                                boxWidth: 15, // Adjust legend box size
-                                padding: 15 // Adjust legend padding
-                            }
+                           display: false // Hide legend for bar chart (colors imply group)
                         },
                         tooltip: {
                             enabled: true,
                             backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            padding: 10,
+                            titleFont: { size: 12, weight: 'bold' }, // Adjusted size
+                            bodyFont: { size: 11 }, // Adjusted size
+                            padding: 8, // Adjusted padding
                             boxPadding: 4,
                             cornerRadius: 4,
                              callbacks: {
@@ -943,20 +868,18 @@ function getVolumeLineChartScript(volumeData) {
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false // Important: Let container control size
+                    maintainAspectRatio: false
                 }
             });
         } catch (error) {
-             console.error("Error initializing Volume Line Chart:", error);
+             console.error("Error initializing Volume Bar Chart:", error);
         }
       }
 
-      // Initialize chart when the DOM is ready
       if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initVolumeLineChart);
+          document.addEventListener('DOMContentLoaded', initVolumeBarChart);
       } else {
-           // Delay slightly if DOM is already loaded
-          setTimeout(initVolumeLineChart, 150); // Increased delay slightly
+          setTimeout(initVolumeBarChart, 50); // Reduced timeout
       }
     </script>
     `;
@@ -971,16 +894,10 @@ function getVolumeLineChartScript(volumeData) {
  * @returns {object} - Object containing fullCoverPageHtml, styles, combined script, scores, and volumeData.
  */
 function createCoverPage(routineHtml, clientName, logoBase64) {
-    // 1. Calculate component scores
     const scores = calculateTrainingComponentScores(routineHtml);
-
-    // 2. Calculate weekly volume
-    const volumeData = calculateWeeklyVolume(routineHtml); // Returns filtered data
-
-    // 3. Generate cover page HTML (placeholders for charts)
+    const volumeData = calculateWeeklyVolume(routineHtml);
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
 
-    // 4. Replace logo placeholder
     if (logoBase64 && logoBase64.startsWith('data:image')) {
         fullCoverPageHtml = fullCoverPageHtml.replace('LOGO_BASE_64_PLACEHOLDER', logoBase64);
     } else {
@@ -988,34 +905,36 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
         console.warn("Valid Logo Base64 not provided or invalid format. Removing logo element.");
     }
 
-    // 5. Get CSS styles
     const styles = getCoverPageStyles();
-
-    // 6. Get Chart.js initialization scripts
     const radarScript = getRadarChartScript(scores);
-    // Pass the potentially empty filtered volume data to the script generator
-    const volumeScript = getVolumeLineChartScript(volumeData);
+    const volumeScript = getVolumeBarChartScript(volumeData); // Use bar chart script
 
-    // 7. Combine scripts (including the main Chart.js library)
     const combinedScript = `
         <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
         ${radarScript}
         ${volumeScript}
     `;
 
-
     return {
         fullCoverPageHtml,
         styles,
         script: combinedScript,
         scores,
-        volumeData // Return the calculated (possibly empty) volume data
+        volumeData
     };
 }
 
-// Export the main function
-module.exports = {
-    calculateTrainingComponentScores,
-    calculateWeeklyVolume,
-    createCoverPage
-};
+// Export the main function (assuming Node.js environment)
+// If in browser, these functions would be globally available or attached to a namespace
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        calculateTrainingComponentScores,
+        calculateWeeklyVolume,
+        createCoverPage,
+        // Also export generators if needed individually
+        generateCoverPageHtml,
+        getCoverPageStyles,
+        getRadarChartScript,
+        getVolumeBarChartScript
+    };
+}
