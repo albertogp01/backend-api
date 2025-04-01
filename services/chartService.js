@@ -1,4 +1,4 @@
-// chartService.js (Mejorado v2)
+// chartService.js (Corregido para apilar gráficos verticalmente)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -171,23 +171,23 @@ function calculateTrainingComponentScores(routineHtml) {
     let maxScore = 0;
     let mainComponents = [];
     Object.entries(scores).forEach(([component, score]) => {
-        if (score >= 25) { // Threshold for significant component
-             if (score > maxScore) {
-                 maxScore = score;
-                 mainComponents = [component];
-             } else if (score === maxScore && !mainComponents.includes(component)) { // Add ties
-                 mainComponents.push(component);
-             }
+         if (score >= 25) { // Threshold for significant component
+              if (score > maxScore) {
+                  maxScore = score;
+                  mainComponents = [component];
+              } else if (score === maxScore && !mainComponents.includes(component)) { // Add ties
+                  mainComponents.push(component);
+              }
          }
     });
-     // Ensure all components with max score are included if threshold wasn't met but max exists
-     if (mainComponents.length === 0 && maxScore > 0) {
+      // Ensure all components with max score are included if threshold wasn't met but max exists
+      if (mainComponents.length === 0 && maxScore > 0) {
          Object.entries(scores).forEach(([component, score]) => {
-             if (score === maxScore) {
-                 mainComponents.push(component);
-             }
+              if (score === maxScore) {
+                  mainComponents.push(component);
+              }
          });
-     }
+      }
 
 
     scores.mainComponents = mainComponents;
@@ -289,7 +289,7 @@ function calculateWeeklyVolume(routineHtml) {
             if (!assigned && !isCardioSession) {
                 volume.Otro += sets;
                  // DEBUG: Log assignment to 'Otro'
-                console.log(`[Volume Debug] No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
+                 console.log(`[Volume Debug] No specific keyword found (and not cardio session). Assigning ${sets} sets to group: Otro`);
             }
         } else {
              // DEBUG: Log blocks where no sets were found
@@ -400,12 +400,12 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
 
         <div class="cover-visuals-content">
           <div class="chart-container-new radar-chart-container-new">
-             <h3 class="chart-title">Distribución del Enfoque</h3>
-             <canvas id="radarChart"></canvas>
+              <h3 class="chart-title">Distribución del Enfoque</h3>
+              <canvas id="radarChart"></canvas>
           </div>
           <div class="chart-container-new volume-chart-container-new">
-             <h3 class="chart-title">Volumen Semanal Estimado (Series)</h3>
-             <canvas id="volumeLineChart"></canvas>
+              <h3 class="chart-title">Volumen Semanal Estimado (Series)</h3>
+              <canvas id="volumeLineChart"></canvas>
           </div>
         </div>
       </div>
@@ -425,7 +425,7 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
 function getCoverPageStyles() {
     // Combined and refined styles for cover page elements
     return `
-    /* Estilos Mejorados Portada Completa v3 */
+    /* Estilos Mejorados Portada Completa v3 - Corregido Layout Gráficos */
     :root {
         /* Define color variables */
         --primary-color: #2c3e50; /* Dark Blue-Gray for text */
@@ -476,8 +476,8 @@ function getCoverPageStyles() {
         color: var(--text-dark); /* Main text color changed to dark */
         box-sizing: border-box;
         page-break-after: always;
-        overflow: hidden;
-        padding: 40px 50px;
+        overflow: hidden; /* Prevent content spill */
+        padding: 30px 40px; /* Reduced padding slightly */
     }
 
     .cover-header-new {
@@ -485,16 +485,15 @@ function getCoverPageStyles() {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 35px; /* Adjusted margin */
+        margin-bottom: 25px; /* Adjusted margin */
         border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Darker border on light bg */
-        padding-bottom: 20px;
+        padding-bottom: 15px;
+        flex-shrink: 0; /* Prevent header from shrinking */
     }
 
     .cover-logo-new {
-        width: 110px; /* Further adjusted size */
+        width: 100px; /* Further adjusted size */
         height: auto;
-        /* Logo color needs adjustment if original is light */
-        /* filter: brightness(0.1); /* Example: Darken a light logo */
         opacity: 0.9;
          /* Assuming logo needs to be dark on light bg, remove invert */
          /* filter: brightness(0) invert(1); */
@@ -505,42 +504,44 @@ function getCoverPageStyles() {
     }
 
     .client-info-new h1 {
-        font-size: 26px; /* Adjusted size */
+        font-size: 24px; /* Adjusted size */
         font-weight: 700;
         color: var(--primary-color); /* Use primary dark color */
-        margin: 0 0 5px 0;
+        margin: 0 0 4px 0;
         line-height: 1.2;
     }
 
     .client-info-new p {
         margin: 0;
         color: var(--text-medium-dark); /* Medium dark gray */
-        font-size: 14px;
+        font-size: 13px; /* Adjusted */
         font-weight: 400;
     }
 
     .cover-main-new {
-        flex-grow: 1;
+        flex-grow: 1; /* Allow main content to take available space */
         display: flex;
         flex-direction: column;
-        gap: 30px; /* Adjusted gap */
+        gap: 20px; /* Adjusted gap */
         width: 100%;
-        margin-bottom: 30px;
+        overflow: hidden; /* Prevent inner content from overflowing the page */
+        /* Removed margin-bottom to let flexbox handle space */
     }
 
     .cover-text-content {
-        /* Full width */
+       flex-shrink: 0; /* Prevent text content from shrinking too much */
+       margin-bottom: 15px; /* Add some space below text */
     }
 
     .cover-text-content h2 {
-        font-size: 24px; /* Adjusted size */
+        font-size: 22px; /* Adjusted size */
         font-weight: 700;
         color: var(--primary-color);
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         line-height: 1.3;
         position: relative;
         display: inline-block;
-        padding-bottom: 8px;
+        padding-bottom: 6px;
     }
 
     .cover-text-content h2::after {
@@ -548,19 +549,19 @@ function getCoverPageStyles() {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 50px;
+        width: 40px;
         height: 3px;
         background-color: var(--accent-color);
         border-radius: 3px;
     }
 
     .cover-description-new {
-        font-size: 14.5px; /* Adjusted size */
+        font-size: 13px; /* Adjusted size */
         color: var(--secondary-color); /* Use secondary dark color */
-        line-height: 1.6;
-        margin-bottom: 25px; /* Adjusted margin */
+        line-height: 1.5; /* Adjusted */
+        margin-bottom: 20px; /* Adjusted margin */
         font-weight: 400;
-        max-width: 100%; /* Allow full width */
+        max-width: 100%;
     }
 
     .cover-description-new strong {
@@ -570,35 +571,35 @@ function getCoverPageStyles() {
 
     .components-legend-new {
         background-color: var(--background-light-accent);
-        padding: 18px 22px; /* Adjusted padding */
+        padding: 15px 20px; /* Adjusted padding */
         border-radius: var(--border-radius);
         border: 1px solid var(--border-light);
     }
 
     .components-legend-new h3 {
-        font-size: 15px; /* Adjusted size */
+        font-size: 14px; /* Adjusted size */
         font-weight: 600;
         color: var(--primary-color);
-        margin: 0 0 15px 0;
+        margin: 0 0 12px 0;
         text-align: left;
     }
 
     .legend-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
-        gap: 10px 20px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Responsive columns */
+        gap: 8px 15px; /* Adjusted gap */
     }
 
 
     .component-item-new {
         display: flex;
         align-items: center;
-        gap: 8px; /* Adjusted gap */
+        gap: 7px; /* Adjusted gap */
     }
 
     .component-dot-new {
-        width: 10px;
-        height: 10px;
+        width: 9px; /* Adjusted */
+        height: 9px; /* Adjusted */
         border-radius: 50%;
         flex-shrink: 0;
         border: 1px solid rgba(0, 0, 0, 0.3); /* Darker border for dots */
@@ -613,7 +614,7 @@ function getCoverPageStyles() {
     .cardio-color { background-color: var(--cardio-color); }
 
     .component-label-new {
-        font-size: 13px; /* Adjusted size */
+        font-size: 12px; /* Adjusted size */
         font-weight: 500;
         color: var(--secondary-color);
     }
@@ -624,51 +625,71 @@ function getCoverPageStyles() {
         margin-left: 4px;
     }
 
+    /* --- Layout Correction for Charts --- */
     .cover-visuals-content {
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping on smaller screens if needed */
-        gap: 25px; /* Adjusted gap */
+        display: flex; /* Use flexbox */
+        flex-direction: column; /* Stack charts vertically */
+        gap: 15px; /* Space between charts */
         width: 100%;
-        align-items: stretch;
+        flex-grow: 1; /* Allow this container to grow */
+        overflow: hidden; /* Prevent charts from overflowing */
+        /* align-items: stretch; Removed */
     }
 
     .chart-container-new {
-        flex: 1 1 300px; /* Allow shrinking, base width 300px, allow growing */
+        /* flex: 1 1 300px; Removed - let flex column handle sizing */
         background-color: var(--background-chart-container);
         border-radius: var(--border-radius-large);
-        padding: 20px 25px 25px 25px;
+        padding: 15px 20px 20px 20px; /* Adjusted padding */
         box-shadow: var(--box-shadow-medium);
         border: 1px solid var(--border-medium); /* Subtle border */
         display: flex;
         flex-direction: column;
-        min-width: 0;
-        height: 360px; /* Adjusted height */
-        max-height: 360px;
+        /* min-width: 0; Removed */
+        height: auto; /* Let height be determined by content and available space */
+        min-height: 250px; /* Minimum height to ensure chart visibility */
+        max-height: 300px; /* **Adjust this value as needed** Maximum height per chart */
+        flex-shrink: 1; /* Allow charts to shrink if needed */
+        flex-grow: 1; /* Allow charts to grow to fill space */
+        /* margin-bottom: 20px; /* Add space below each chart */
+        /* Removed margin-bottom, using gap in parent instead */
     }
 
+    /* .chart-container-new:last-child {
+       margin-bottom: 0; /* Remove margin from the last chart */
+    /* } */
+
+
      .chart-title {
-        font-size: 14px; /* Adjusted size */
+        font-size: 13px; /* Adjusted size */
         font-weight: 600;
         color: var(--text-dark);
-        margin: 0 0 15px 0;
+        margin: 0 0 10px 0; /* Adjusted margin */
         text-align: center;
+        flex-shrink: 0; /* Prevent title from shrinking */
     }
 
     #radarChart, #volumeLineChart {
         max-width: 100%;
-        max-height: calc(100% - 30px); /* Account for title */
+        /* max-height: calc(100% - 30px); /* Removed fixed calc, let flexbox manage */
+        width: 100%; /* Ensure canvas tries to fill container width */
+        height: 100%; /* Ensure canvas tries to fill container height */
         margin: auto;
         display: block;
+        flex-grow: 1; /* Allow canvas to grow */
+        min-height: 0; /* Important for flex item sizing */
     }
+    /* --- End Layout Correction --- */
 
     .cover-footer-new {
         width: 100%;
         text-align: center;
-        padding-top: 15px; /* Adjusted padding */
+        padding-top: 10px; /* Adjusted padding */
         margin-top: auto; /* Push footer to bottom */
         border-top: 1px solid var(--border-light);
-        font-size: 11px; /* Adjusted size */
+        font-size: 10px; /* Adjusted size */
         color: var(--text-light-gray);
+        flex-shrink: 0; /* Prevent footer from shrinking */
     }
     `;
 }
@@ -689,6 +710,8 @@ function getRadarChartScript(scores) {
     // Chart.js initialization script
     return `
     <script>
+      // Variable global para la instancia del gráfico radar
+      var myRadarChart;
       // Function to initialize the radar chart
       function initRadarChart() {
         const canvasElement = document.getElementById('radarChart');
@@ -704,7 +727,11 @@ function getRadarChartScript(scores) {
 
         // Chart.js Configuration
         try {
-            const radarChart = new Chart(ctx, {
+            // Destruir gráfico existente si lo hay (para reinicialización)
+            if (window.myRadarChart) {
+                window.myRadarChart.destroy();
+            }
+            window.myRadarChart = new Chart(ctx, { // Asignar a la variable global
                 type: 'radar',
                 data: {
                     labels: ${JSON.stringify(labels)},
@@ -713,32 +740,32 @@ function getRadarChartScript(scores) {
                         data: ${JSON.stringify(chartData)},
                         backgroundColor: 'rgba(10, 42, 94, 0.3)', // Keep dark fill for contrast
                         borderColor: 'rgba(10, 42, 94, 0.9)',   // Keep dark border
-                        borderWidth: 2,
+                        borderWidth: 1.5, // Reduced border width slightly
                         pointBackgroundColor: 'rgba(10, 42, 94, 1)',
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
                         pointHoverBorderColor: 'rgba(10, 42, 94, 1)',
-                        pointRadius: 3.5,
-                        pointHoverRadius: 5.5
+                        pointRadius: 3, // Reduced point size
+                        pointHoverRadius: 5 // Reduced hover size
                     }]
                 },
                 options: {
                     scales: {
                         r: { // Radial axis
-                            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' },
+                            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.08)' }, // Lighter lines
                             suggestedMin: 0,
                             suggestedMax: 100,
-                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.08)' }, // Lighter grid
                             ticks: {
-                                stepSize: 20,
-                                color: 'rgba(0, 0, 0, 0.6)',
-                                backdropColor: 'rgba(255, 255, 255, 0.75)',
-                                padding: 8,
-                                font: { size: 10 }
+                                stepSize: 25, // Adjusted step size
+                                color: 'rgba(0, 0, 0, 0.5)', // Lighter ticks
+                                backdropColor: 'rgba(255, 255, 255, 0.6)', // More transparent backdrop
+                                padding: 5, // Reduced padding
+                                font: { size: 9 } // Smaller font
                             },
                             pointLabels: { // Labels around the edge
-                                font: { size: 12, weight: '500' },
-                                color: 'rgba(0, 0, 0, 0.85)'
+                                font: { size: 11, weight: '500' }, // Adjusted font size
+                                color: 'rgba(0, 0, 0, 0.75)' // Slightly lighter labels
                             }
                         }
                     },
@@ -746,12 +773,12 @@ function getRadarChartScript(scores) {
                         legend: { display: false },
                         tooltip: {
                             enabled: true,
-                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            padding: 10,
-                            boxPadding: 4,
-                            cornerRadius: 4,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Slightly lighter tooltip
+                            titleFont: { size: 12, weight: 'bold' }, // Adjusted size
+                            bodyFont: { size: 11 }, // Adjusted size
+                            padding: 8, // Adjusted padding
+                            boxPadding: 3,
+                            cornerRadius: 3,
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
@@ -765,9 +792,10 @@ function getRadarChartScript(scores) {
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false // Crucial for resizing within flex container
                 }
             });
+            console.log("Radar chart initialized successfully."); // Confirmation log
         } catch (error) {
              console.error("Error initializing Radar Chart:", error);
         }
@@ -778,7 +806,7 @@ function getRadarChartScript(scores) {
           document.addEventListener('DOMContentLoaded', initRadarChart);
       } else {
           // Delay slightly if DOM is already loaded, might help rendering in some cases
-          setTimeout(initRadarChart, 100);
+          setTimeout(initRadarChart, 50); // Reduced delay
       }
     </script>
     `;
@@ -796,10 +824,12 @@ function getVolumeLineChartScript(volumeData) {
     // Check if data is empty and provide default if needed for display
     const displayLabels = labels.length > 0 ? labels : ['No Data'];
     const displayData = data.length > 0 ? data : [0];
+    const noDataAvailable = displayLabels.length === 1 && displayLabels[0] === 'No Data';
+
 
     const lineChartColors = {
-        backgroundColor: 'rgba(52, 152, 219, 0.2)', // Light blue area fill
-        borderColor: 'rgba(52, 152, 219, 1)',     // Solid blue line
+        backgroundColor: 'rgba(52, 152, 219, 0.15)', // Lighter blue area fill
+        borderColor: 'rgba(52, 152, 219, 0.9)',    // Solid blue line
         pointBackgroundColor: 'rgba(52, 152, 219, 1)',
         pointBorderColor: '#fff',
         pointHoverBackgroundColor: '#fff',
@@ -808,6 +838,8 @@ function getVolumeLineChartScript(volumeData) {
 
     return `
     <script>
+      // Variable global para la instancia del gráfico de volumen
+      var myVolumeChart;
       // Function to initialize the volume line chart
       function initVolumeLineChart() {
         const canvasElement = document.getElementById('volumeLineChart');
@@ -817,16 +849,16 @@ function getVolumeLineChartScript(volumeData) {
         }
         const ctx = canvasElement.getContext('2d');
          if (!ctx) {
-            console.error("Failed to get 2D context from volume canvas.");
-            return;
-        }
+             console.error("Failed to get 2D context from volume canvas.");
+             return;
+         }
 
         // Display message if no data
-        const volumeLabels = ${JSON.stringify(displayLabels)};
-        const volumeDataPoints = ${JSON.stringify(displayData)};
-        if (volumeLabels.length === 1 && volumeLabels[0] === 'No Data') {
-            ctx.font = "16px 'Inter', sans-serif";
-            ctx.fillStyle = '#888';
+        const noData = ${noDataAvailable};
+        if (noData) {
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Clear previous drawings
+            ctx.font = "14px 'Inter', sans-serif"; // Slightly smaller font
+            ctx.fillStyle = '#777'; // Lighter gray
             ctx.textAlign = 'center';
             ctx.fillText("No se pudo calcular el volumen.", canvasElement.width / 2, canvasElement.height / 2);
             console.warn("No volume data to display in line chart.");
@@ -836,24 +868,28 @@ function getVolumeLineChartScript(volumeData) {
 
         // Chart.js Configuration
         try {
-            const volumeChart = new Chart(ctx, {
+            // Destruir gráfico existente si lo hay
+            if (window.myVolumeChart) {
+                window.myVolumeChart.destroy();
+            }
+            window.myVolumeChart = new Chart(ctx, { // Asignar a la variable global
                 type: 'line',
                 data: {
-                    labels: volumeLabels,
+                    labels: ${JSON.stringify(displayLabels)},
                     datasets: [{
                         label: 'Series Semanales',
-                        data: volumeDataPoints,
+                        data: ${JSON.stringify(displayData)},
                         fill: true,
                         backgroundColor: '${lineChartColors.backgroundColor}',
                         borderColor: '${lineChartColors.borderColor}',
-                        borderWidth: 2.5,
+                        borderWidth: 2, // Adjusted width
                         pointBackgroundColor: '${lineChartColors.pointBackgroundColor}',
                         pointBorderColor: '${lineChartColors.pointBorderColor}',
                         pointHoverBackgroundColor: '${lineChartColors.pointHoverBackgroundColor}',
                         pointHoverBorderColor: '${lineChartColors.pointHoverBorderColor}',
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        tension: 0.1
+                        pointRadius: 3.5, // Adjusted size
+                        pointHoverRadius: 5.5, // Adjusted size
+                        tension: 0.2 // Slightly more tension
                     }]
                 },
                 options: {
@@ -861,62 +897,64 @@ function getVolumeLineChartScript(volumeData) {
                         y: {
                             beginAtZero: true,
                             title: {
-                                display: true,
-                                text: 'Número de Series',
-                                font: { size: 12 },
-                                color: '#666'
+                                display: false, // Hide Y axis title to save space
+                                // text: 'Número de Series',
+                                // font: { size: 11 },
+                                // color: '#666'
                             },
                             ticks: {
-                                color: 'rgba(0, 0, 0, 0.7)',
-                                precision: 0
+                                color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
+                                precision: 0,
+                                font: { size: 10 } // Smaller font
                             },
                              grid: {
-                                color: 'rgba(0, 0, 0, 0.08)'
+                                 color: 'rgba(0, 0, 0, 0.06)' // Lighter grid
                             }
                         },
                         x: {
                              ticks: {
-                                color: 'rgba(0, 0, 0, 0.7)',
-                                font: { size: 11 }
+                                 color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
+                                 font: { size: 10 } // Smaller font
                             },
                              grid: {
-                                display: false
+                                 display: false
                             }
                         }
                     },
                     plugins: {
                         legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                font: { size: 12 },
-                                color: 'rgba(0, 0, 0, 0.8)'
-                            }
+                            display: false, // Hide legend to save space
+                            // position: 'bottom',
+                            // labels: {
+                            //     font: { size: 11 },
+                            //     color: 'rgba(0, 0, 0, 0.8)'
+                            // }
                         },
                         tooltip: {
                             enabled: true,
-                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            padding: 10,
-                            boxPadding: 4,
-                            cornerRadius: 4,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            padding: 8,
+                            boxPadding: 3,
+                            cornerRadius: 3,
                              callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) { label += ': '; }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y + ' series';
-                                    }
-                                    return label;
-                                }
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) { label += ': '; }
+                                     if (context.parsed.y !== null) {
+                                         label += context.parsed.y + ' series';
+                                     }
+                                     return label;
+                                 }
                             }
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false // Crucial for resizing
                 }
             });
+             console.log("Volume chart initialized successfully."); // Confirmation log
         } catch (error) {
              console.error("Error initializing Volume Line Chart:", error);
         }
@@ -926,8 +964,8 @@ function getVolumeLineChartScript(volumeData) {
       if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', initVolumeLineChart);
       } else {
-           // Delay slightly if DOM is already loaded
-          setTimeout(initVolumeLineChart, 100);
+          // Delay slightly if DOM is already loaded
+          setTimeout(initVolumeLineChart, 50); // Reduced delay
       }
     </script>
     `;
