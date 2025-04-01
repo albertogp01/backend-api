@@ -1,4 +1,4 @@
-// chartService.js (Análisis Volumen Mejorado + Logging)
+// chartService.js (Calcula Volumen por Día + Logging)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -210,194 +210,128 @@ function calculateTrainingComponentScores(routineHtml) {
 
 
 /**
- * Calculates approximate weekly volume (total sets) per muscle group from routine HTML.
- * VERSION 3: More robust parsing, less dependent on specific HTML tags.
+ * Calculates approximate daily volume (total sets) from routine HTML.
+ * VERSION 4: Calculates total sets per day.
  * @param {string} routineHtml - The HTML content of the generated routine.
- * @returns {Object} - An object with muscle groups as keys and total weekly sets as values.
+ * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
  */
-function calculateWeeklyVolume(routineHtml) {
-    console.log("[Volume Calculation v3] Starting...");
+function calculateDailyVolume(routineHtml) {
+    console.log("[Volume Calculation v4 - Daily] Starting...");
 
-    const volume = {
-        Pecho: 0, Espalda: 0, Hombro: 0,
-        Biceps: 0, Triceps: 0, Pierna: 0,
-        Gluteo: 0, Abdomen: 0, Cardio: 0, Otro: 0
-    };
+    const dailyVolume = {}; // Example: { 'Día 1': 20, 'Día 2': 18 }
 
     if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
-        console.warn("[Volume Calculation v3] No valid routine HTML provided.");
+        console.warn("[Volume Calculation v4 - Daily] No valid routine HTML provided.");
         return {}; // Return empty object if no valid HTML
     }
 
-    // --- Keywords (Mantener o expandir según necesidad) ---
-    const muscleGroupKeywords = {
-        Pecho: ['pecho', 'chest', 'press de banca', 'bench press', 'aperturas', 'flyes', 'flexiones', 'push-up', 'pectoral'],
-        Espalda: ['espalda', 'back', 'remo', 'row', 'dominadas', 'pull-up', 'chin-up', 'pulldown', 'peso muerto', 'deadlift', 'dorsal', 'jalon', 'pull over', 'trapecio', 'trapezius'],
-        Hombro: ['hombro', 'shoulder', 'press militar', 'overhead press', 'elevaciones laterales', 'lateral raise', 'elevaciones frontales', 'front raise', 'pájaros', 'rear delt fly', 'face pull', 'deltoides'],
-        Biceps: ['biceps', 'bíceps', 'curl'],
-        Triceps: ['triceps', 'tríceps', 'extensiones', 'extension', 'fondos', 'dips', 'press francés', 'french press', 'skullcrusher'],
-        Pierna: ['pierna', 'leg', 'cuádriceps', 'quadriceps', 'femoral', 'hamstring', 'gemelo', 'calf', 'soleo', 'sentadilla', 'squat', 'prensa', 'leg press', 'zancadas', 'lunges', 'leg curl', 'leg extension', 'aductor', 'abductor', 'tibial'],
-        Gluteo: ['glúteo', 'glute', 'hip thrust', 'puente de glúteo', 'glute bridge', 'patada de glúteo', 'kickback'],
-        Abdomen: ['abdomen', 'abdominales', 'abs', 'core', 'plancha', 'plank', 'crunches', 'elevaciones de piernas', 'leg raise', 'rueda abdominal', 'ab wheel', 'oblicuos'],
-        Cardio: ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'aeróbico']
-    };
-
     // --- Regex Patterns ---
-    // Regex más flexible para sets x reps (permite 'series', 'sets', 'x', espacios variables)
+    // Regex para identificar encabezados de día (captura "Día X")
+    const dayHeaderRegex = /<th[^>]*colspan="5"[^>]*>.*?(Día\s*\d+).*?<\/th>/i;
+    // Regex más flexible para sets x reps
     const setRepRegex = /(\d+)\s*(?:series|sets|x)\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
     // Regex simple N x N
     const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
-    // Regex para tiempo
+    // Regex para tiempo (para contar cardio como 1 set)
     const timeBasedRegex = /(\d+)\s*(?:seg|sec|min|seconds?|minutes?)/i;
-    // Regex para RIR/RPE (opcional, podría usarse para refinar, pero no para sets)
-    // const intensityRegex = /RIR\s*\d+|RPE\s*\d+/i;
+    // Regex para keywords de cardio (para confirmar que el tiempo es de cardio)
+    const cardioKeywords = ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'aeróbico'];
+    const cardioKeywordRegex = new RegExp(`\\b(${cardioKeywords.join('|')})\\b`, 'i');
+
 
     // --- Preprocessing ---
-    // Extraer texto de las tablas de rutina principal y activación
-    let relevantText = '';
-    const tableMatches = routineHtml.match(/<table[\s\S]*?<\/table>/gi);
-    if (tableMatches) {
-        tableMatches.forEach(tableHtml => {
-            // Incluir solo si parece ser una tabla de ejercicios (contiene 'Ejercicio', 'Series', 'Reps', etc.)
-            if (/<th>Ejercicio<\/th>|<th>Series<\/th>|<th>Reps<\/th>/i.test(tableHtml)) {
-                relevantText += tableHtml + '\n'; // Añadir separador
-            }
-        });
-    } else {
-        // Si no hay tablas, usar todo el HTML (menos robusto)
-        relevantText = routineHtml;
-    }
-
     // Limpiar HTML y dividir en líneas significativas
-    const textContent = relevantText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' '); // Quitar tags y non-breaking spaces
-    const lines = textContent.split('\n') // Dividir por saltos de línea explícitos
-                         .map(line => line.replace(/\s+/g, ' ').trim()) // Limpiar espacios internos y externos
-                         .filter(line => line.length > 3); // Filtrar líneas muy cortas
+    const textContent = routineHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+    const lines = textContent.split('\n')
+                         .map(line => line.replace(/\s+/g, ' ').trim())
+                         .filter(line => line.length > 3);
 
-    console.log(`[Volume Calculation v3] Total lines extracted for analysis: ${lines.length}`);
+    console.log(`[Volume Calculation v4 - Daily] Total lines extracted for analysis: ${lines.length}`);
 
     // --- Analysis Loop ---
-    let exerciseContext = ""; // Guardar la línea anterior si parece un nombre de ejercicio
+    let currentDay = null;
+    let exerciseContext = ""; // Línea anterior (posible nombre de ejercicio)
+
     for (let i = 0; i < lines.length; i++) {
         const currentLine = lines[i];
-        console.log(`[Volume Debug v3] Analyzing Line ${i + 1}: "${currentLine}"`);
+        console.log(`[Volume Debug v4] Analyzing Line ${i + 1}: "${currentLine}"`);
 
-        let sets = 0;
-        let isCardio = false;
-
-        // 1. Buscar Sets x Reps
-        let setRepMatch = currentLine.match(setRepRegex) || currentLine.match(simpleSetRepRegex);
-        if (setRepMatch && setRepMatch.length >= 2) {
-            sets = parseInt(setRepMatch[1], 10) || 0;
-            console.log(`[Volume Debug v3] Line ${i + 1}: Found Set/Rep pattern "${setRepMatch[0]}". Sets: ${sets}`);
-        }
-
-        // 2. Buscar Tiempo (Cardio) - Solo si NO se encontraron sets
-        let timeMatch = null;
-        if (sets === 0) {
-            timeMatch = currentLine.match(timeBasedRegex);
-            if (timeMatch) {
-                // Considerar cardio si hay palabra clave de cardio EN LA MISMA LÍNEA O ANTERIOR
-                let searchContext = (exerciseContext + " " + currentLine).toLowerCase();
-                for (const keyword of muscleGroupKeywords.Cardio) {
-                    try {
-                        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                        if (regex.test(searchContext)) {
-                            isCardio = true;
-                            sets = 1; // Contar como 1 "set" de cardio
-                            console.log(`[Volume Debug v3] Line ${i + 1}: Found Time pattern "${timeMatch[0]}" AND Cardio keyword "${keyword}" in context. Sets: ${sets}`);
-                            break;
-                        }
-                    } catch(e) {/* ignore */}
-                }
-                 if (!isCardio) {
-                     console.log(`[Volume Debug v3] Line ${i + 1}: Found Time pattern "${timeMatch[0]}" but NO Cardio keyword in context.`);
-                 }
+        // 1. Comprobar si es un encabezado de día
+        const dayMatch = currentLine.match(dayHeaderRegex);
+        if (dayMatch && dayMatch[1]) {
+            // Normalizar el identificador del día (ej. "Día 1")
+            currentDay = dayMatch[1].replace(/:\s*.*$/, '').trim(); // Quita el texto después de ':'
+            if (!dailyVolume[currentDay]) {
+                dailyVolume[currentDay] = 0; // Inicializar si es la primera vez que vemos este día
             }
+            console.log(`[Volume Debug v4] Found Day Header: "${currentDay}"`);
+            exerciseContext = ""; // Resetear contexto al cambiar de día
+            continue; // Pasar a la siguiente línea después de encontrar encabezado
         }
 
-        // 3. Asignar Volumen si se encontraron Sets (o es Cardio)
-        if (sets > 0) {
-            let assigned = false;
-            let searchContext = (exerciseContext + " " + currentLine).toLowerCase(); // Buscar en línea actual + anterior
+        // 2. Si estamos dentro de un día, buscar sets/tiempo
+        if (currentDay) {
+            let setsFound = 0;
+            let isCardioSet = false;
 
-            if (isCardio) {
-                volume.Cardio += sets;
-                assigned = true;
-                console.log(`[Volume Assignment v3] Line ${i + 1}: Assigned ${sets} set(s) to Cardio.`);
-            } else {
-                // Buscar keywords de otros grupos musculares
-                for (const group in muscleGroupKeywords) {
-                    if (group === 'Cardio') continue; // Ya manejado
+            // Buscar Sets x Reps
+            let setRepMatch = currentLine.match(setRepRegex) || currentLine.match(simpleSetRepRegex);
+            if (setRepMatch && setRepMatch.length >= 2) {
+                setsFound = parseInt(setRepMatch[1], 10) || 0;
+                console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): Found Set/Rep pattern "${setRepMatch[0]}". Sets: ${setsFound}`);
+            }
 
-                    for (const keyword of muscleGroupKeywords[group]) {
-                        try {
-                            const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                            if (regex.test(searchContext)) {
-                                volume[group] += sets;
-                                assigned = true;
-                                console.log(`[Volume Assignment v3] Line ${i + 1}: Keyword '${keyword}' found in context. Assigned ${sets} sets to ${group}.`);
-                                break; // Asignar al primer grupo encontrado
-                            }
-                        } catch (e) {
-                            console.warn(`[Volume Calculation v3] Invalid regex for volume keyword: ${keyword}`, e);
-                        }
+            // Buscar Tiempo (Cardio) - SOLO si NO se encontraron sets/reps
+            if (setsFound === 0) {
+                let timeMatch = currentLine.match(timeBasedRegex);
+                if (timeMatch) {
+                    // Verificar si es cardio buscando keyword en línea actual o anterior
+                    let searchContext = (exerciseContext + " " + currentLine).toLowerCase();
+                    if (cardioKeywordRegex.test(searchContext)) {
+                        setsFound = 1; // Contar como 1 set de cardio
+                        isCardioSet = true;
+                        console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): Found Time pattern "${timeMatch[0]}" and Cardio keyword. Counting as 1 set.`);
+                    } else {
+                         console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): Found Time pattern "${timeMatch[0]}" but NO Cardio keyword in context.`);
                     }
-                    if (assigned) break;
                 }
             }
 
-            // Asignar a 'Otro' si hay sets pero no se encontró keyword
-            if (!assigned && !isCardio) {
-                // Solo asignar a Otro si la línea parece contener un ejercicio (evitar asignar líneas de notas)
-                if (setRepMatch) { // Condición más fuerte: solo si encontramos sets/reps explícitos
-                    volume.Otro += sets;
-                    console.log(`[Volume Assignment v3] Line ${i + 1}: Found sets (${sets}) but no keyword in context "${searchContext.substring(0,50)}...". Assigned to Otro.`);
-                } else {
-                     console.log(`[Volume Assignment v3] Line ${i + 1}: No sets/reps found and not cardio. Not assigned.`);
-                }
+            // Añadir sets al total del día
+            if (setsFound > 0) {
+                dailyVolume[currentDay] += setsFound;
+                console.log(`[Volume Assignment v4] Line ${i + 1}: Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
+            } else {
+                 console.log(`[Volume Debug v4] Line ${i + 1} (Day: ${currentDay}): No sets identified.`);
             }
+
+             // Actualizar contexto para la siguiente línea (si no tenía sets/tiempo y no es cabecera)
+             if (setsFound === 0 && !timeMatch && !/Ejercicio|Series|Reps|Descanso|Notas/i.test(currentLine)) {
+                 exerciseContext = currentLine;
+             } else {
+                 exerciseContext = ""; // Resetear si la línea actual tenía sets/tiempo o era cabecera
+             }
+
         } else {
-             console.log(`[Volume Debug v3] Line ${i + 1}: No sets or cardio identified.`);
-        }
-
-        // Actualizar contexto para la siguiente línea
-        // Asumir que una línea sin sets/tiempo es probablemente el nombre del ejercicio
-        if (sets === 0 && !timeMatch) {
-             // Evitar que cabeceras de tabla (Ejercicio, Series, Reps...) se consideren contexto
+             console.log(`[Volume Debug v4] Line ${i + 1}: Skipping line as no current day context is set.`);
+             // Actualizar contexto por si la línea es un nombre de ejercicio antes del primer día (poco probable)
              if (!/Ejercicio|Series|Reps|Descanso|Notas/i.test(currentLine)) {
                   exerciseContext = currentLine;
              } else {
-                  exerciseContext = ""; // Resetear si es cabecera
+                  exerciseContext = "";
              }
-        } else {
-            exerciseContext = ""; // Resetear si la línea actual tenía sets/tiempo
         }
-
     } // Fin del bucle de líneas
 
-    console.log("[Volume Calculation v3] Final Volume (Before Filter):", JSON.stringify(volume));
-
-    // --- Filtrado Final ---
-    const filteredVolume = {};
-    let totalSetsCalculated = 0;
-    for (const group in volume) {
-        if (volume[group] > 0) {
-            filteredVolume[group] = volume[group];
-            totalSetsCalculated += volume[group];
-        }
-    }
-
-    console.log(`[Volume Calculation v3] Total sets calculated across all groups: ${totalSetsCalculated}`);
+    console.log("[Volume Calculation v4 - Daily] Final Daily Volume:", JSON.stringify(dailyVolume));
 
     // Devolver objeto vacío si no se calculó NINGÚN set en absoluto
-    if (totalSetsCalculated === 0) {
-         console.warn("[Volume Calculation v3] No sets were calculated for any muscle group. Returning empty object.");
+    if (Object.keys(dailyVolume).length === 0 || Object.values(dailyVolume).every(v => v === 0)) {
+         console.warn("[Volume Calculation v4 - Daily] No sets were calculated for any day. Returning empty object.");
          return {};
     }
 
-    console.log("[Volume Calculation v3] Final Filtered Volume (for chart):", JSON.stringify(filteredVolume));
-    return filteredVolume;
+    return dailyVolume;
 }
 
 
@@ -417,12 +351,12 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
     // Dynamic description based on main components
     let description = `¡Hola ${clientName}! Aquí tienes un resumen visual de tu nuevo plan de entrenamiento. `;
     if (scores.mainComponents && scores.mainComponents.length > 0) {
-        description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por grupo muscular. ¡A darle con todo!`;
+        description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡A darle con todo!`; // Texto actualizado
     } else {
-        description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado. ¡Disfruta del proceso!`;
+        description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`; // Texto actualizado
     }
 
-    // HTML Structure remains the same as previous version
+    // HTML Structure remains the same
     return `
     <div class="cover-page-new">
       <div class="cover-header-new">
@@ -474,7 +408,8 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
               <canvas id="radarChart"></canvas>
           </div>
           <div class="chart-container-new volume-chart-container-new">
-              <h3 class="chart-title">Volumen Semanal Estimado (Series)</h3>
+              {/* Título del gráfico actualizado */}
+              <h3 class="chart-title">Volumen Total Estimado por Día (Series)</h3>
               <canvas id="volumeLineChart"></canvas>
           </div>
         </div>
@@ -883,21 +818,31 @@ function getRadarChartScript(scores) {
 }
 
 /**
- * Genera el script de inicialización de Chart.js para el gráfico de líneas de volumen.
- * @param {Object} volumeData - Datos de volumen semanal por grupo muscular.
+ * Genera el script de inicialización de Chart.js para el gráfico de líneas de volumen DIARIO.
+ * @param {Object} dailyVolumeData - Datos de volumen diario (ej. {'Día 1': 20, 'Día 2': 18}).
  * @returns {string} - Código JavaScript para inicializar el gráfico de líneas.
  */
-function getVolumeLineChartScript(volumeData) {
-    const labels = Object.keys(volumeData);
-    const data = Object.values(volumeData);
+function getVolumeLineChartScript(dailyVolumeData) {
+    // Extraer etiquetas (Día 1, Día 2...) y datos (total series)
+    // Asegurarse de que los días estén ordenados correctamente si es necesario
+    const sortedDays = Object.keys(dailyVolumeData).sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+    });
+
+    const labels = sortedDays;
+    const data = sortedDays.map(day => dailyVolumeData[day]);
 
     // Check if data is empty and provide default if needed for display
     const displayLabels = labels.length > 0 ? labels : ['No Data'];
     const displayData = data.length > 0 ? data : [0];
     // Determine if the chart should display the "No Data" message
-    const noDataAvailable = (Object.keys(volumeData).length === 0);
-    console.log(`[Volume Script] Generating script. No data available: ${noDataAvailable}`);
-    console.log(`[Volume Script] volumeData for script: ${JSON.stringify(volumeData)}`);
+    const noDataAvailable = (Object.keys(dailyVolumeData).length === 0);
+    console.log(`[Volume Script - Daily] Generating script. No data available: ${noDataAvailable}`);
+    console.log(`[Volume Script - Daily] dailyVolumeData for script: ${JSON.stringify(dailyVolumeData)}`);
+    console.log(`[Volume Script - Daily] Labels for chart: ${JSON.stringify(displayLabels)}`);
+    console.log(`[Volume Script - Daily] Data for chart: ${JSON.stringify(displayData)}`);
 
 
     const lineChartColors = {
@@ -929,7 +874,7 @@ function getVolumeLineChartScript(volumeData) {
         // Display message if no data
         const noData = ${noDataAvailable}; // Use the calculated boolean
         if (noData) {
-            console.log("[Volume Script] No data flag is true, displaying message on canvas.");
+            console.log("[Volume Script - Daily] No data flag is true, displaying message on canvas.");
             // Clear previous drawings (important if chart existed before)
              if (window.myVolumeChart) {
                 window.myVolumeChart.destroy();
@@ -946,7 +891,7 @@ function getVolumeLineChartScript(volumeData) {
             console.warn("No volume data to display in line chart.");
             return; // Stop chart initialization
         } else {
-             console.log("[Volume Script] Data is available, proceeding with chart initialization.");
+             console.log("[Volume Script - Daily] Data is available, proceeding with chart initialization.");
         }
 
 
@@ -954,17 +899,17 @@ function getVolumeLineChartScript(volumeData) {
         try {
             // Destruir gráfico existente si lo hay
             if (window.myVolumeChart) {
-                console.log("[Volume Script] Destroying existing volume chart instance.");
+                console.log("[Volume Script - Daily] Destroying existing volume chart instance.");
                 window.myVolumeChart.destroy();
             }
-            console.log("[Volume Script] Creating new Chart instance.");
+            console.log("[Volume Script - Daily] Creating new Chart instance.");
             window.myVolumeChart = new Chart(ctx, { // Asignar a la variable global
-                type: 'line',
+                type: 'line', // Podría ser 'bar' también si se prefiere
                 data: {
-                    // Use the actual labels and data if not empty
+                    // Usar los días ordenados como etiquetas y los sets totales como datos
                     labels: ${JSON.stringify(displayLabels)},
                     datasets: [{
-                        label: 'Series Semanales',
+                        label: 'Series Totales por Día', // Etiqueta actualizada
                         data: ${JSON.stringify(displayData)},
                         fill: true,
                         backgroundColor: '${lineChartColors.backgroundColor}',
@@ -976,7 +921,7 @@ function getVolumeLineChartScript(volumeData) {
                         pointHoverBorderColor: '${lineChartColors.pointHoverBorderColor}',
                         pointRadius: 3.5, // Adjusted size
                         pointHoverRadius: 5.5, // Adjusted size
-                        tension: 0.2 // Slightly more tension
+                        tension: 0.1 // Slightly less tension for potentially fewer points
                     }]
                 },
                 options: {
@@ -984,11 +929,15 @@ function getVolumeLineChartScript(volumeData) {
                         y: {
                             beginAtZero: true,
                             title: {
-                                display: false, // Hide Y axis title to save space
+                                display: true, // Mostrar título del eje Y
+                                text: 'Número Total de Series', // Título actualizado
+                                font: { size: 11 },
+                                color: '#666',
+                                padding: { top: 0, bottom: 5 }
                             },
                             ticks: {
                                 color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
-                                precision: 0,
+                                precision: 0, // Asegurar números enteros para series
                                 font: { size: 10 } // Smaller font
                             },
                              grid: {
@@ -996,6 +945,13 @@ function getVolumeLineChartScript(volumeData) {
                             }
                         },
                         x: {
+                             title: { // Añadir título opcional al eje X
+                                display: true,
+                                text: 'Día de Entrenamiento',
+                                font: { size: 11 },
+                                color: '#666',
+                                padding: { top: 5, bottom: 0 }
+                             },
                              ticks: {
                                  color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
                                  font: { size: 10 } // Smaller font
@@ -1007,7 +963,7 @@ function getVolumeLineChartScript(volumeData) {
                     },
                     plugins: {
                         legend: {
-                            display: false, // Hide legend to save space
+                            display: false, // Ocultar leyenda (solo hay una línea)
                         },
                         tooltip: {
                             enabled: true,
@@ -1018,8 +974,13 @@ function getVolumeLineChartScript(volumeData) {
                             boxPadding: 3,
                             cornerRadius: 3,
                              callbacks: {
+                                 // Mostrar "Día X: Y series" en el tooltip
+                                 title: function(tooltipItems) {
+                                     // tooltipItems es un array, usualmente con un item para gráficos de línea
+                                     return tooltipItems[0]?.label || '';
+                                 },
                                  label: function(context) {
-                                     let label = context.dataset.label || '';
+                                     let label = context.dataset.label || ''; // "Series Totales por Día"
                                      if (label) { label += ': '; }
                                      if (context.parsed.y !== null) {
                                          label += context.parsed.y + ' series';
@@ -1033,9 +994,9 @@ function getVolumeLineChartScript(volumeData) {
                     maintainAspectRatio: false // Crucial for resizing
                 }
             });
-             console.log("[Volume Script] Volume chart initialized successfully."); // Confirmation log
+             console.log("[Volume Script - Daily] Volume chart initialized successfully."); // Confirmation log
         } catch (error) {
-             console.error("[Volume Script] Error initializing Volume Line Chart:", error);
+             console.error("[Volume Script - Daily] Error initializing Volume Line Chart:", error);
         }
       }
 
@@ -1059,16 +1020,18 @@ function getVolumeLineChartScript(volumeData) {
  * @returns {object} - Object containing fullCoverPageHtml, styles, combined script, scores, and volumeData.
  */
 function createCoverPage(routineHtml, clientName, logoBase64) {
-    // 1. Calculate component scores
+    // 1. Calculate component scores (no changes needed here)
     const scores = calculateTrainingComponentScores(routineHtml);
 
-    // 2. Calculate weekly volume
-    // **Important:** calculateWeeklyVolume now returns an empty object {} if no volume is found.
-    const volumeData = calculateWeeklyVolume(routineHtml);
-    console.log(`[createCoverPage] volumeData received from calculateWeeklyVolume: ${JSON.stringify(volumeData)}`);
+    // 2. Calculate DAILY volume
+    // Renamed function and expected output format changed
+    const dailyVolumeData = calculateDailyVolume(routineHtml);
+    console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
     // 3. Generate cover page HTML (placeholders for charts)
+    // generateCoverPageHtml internally uses scores for the legend, no change needed there.
+    // The title for the volume chart inside this HTML is updated manually below or within the function.
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
 
     // 4. Replace logo placeholder
@@ -1079,13 +1042,13 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
         console.warn("Valid Logo Base64 not provided or invalid format. Removing logo element.");
     }
 
-    // 5. Get CSS styles
+    // 5. Get CSS styles (no changes needed here)
     const styles = getCoverPageStyles();
 
     // 6. Get Chart.js initialization scripts
     const radarScript = getRadarChartScript(scores);
-    // Pass the potentially empty volume data to the script generator
-    const volumeScript = getVolumeLineChartScript(volumeData);
+    // Pass the DAILY volume data to the updated script generator
+    const volumeScript = getVolumeLineChartScript(dailyVolumeData);
 
     // 7. Combine scripts (including the main Chart.js library)
     const combinedScript = `
@@ -1099,15 +1062,17 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
         fullCoverPageHtml,
         styles,
         script: combinedScript,
-        scores,
-        volumeData // Return the calculated (possibly empty) volume data
+        scores, // Keep scores for radar chart
+        volumeData: dailyVolumeData // Return the calculated daily volume data
     };
 }
 
-// Export the main function
+// Export the main function and the new volume function name
 module.exports = {
     calculateTrainingComponentScores,
-    calculateWeeklyVolume,
+    calculateDailyVolume, // Export the new function name
     createCoverPage
+    // Keep other exports if they were needed for testing
 };
+
 
