@@ -6,7 +6,7 @@ const puppeteer = require("puppeteer");
 const os = require("os");
 
 // Importar la función principal de chartService.js
-const { createRadarChartCoverPage } = require('./chartService');
+const { createCoverPage } = require('./chartService');
 
 async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", requestId = "") {
   return new Promise(async (resolve, reject) => {
@@ -60,8 +60,8 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
       // --- Generar HTML de la Portada Dinámica ---
       console.log("Generando HTML de la portada...");
       // Utilizar el nombre correcto de la función y manejar su retorno correctamente
-      console.log(`[DEBUG PDF] Llamando a createRadarChartCoverPage con clientName: ${clientName}, htmlContent length: ${htmlContent?.length || 0}, logoBase64 disponible: ${!!logoBase64}`);
-      const { coverPageHtml, styles, script, scores } = createRadarChartCoverPage(htmlContent, clientName, logoBase64);
+      console.log(`[DEBUG PDF] Llamando a createCoverPage con clientName: ${clientName}, htmlContent length: ${htmlContent?.length || 0}, logoBase64 disponible: ${!!logoBase64}`);
+      const { coverPageHtml, styles, script, scores } = createCoverPage(htmlContent, clientName, logoBase64);
       
       // Combinar los componentes en un solo string HTML
       const coverPageHtmlString = `
