@@ -1,4 +1,4 @@
-// chartService.js (Análisis Estructural Volumen por Día + Logging)
+// chartService.js (Análisis Estructural Volumen por Día + Logging - CORREGIDO)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -181,21 +181,21 @@ function calculateTrainingComponentScores(routineHtml) {
     let mainComponents = [];
     Object.entries(scores).forEach(([component, score]) => {
          if (score >= 25) { // Threshold for significant component
-              if (score > maxScore) {
-                  maxScore = score;
-                  mainComponents = [component];
-              } else if (score === maxScore && !mainComponents.includes(component)) { // Add ties
-                  mainComponents.push(component);
-              }
+             if (score > maxScore) {
+                 maxScore = score;
+                 mainComponents = [component];
+             } else if (score === maxScore && !mainComponents.includes(component)) { // Add ties
+                 mainComponents.push(component);
+             }
          }
     });
       // Ensure all components with max score are included if threshold wasn't met but max exists
       if (mainComponents.length === 0 && maxScore > 0) {
-         Object.entries(scores).forEach(([component, score]) => {
-              if (score === maxScore) {
-                  mainComponents.push(component);
-              }
-         });
+       Object.entries(scores).forEach(([component, score]) => {
+             if (score === maxScore) {
+                 mainComponents.push(component);
+             }
+       });
       }
 
 
@@ -211,50 +211,47 @@ function calculateTrainingComponentScores(routineHtml) {
 
 /**
  * Calculates approximate daily volume (total sets) from routine HTML using structural analysis.
- * VERSION 5: Calculates total sets per day by parsing table structure.
+ * VERSION 6: Calculates total sets per day by parsing table structure (REVISED SET EXTRACTION).
  * @param {string} routineHtml - The HTML content of the generated routine.
  * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
  */
 function calculateDailyVolume(routineHtml) {
-    console.log("[Volume Calculation v5 - Structural] Starting...");
+    console.log("[Volume Calculation v6 - Structural Revised] Starting...");
 
     const dailyVolume = {}; // Example: { 'Día 1': 20, 'Día 2': 18 }
 
     if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
-        console.warn("[Volume Calculation v5] No valid routine HTML provided.");
+        console.warn("[Volume Calculation v6] No valid routine HTML provided.");
         return {};
     }
 
     // --- Regex Patterns ---
     const dayHeaderRegex = /<th[^>]*colspan="5"[^>]*>.*?(Día\s*\d+).*?<\/th>/i;
-    const setRepRegex = /(\d+)\s*(?:series|sets|x)\s*(\d+(?:-\d+)?)\s*(?:reps?|repeticiones?)?/i;
-    const simpleSetRepRegex = /(\d+)\s*x\s*(\d+(?:-\d+)?)/i;
+    // Regex for time-based activities (used as fallback for cardio)
     const timeBasedRegex = /(\d+)\s*(?:seg|sec|min|seconds?|minutes?)/i;
     const cardioKeywords = ['cardio', 'correr', 'run', 'bicicleta', 'bike', 'cinta', 'treadmill', 'eliptica', 'elliptical', 'nadar', 'swim', 'remar', 'rowing', 'hiit', 'intervalos', 'burpee', 'jumping jack', 'aeróbico'];
     const cardioKeywordRegex = new RegExp(`\\b(${cardioKeywords.join('|')})\\b`, 'i');
 
     // --- HTML Parsing ---
-    // Find all table blocks
     const tableRegex = /<table[\s\S]*?<\/table>/gi;
     const tableMatches = routineHtml.match(tableRegex);
 
     if (!tableMatches || tableMatches.length === 0) {
-        console.warn("[Volume Calculation v5] No tables found in routine HTML.");
+        console.warn("[Volume Calculation v6] No tables found in routine HTML.");
         return {};
     }
 
-    console.log(`[Volume Calculation v5] Found ${tableMatches.length} table(s).`);
+    console.log(`[Volume Calculation v6] Found ${tableMatches.length} table(s).`);
 
     tableMatches.forEach((tableHtml, tableIndex) => {
-        console.log(`[Volume Debug v5] Processing Table ${tableIndex + 1}`);
+        console.log(`[Volume Debug v6] Processing Table ${tableIndex + 1}`);
         let currentDay = null;
 
-        // Find rows within the current table
         const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
         const rowMatches = tableHtml.match(rowRegex);
 
         if (!rowMatches) {
-            console.log(`[Volume Debug v5] No rows found in Table ${tableIndex + 1}.`);
+            console.log(`[Volume Debug v6] No rows found in Table ${tableIndex + 1}.`);
             return; // Skip this table if it has no rows
         }
 
@@ -267,7 +264,7 @@ function calculateDailyVolume(routineHtml) {
                 if (!dailyVolume[currentDay]) {
                     dailyVolume[currentDay] = 0;
                 }
-                console.log(`[Volume Debug v5] Table ${tableIndex + 1}, Row ${rowIndex + 1}: Found Day Header "${currentDay}"`);
+                console.log(`[Volume Debug v6] Table ${tableIndex + 1}, Row ${rowIndex + 1}: Found Day Header "${currentDay}"`);
                 return; // Move to the next row after finding header
             }
 
@@ -279,78 +276,96 @@ function calculateDailyVolume(routineHtml) {
                 let rowTextContent = "";
                 if (cellMatches) {
                     rowTextContent = cellMatches.map(cellHtml => {
-                        return cellHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' '); // Clean cell content
-                    }).join(' ').replace(/\s+/g, ' ').trim();
+                        // Clean cell content: remove HTML tags, decode entities like &nbsp;
+                        return cellHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+                    }).join(' ').replace(/\s+/g, ' ').trim(); // Collapse multiple spaces
                 }
 
-                if (!rowTextContent) {
-                    // console.log(`[Volume Debug v5] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Skipping row with no text content.`);
-                    return; // Skip rows without content
+                // Skip rows that are likely subheaders or empty after cleaning
+                if (!rowTextContent || /<b>.*?<\/b>|Ejercicio|Series|Reps|Descanso|Notas Clave/i.test(rowHtml)) {
+                     // console.log(`[Volume Debug v6] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Skipping row (likely header or empty). Content: "${rowTextContent}"`);
+                    return;
                 }
 
-                console.log(`[Volume Debug v5] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Analyzing text "${rowTextContent.substring(0, 100)}..."`);
+                console.log(`[Volume Debug v6] Table ${tableIndex + 1}, Row ${rowIndex + 1} (Day ${currentDay}): Analyzing text "${rowTextContent.substring(0, 100)}..."`);
 
                 let setsFound = 0;
                 let isCardioSet = false;
 
-                // Search for Sets x Reps in the row's text
-                let setRepMatch = rowTextContent.match(setRepRegex) || rowTextContent.match(simpleSetRepRegex);
-                if (setRepMatch && setRepMatch.length >= 2) {
-                    // Prioritize the second number if it looks like sets (e.g., "Ejercicio 3 x 10")
-                    let potentialSetsIndex1 = parseInt(setRepMatch[1], 10);
-                    let potentialSetsIndex2 = NaN;
-                    // Check if there's a number before 'x' or 'series'/'sets'
-                     const setsPrefixMatch = rowTextContent.match(/(\d+)\s*(?:series|sets|x)/i);
-                     if(setsPrefixMatch && setsPrefixMatch[1]){
-                        potentialSetsIndex2 = parseInt(setsPrefixMatch[1], 10);
-                     }
-
-                     // Heuristic: If one number is significantly smaller (e.g., < 6) and the other is larger, assume smaller is sets.
-                     // Or if a specific "sets/series" keyword is found before a number.
-                     if (!isNaN(potentialSetsIndex2)) {
-                         setsFound = potentialSetsIndex2;
-                     } else if (!isNaN(potentialSetsIndex1)) {
-                         setsFound = potentialSetsIndex1;
-                     } else {
-                         setsFound = 0;
-                     }
-
-                    if (setsFound > 0) {
-                        console.log(`[Volume Debug v5] Row ${rowIndex + 1}: Found Set/Rep pattern "${setRepMatch[0]}". Extracted Sets: ${setsFound}`);
+                // --- Revised Set Extraction Logic ---
+                // Try to find explicit "N series" or "N sets" first within the text content of the row
+                const explicitSetsMatch = rowTextContent.match(/(\d+)\s+(?:series|sets)\b/i); // Added word boundary \b
+                if (explicitSetsMatch && explicitSetsMatch[1]) {
+                    let potentialSets = parseInt(explicitSetsMatch[1], 10);
+                     if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check: >0 and <50 sets
+                         setsFound = potentialSets;
+                         console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found explicit Set pattern "${explicitSetsMatch[0]}". Extracted Sets: ${setsFound}`);
+                    } else {
+                         console.warn(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Explicit Set pattern found but value invalid (${explicitSetsMatch[1]}).`);
+                         setsFound = 0; // Reset if parsing failed or value is unreasonable
                     }
                 }
 
-                // Search for Time (Cardio) - ONLY if no sets/reps found
+                // If no explicit sets found, try "N x Reps" or "N x Y" patterns
+                // Looks for a number, followed by 'x', followed by another number (potentially a range)
+                if (setsFound === 0) {
+                    // Prioritize matching the number directly before 'x'
+                    const xSetsMatch = rowTextContent.match(/(\d+)\s*x\s+\d+(?:-\d+)?/i);
+                    if (xSetsMatch && xSetsMatch[1]) {
+                        let potentialSets = parseInt(xSetsMatch[1], 10);
+                         if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check
+                            setsFound = potentialSets;
+                            console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found "N x Reps" pattern "${xSetsMatch[0]}". Extracted Sets: ${setsFound}`);
+                        } else {
+                             console.warn(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: "N x Reps" pattern found but value invalid (${xSetsMatch[1]}).`);
+                             setsFound = 0; // Reset
+                        }
+                    }
+                }
+                // --- End Revised Set Extraction Logic ---
+
+
+                // Search for Time (Cardio) - ONLY if no sets found via revised logic
                 if (setsFound === 0) {
                     let timeMatch = rowTextContent.match(timeBasedRegex);
                     if (timeMatch) {
                         // Check for cardio keyword in the same row text
                         if (cardioKeywordRegex.test(rowTextContent)) {
-                            setsFound = 1; // Count as 1 set
+                            setsFound = 1; // Count time-based cardio as 1 set
                             isCardioSet = true;
-                            console.log(`[Volume Debug v5] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" and Cardio keyword. Counting as 1 set.`);
+                            console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" and Cardio keyword. Counting as 1 set.`);
                         } else {
-                            console.log(`[Volume Debug v5] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" but NO Cardio keyword.`);
+                            console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: Found Time pattern "${timeMatch[0]}" but NO Cardio keyword.`);
                         }
                     }
                 }
 
                 // Add sets to the current day's total
                 if (setsFound > 0) {
-                    dailyVolume[currentDay] += setsFound;
-                    console.log(`[Volume Assignment v5] Row ${rowIndex + 1}: Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
-                } else {
-                    console.log(`[Volume Debug v5] Row ${rowIndex + 1}: No sets or cardio identified in this row.`);
+                    // Ensure the number is valid before adding
+                    if (!isNaN(setsFound)) {
+                        dailyVolume[currentDay] += setsFound;
+                        console.log(`[Volume Assignment v6 - Rev] Row ${rowIndex + 1}: Added ${setsFound} sets to ${currentDay}. New total: ${dailyVolume[currentDay]}`);
+                    } else {
+                        // This case should be rare now due to checks above, but good to keep
+                        console.warn(`[Volume Assignment v6 - Rev] Row ${rowIndex + 1}: Invalid setsFound value was not caught earlier (${setsFound}). Skipping addition.`);
+                        setsFound = 0; // Ensure it's reset if invalid
+                    }
                 }
-            }
+
+                // Log only if truly nothing was identified for this data row
+                if (setsFound === 0) {
+                    console.log(`[Volume Debug v6 - Rev] Row ${rowIndex + 1}: No sets or qualifying cardio identified in this row.`);
+                }
+            } // end if(currentDay)
         }); // End loop through rows
     }); // End loop through tables
 
-    console.log("[Volume Calculation v5 - Structural] Final Daily Volume:", JSON.stringify(dailyVolume));
+    console.log("[Volume Calculation v6 - Structural Revised] Final Daily Volume:", JSON.stringify(dailyVolume));
 
     // Return empty object if no sets were calculated for any day
     if (Object.keys(dailyVolume).length === 0 || Object.values(dailyVolume).every(v => v === 0)) {
-        console.warn("[Volume Calculation v5] No sets were calculated for any day. Returning empty object.");
+        console.warn("[Volume Calculation v6] No sets were calculated for any day. Returning empty object.");
         return {};
     }
 
@@ -374,12 +389,12 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
     // Dynamic description based on main components
     let description = `¡Hola ${clientName}! Aquí tienes un resumen visual de tu nuevo plan de entrenamiento. `;
     if (scores.mainComponents && scores.mainComponents.length > 0) {
-        description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡A darle con todo!`; // Texto actualizado
+        description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡A darle con todo!`;
     } else {
-        description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`; // Texto actualizado
+        description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`;
     }
 
-    // HTML Structure remains the same
+    // HTML Structure
     return `
     <div class="cover-page-new">
       <div class="cover-header-new">
@@ -397,30 +412,30 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
           <div class="components-legend-new">
             <h3>Enfoque del Entrenamiento (%)</h3>
             <div class="legend-grid">
-                <div class="component-item-new">
-                    <div class="component-dot-new fuerza-color"></div>
-                    <div class="component-label-new">Fuerza: <span>${scores.fuerza}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new potencia-color"></div>
-                    <div class="component-label-new">Potencia: <span>${scores.potencia}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new hipertrofia-color"></div>
-                    <div class="component-label-new">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
-                </div>
-                 <div class="component-item-new">
-                    <div class="component-dot-new tecnica-color"></div>
-                    <div class="component-label-new">Técnica: <span>${scores.tecnica}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new movilidad-color"></div>
-                    <div class="component-label-new">Movilidad: <span>${scores.movilidad}%</span></div>
-                </div>
-                <div class="component-item-new">
-                    <div class="component-dot-new cardio-color"></div>
-                    <div class="component-label-new">Cardio: <span>${scores.cardio}%</span></div>
-                </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new fuerza-color"></div>
+                  <div class="component-label-new">Fuerza: <span>${scores.fuerza}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new potencia-color"></div>
+                  <div class="component-label-new">Potencia: <span>${scores.potencia}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new hipertrofia-color"></div>
+                  <div class="component-label-new">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
+              </div>
+               <div class="component-item-new">
+                  <div class="component-dot-new tecnica-color"></div>
+                  <div class="component-label-new">Técnica: <span>${scores.tecnica}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new movilidad-color"></div>
+                  <div class="component-label-new">Movilidad: <span>${scores.movilidad}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new cardio-color"></div>
+                  <div class="component-label-new">Cardio: <span>${scores.cardio}%</span></div>
+              </div>
             </div>
           </div>
         </div>
@@ -462,10 +477,10 @@ function getCoverPageStyles() {
         --light-blue-bg: #e0f2f7; /* Light Sky Blue */
         --medium-blue-bg: #b3e0f2; /* Medium Sky Blue */
         --text-light: #ffffff;     /* White text (e.g., for buttons if added) */
-        --text-dark: #2c3e50;      /* Dark Blue-Gray for main text */
-        --text-medium-dark: #555;  /* Medium dark gray for less important text */
+        --text-dark: #2c3e50;       /* Dark Blue-Gray for main text */
+        --text-medium-dark: #555;   /* Medium dark gray for less important text */
         --text-light-gray: #95a5a6; /* Light gray for footer */
-        --border-light: rgba(0, 0, 0, 0.1);  /* Light border for dark on light */
+        --border-light: rgba(0, 0, 0, 0.1);   /* Light border for dark on light */
         --border-medium: #bdc3c7; /* Medium border */
         --background-light-accent: rgba(0, 0, 0, 0.04); /* Subtle dark accent on light bg */
         --background-chart-container: #ffffff; /* White background for charts */
@@ -861,7 +876,8 @@ function getVolumeLineChartScript(dailyVolumeData) {
     const displayLabels = labels.length > 0 ? labels : ['No Data'];
     const displayData = data.length > 0 ? data : [0];
     // Determine if the chart should display the "No Data" message
-    const noDataAvailable = (Object.keys(dailyVolumeData).length === 0);
+    // Check if dailyVolumeData is empty OR if all values are 0
+    const noDataAvailable = (Object.keys(dailyVolumeData).length === 0 || data.every(v => v === 0));
     console.log(`[Volume Script - Daily] Generating script. No data available: ${noDataAvailable}`);
     console.log(`[Volume Script - Daily] dailyVolumeData for script: ${JSON.stringify(dailyVolumeData)}`);
     console.log(`[Volume Script - Daily] Labels for chart: ${JSON.stringify(displayLabels)}`);
@@ -870,7 +886,7 @@ function getVolumeLineChartScript(dailyVolumeData) {
 
     const lineChartColors = {
         backgroundColor: 'rgba(52, 152, 219, 0.15)', // Lighter blue area fill
-        borderColor: 'rgba(52, 152, 219, 0.9)',    // Solid blue line
+        borderColor: 'rgba(52, 152, 219, 0.9)',     // Solid blue line
         pointBackgroundColor: 'rgba(52, 152, 219, 1)',
         pointBorderColor: '#fff',
         pointHoverBackgroundColor: '#fff',
@@ -900,14 +916,17 @@ function getVolumeLineChartScript(dailyVolumeData) {
             console.log("[Volume Script - Daily] No data flag is true, displaying message on canvas.");
             // Clear previous drawings (important if chart existed before)
              if (window.myVolumeChart) {
-                window.myVolumeChart.destroy();
-                window.myVolumeChart = null; // Clear the global variable
-            }
-            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                 window.myVolumeChart.destroy();
+                 window.myVolumeChart = null; // Clear the global variable
+             }
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Clear canvas
+            // Ensure canvas has dimensions before drawing text
+            canvasElement.width = canvasElement.offsetWidth;
+            canvasElement.height = canvasElement.offsetHeight;
             ctx.font = "14px 'Inter', sans-serif"; // Slightly smaller font
             ctx.fillStyle = '#777'; // Lighter gray
             ctx.textAlign = 'center';
-            // Calculate center position more reliably
+            // Calculate center position more reliably after setting dimensions
             const centerX = canvasElement.width / 2;
             const centerY = canvasElement.height / 2;
             ctx.fillText("No se pudo calcular el volumen.", centerX, centerY);
@@ -927,12 +946,12 @@ function getVolumeLineChartScript(dailyVolumeData) {
             }
             console.log("[Volume Script - Daily] Creating new Chart instance.");
             window.myVolumeChart = new Chart(ctx, { // Asignar a la variable global
-                type: 'line', // Podría ser 'bar' también si se prefiere
+                type: 'line', // Could also be 'bar' if preferred
                 data: {
-                    // Usar los días ordenados como etiquetas y los sets totales como datos
+                    // Use sorted days as labels and total sets as data
                     labels: ${JSON.stringify(displayLabels)},
                     datasets: [{
-                        label: 'Series Totales por Día', // Etiqueta actualizada
+                        label: 'Series Totales por Día', // Updated label
                         data: ${JSON.stringify(displayData)},
                         fill: true,
                         backgroundColor: '${lineChartColors.backgroundColor}',
@@ -952,41 +971,41 @@ function getVolumeLineChartScript(dailyVolumeData) {
                         y: {
                             beginAtZero: true,
                             title: {
-                                display: true, // Mostrar título del eje Y
-                                text: 'Número Total de Series', // Título actualizado
+                                display: true, // Show Y-axis title
+                                text: 'Número Total de Series', // Updated title
                                 font: { size: 11 },
                                 color: '#666',
                                 padding: { top: 0, bottom: 5 }
                             },
                             ticks: {
                                 color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
-                                precision: 0, // Asegurar números enteros para series
+                                precision: 0, // Ensure whole numbers for sets
                                 font: { size: 10 } // Smaller font
                             },
                              grid: {
                                  color: 'rgba(0, 0, 0, 0.06)' // Lighter grid
-                            }
+                             }
                         },
                         x: {
-                             title: { // Añadir título opcional al eje X
-                                display: true,
-                                text: 'Día de Entrenamiento',
-                                font: { size: 11 },
-                                color: '#666',
-                                padding: { top: 5, bottom: 0 }
+                             title: { // Optional X-axis title
+                                 display: true,
+                                 text: 'Día de Entrenamiento',
+                                 font: { size: 11 },
+                                 color: '#666',
+                                 padding: { top: 5, bottom: 0 }
                              },
                              ticks: {
                                  color: 'rgba(0, 0, 0, 0.6)', // Lighter ticks
                                  font: { size: 10 } // Smaller font
-                            },
+                             },
                              grid: {
-                                 display: false
-                            }
+                                 display: false // Hide vertical grid lines
+                             }
                         }
                     },
                     plugins: {
                         legend: {
-                            display: false, // Ocultar leyenda (solo hay una línea)
+                            display: false, // Hide legend (only one line)
                         },
                         tooltip: {
                             enabled: true,
@@ -997,9 +1016,9 @@ function getVolumeLineChartScript(dailyVolumeData) {
                             boxPadding: 3,
                             cornerRadius: 3,
                              callbacks: {
-                                 // Mostrar "Día X: Y series" en el tooltip
+                                 // Show "Day X: Y series" in tooltip
                                  title: function(tooltipItems) {
-                                     // tooltipItems es un array, usualmente con un item para gráficos de línea
+                                     // tooltipItems is an array, usually with one item for line charts
                                      return tooltipItems[0]?.label || '';
                                  },
                                  label: function(context) {
@@ -1010,7 +1029,7 @@ function getVolumeLineChartScript(dailyVolumeData) {
                                      }
                                      return label;
                                  }
-                            }
+                             }
                         }
                     },
                     responsive: true,
@@ -1043,18 +1062,15 @@ function getVolumeLineChartScript(dailyVolumeData) {
  * @returns {object} - Object containing fullCoverPageHtml, styles, combined script, scores, and volumeData.
  */
 function createCoverPage(routineHtml, clientName, logoBase64) {
-    // 1. Calculate component scores (no changes needed here)
+    // 1. Calculate component scores
     const scores = calculateTrainingComponentScores(routineHtml);
 
-    // 2. Calculate DAILY volume
-    // Renamed function and expected output format changed
+    // 2. Calculate DAILY volume using the revised function
     const dailyVolumeData = calculateDailyVolume(routineHtml);
     console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
     // 3. Generate cover page HTML (placeholders for charts)
-    // generateCoverPageHtml internally uses scores for the legend, no change needed there.
-    // The title for the volume chart inside this HTML is updated manually below or within the function.
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
 
     // 4. Replace logo placeholder
@@ -1065,7 +1081,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
         console.warn("Valid Logo Base64 not provided or invalid format. Removing logo element.");
     }
 
-    // 5. Get CSS styles (no changes needed here)
+    // 5. Get CSS styles
     const styles = getCoverPageStyles();
 
     // 6. Get Chart.js initialization scripts
@@ -1090,12 +1106,16 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     };
 }
 
-// Export the main function and the new volume function name
+// Export the main function and the revised volume function name
 module.exports = {
     calculateTrainingComponentScores,
-    calculateDailyVolume, // Export the new function name
-    createCoverPage
-    // Keep other exports if they were needed for testing
+    calculateDailyVolume, // Export the revised function name
+    createCoverPage,
+    // Keep other exports if they were needed for testing/other modules
+    generateCoverPageHtml,
+    getCoverPageStyles,
+    getRadarChartScript,
+    getVolumeLineChartScript
 };
 
 
