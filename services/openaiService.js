@@ -847,6 +847,19 @@ ${formattedResponsesForPrompt.join("\n")}
 5.  **Estructura Preferida:** Respeta la preferencia (${cleanedData.trainingPreference || 'No especificada'}). Si no, elige la más adecuada (Principiante: Full Body; Intermedio/Avanzado: Split según días/objetivo, e.g., Empuje/Tire/Pierna, Torso/Pierna, Dividida por grupos).
 6.  **IMC y Consideraciones:** ${cleanedData.imc ? `Considera el IMC de ${cleanedData.imc}. Si es >25, limita impacto articular inicial. Si es <18.5, asegura suficiente estímulo y nutrición (aunque no das consejos de nutrición).` : 'IMC no disponible.'}
 
+**PERIODIZACIÓN SEMANAL OBLIGATORIA:**
+1. **Variación Diaria:** Cada día de entrenamiento DEBE tener una declaración clara de ENFOQUE (principal) e INTENSIDAD (alta/media/baja).
+2. **Distribución de Intensidad:** 
+   - Si entrena 2-3 días: Alterna alta-baja o alta-media-baja intensidad.
+   - Si entrena 4-5 días: Estructura semanal como: Alta-Baja-Media-Alta-Baja O Alta-Media-Baja-Media-Alta.
+   - Si entrena 6-7 días: Incluye al menos 2 días de baja intensidad para recuperación.
+3. **Enfoque de Variación:** Para cada tipo de objetivo principal:
+   - Hipertrofia/Fuerza: Varía entre días de volumen (más series/reps, menor intensidad) y días de intensidad (menos series/reps, mayor carga/esfuerzo).
+   - Resistencia/Cardio: Alterna entre trabajo continuo, intervalos y recuperación activa.
+   - Pérdida de peso: Combina días de fuerza, cardio de alto gasto calórico y cardio moderado.
+4. **Especificación de RIR y Tempo:** PARA CADA DÍA, especifica el RIR (Reps In Reserve) objetivo y patrones de tempo recomendados (e.g., 2-0-X-0) coherentes con el enfoque del día.
+5. **Etiquetado Explícito:** Etiqueta cada día en la tabla con su intensidad y enfoque, por ejemplo: "Día 1: Alta Intensidad - Empuje" o "Día 3: Baja Intensidad - Recuperación Activa".
+
 **FORMATO DE SALIDA (HTML ESTRICTO - SIN MARKDOWN):**
 Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estructura de tabla EXACTA:
 
