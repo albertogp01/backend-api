@@ -1044,7 +1044,7 @@ function getVolumeLineChartScript(dailyVolumeData) {
                              }
                         },
                         datalabels: { // Configuration for chartjs-plugin-datalabels
-                            display: true, // Show labels by default
+                            display: false, // Show labels by default
                             anchor: 'end', // Position label at the end of the data element
                             align: 'top', // Align label above the anchor point
                             color: '${lineChartColors.datalabelColor}', // Label text color
