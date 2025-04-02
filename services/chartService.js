@@ -1,933 +1,1153 @@
-// pdfService.js (Actualizado con Esperas para Gráficos)
-
-const fs = require("fs");
-const path = require("path");
-const puppeteer = require("puppeteer");
-const os = require("os");
-const { PDFDocument } = require('pdf-lib'); // Asegúrate de tener: npm install pdf-lib
-
-// Importar la función principal de chartService.js
-const { createCoverPage } = require('./chartService'); // Asegúrate que la ruta es correcta
+// chartService.js (Comment Removed & Visual Enhancements v12)
 
 /**
- * Genera un archivo PDF a partir de contenido HTML, incluyendo una portada dinámica.
- * @param {string} htmlContent - El contenido HTML principal de la rutina.
- * @param {string} [clientName="Cliente"] - El nombre del cliente.
- * @param {string} [tempDir=""] - Directorio temporal para guardar el PDF. Si está vacío, usa el directorio temporal del sistema.
- * @param {string} [requestId=""] - Un ID opcional para seguimiento (no usado actualmente en la lógica principal).
- * @returns {Promise<string>} - Una promesa que resuelve con la ruta al archivo PDF generado.
+ * Calculates training component scores based on keywords and heuristics in routine HTML.
+ * @param {string} routineHtml - The HTML content of the generated routine.
+ * @returns {Object} - Scores for each training component (0-100) and main components.
  */
-async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", requestId = "") {
-    return new Promise(async (resolve, reject) => {
-        let browser = null; // Declarar fuera para acceso en finally
-
-        try {
-            console.log("Generando PDF para:", clientName);
-            const sanitizedName = clientName.replace(/[^a-zA-Z0-9]/g, "_");
-            const fileName = `rutina_${sanitizedName}_${Date.now()}.pdf`;
-
-            // Usar el directorio temporal del sistema operativo si no se proporciona uno
-            if (!tempDir) {
-                tempDir = os.tmpdir();
-            }
-            const filePath = path.join(tempDir, fileName);
-
-            console.log(`Usando directorio temporal: ${tempDir}`);
-            console.log(`Ruta del archivo PDF: ${filePath}`);
-
-            // --- Preparar logo ---
-            const logoPath = path.resolve(__dirname, "../assets/logo.png"); // Ajusta si es necesario
-            let logoBase64 = "";
-            if (fs.existsSync(logoPath)) {
-                logoBase64 = `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}`;
-                console.log("Logo cargado correctamente.");
-            } else {
-                console.error("Error: El archivo del logo NO EXISTE en la ruta:", logoPath);
-            }
-
-            // --- Procesamiento del HTML de la rutina (Mantener tu lógica) ---
-            let modifiedHtml = htmlContent.replace(/<\/table>\s*<table>/g, "</table><div class='table-spacer'></div><table>");
-            if (modifiedHtml.startsWith("<table>")) {
-             const firstDayMatch = modifiedHtml.match(/<th colspan="5">(Día 1:.+?)<\/th>/);
-             if (firstDayMatch) {
-               modifiedHtml = `<h2 class="day-title first-day-title">${firstDayMatch[1]}</h2>${modifiedHtml}`;
-               modifiedHtml = modifiedHtml.replace(/<th colspan="5">Día 1:.+?<\/th>/, '');
-             }
-            }
-            modifiedHtml = modifiedHtml.replace(
-             /<th colspan="5">(Día \d+:.+?)<\/th>/g,
-             '</table><h2 class="day-title">$1</h2><table>'
-            );
-            console.log("HTML de la rutina procesado.");
-
-
-            const currentYear = new Date().getFullYear();
-            const creationDate = new Date().toLocaleDateString("es-ES", {
-                year: "numeric", month: "long", day: "numeric"
-            });
-
-            // --- Generar HTML de la Portada Dinámica ---
-            console.log("Generando HTML de la portada...");
-            const { fullCoverPageHtml, styles, script, scores, volumeData } = createCoverPage(htmlContent, clientName, logoBase64);
-
-            const coverPageCompleteHtml = `
-             <!DOCTYPE html>
-             <html lang="es">
-             <head>
-                 <meta charset="UTF-8">
-                 <title>Portada - ${clientName}</title>
-                 <link rel="preconnect" href="https://fonts.googleapis.com">
-                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-                 <style>${styles}</style>
-             </head>
-             <body>
-                 ${fullCoverPageHtml}
-                 ${script}
-             </body>
-             </html>
-            `;
-            console.log("HTML de la portada generado.");
-
-            // --- Ensamblar el HTML COMPLETO para la RUTINA (para la segunda parte del PDF) ---
-            const routinePageHtml = `
-             <!DOCTYPE html>
-             <html lang="es">
-             <head>
-                 <meta charset="UTF-8">
-                 <title>Rutina - ${clientName}</title>
-                 <link rel="preconnect" href="https://fonts.googleapis.com">
-                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-                 <style>
-                     /* --- ESTILOS SOLO PARA LAS PÁGINAS DE LA RUTINA --- */
-                     /* ... (Tu CSS largo para la rutina va aquí, sin cambios) ... */
-                     :root {
-                         --primary-color: #0a2a5e;
-                         --secondary-color: #2c4b7c;
-                         --accent-color: #2196f3;
-                         --routine-color: #1565c0;
-                         --activation-color: #42a5f5;
-                         --light-accent: #e3f2fd;
-                         --light-gray: #f5f7fa;
-                         --dark-gray: #37474f;
-                         --medium-gray: #b0bec5;
-                         --day-color: #e1f5fe;
-                         --day-text: #01579b;
-                         --row-even: #f5f9ff;
-                         --row-odd: #ffffff;
-                         --border-radius: 8px;
-                         --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-                         --variant-bg: #fffde7;
-                         --variant-border: #ffee58;
-                         --variant-text: #333333;
-                         --variant-accent: #ffd600;
-                     }
-
-                     body {
-                         font-family: 'Inter', 'Arial', sans-serif;
-                         color: var(--dark-gray);
-                         line-height: 1.6;
-                         margin: 0;
-                         padding: 0;
-                         font-size: 11px;
-                         position: relative;
-                         width: 100%;
-                         background-color: white;
-                         min-height: 100vh;
-                         letter-spacing: 0.3px;
-                         -webkit-print-color-adjust: exact; /* Importante para Puppeteer */
-                         print-color-adjust: exact;
-                     }
-
-                     .header {
-                         background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-                         padding: 15px 0;
-                         margin: 0;
-                         display: flex;
-                         justify-content: space-between;
-                         align-items: center;
-                         color: white;
-                         border-bottom: 4px solid var(--accent-color);
-                         width: 100%;
-                         position: relative;
-                         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-                     }
-
-                     .header-content {display: flex; justify-content: space-between; width: 100%; padding: 0 30px; align-items: center;}
-
-                     .header img {
-                         width: 140px;
-                         height: auto;
-                         padding: 6px;
-                         border-radius: calc(var(--border-radius) + 2px);
-                         filter: brightness(0) invert(1);
-                         transition: all 0.3s ease;
-                     }
-
-                     .header .info {
-                         text-align: right;
-                         font-size: 13px;
-                         padding: 8px 18px;
-                         background-color: rgba(255, 255, 255, 0.18);
-                         border-radius: var(--border-radius);
-                         backdrop-filter: blur(10px);
-                         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-                         border-left: 3px solid rgba(255, 255, 255, 0.5);
-                     }
-
-                     .header .info p {margin: 5px 0; font-weight: 500; letter-spacing: 0.4px;}
-                     .header .info strong {font-weight: 600; letter-spacing: 0.5px;}
-
-                     .content-wrapper {
-                         padding: 30px;
-                         width: 100%;
-                         box-sizing: border-box;
-                         padding-bottom: 80px; /* Espacio para el footer */
-                         background-color: #ffffff;
-                     }
-
-                     /* Estilos para el disclaimer - CENTRADO Y TEXTO NEGRO */
-                     .disclaimer-container {
-                         background-color: transparent;
-                         border-radius: var(--border-radius);
-                         padding: 25px 30px;
-                         margin-bottom: 35px;
-                         position: relative;
-                         overflow: hidden;
-                         border-left: none;
-                         box-shadow: none;
-                         page-break-inside: avoid;
-                         text-align: center;
-                     }
-
-                     .disclaimer-title {
-                         font-weight: 700;
-                         color: var(--primary-color);
-                         font-size: 16px;
-                         margin-bottom: 20px;
-                         letter-spacing: 0.8px;
-                         text-transform: uppercase;
-                         position: relative;
-                         padding-left: 0;
-                         display: inline-block;
-                     }
-
-                     .disclaimer-title::after {
-                         content: "";
-                         position: absolute;
-                         bottom: -5px;
-                         left: 0;
-                         width: 100%;
-                         height: 2px;
-                         background: linear-gradient(90deg, var(--accent-color) 0%, rgba(33, 150, 243, 0.3) 100%);
-                         border-radius: 2px;
-                     }
-
-                     .disclaimer-content {
-                         font-size: 11px;
-                         color: #000000; /* Texto negro */
-                         line-height: 1.7;
-                         text-align: left; /* Alinear el contenido a la izquierda */
-                         max-width: 800px; /* Opcional: limitar el ancho máximo */
-                         margin: 0 auto; /* Centrar el bloque */
-                     }
-
-                     .disclaimer-content p {
-                         margin-bottom: 12px;
-                     }
-
-                     .disclaimer-content strong {
-                         color: var(--primary-color);
-                         font-weight: 600;
-                     }
-
-                     .disclaimer-content ul {
-                         padding-left: 20px;
-                         margin: 15px 0;
-                         /* Centrado de la lista */
-                         display: inline-block;
-                         text-align: left;
-                     }
-
-                     .disclaimer-content li {
-                         margin-bottom: 8px;
-                     }
-
-                     .disclaimer-footer {
-                         margin-top: 20px;
-                         padding-top: 15px;
-                         border-top: 1px solid #e3e8f0;
-                         font-style: italic;
-                         font-size: 10px;
-                         color: var(--medium-gray);
-                     }
-
-                     .table-spacer {
-                         height: 12px;
-                         width: 100%;
-                     }
-
-                     /* Evitar que elementos vacíos después de table ocupen espacio */
-                     table + *:not(h2):not(.variants-container):not(.side-variants-container) {
-                         margin: 0 !important;
-                         padding: 0 !important;
-                         display: block;
-                         height: 0 !important;
-                         font-size: 0 !important; /* Ocultar texto residual si lo hubiera */
-                         line-height: 0 !important;
-                     }
-
-
-                     table {
-                         width: 100%;
-                         border-collapse: separate;
-                         border-spacing: 0;
-                         margin-bottom: 0 !important; /* Quitar margen inferior */
-                         font-size: 10px;
-                         page-break-inside: auto;
-                         border-radius: var(--border-radius);
-                         overflow: hidden;
-                         box-shadow: var(--box-shadow);
-                         border: 1px solid #e0e0e0;
-                         background-color: white;
-                         position: relative;
-                     }
-
-                     table::after {
-                         content: '';
-                         position: absolute;
-                         top: 0;
-                         right: 0;
-                         width: 8px;
-                         height: 100%;
-                         background: linear-gradient(90deg, rgba(33,150,243,0) 0%, rgba(33,150,243,0.06) 100%);
-                         pointer-events: none;
-                         border-top-right-radius: var(--border-radius);
-                         border-bottom-right-radius: var(--border-radius);
-                     }
-
-                     th, td {
-                         padding: 12px 14px;
-                         text-align: left;
-                         word-wrap: break-word;
-                         border: none;
-                         border-bottom: 1px solid #e3e8f0;
-                         border-right: 1px solid #e3e8f0;
-                         position: relative;
-                         vertical-align: middle;
-                         transition: background-color 0.2s ease;
-                     }
-
-                     th:last-child, td:last-child {border-right: none;}
-                     tr:last-child td {border-bottom: none;}
-
-                     .day-title {
-                         font-size: 18px;
-                         font-weight: 700;
-                         color: var(--primary-color);
-                         margin: 30px 0 20px 0;
-                         padding-bottom: 10px;
-                         position: relative;
-                         letter-spacing: 0.6px;
-                         padding-left: 15px;
-                         max-width: 80%;
-                         display: inline-block;
-                         text-transform: uppercase;
-                     }
-
-                     /* Ajuste especial para el primer día */
-                     .first-day-title {
-                         margin-top: 50px; /* Aumentar el margen superior solo para el primer día */
-                     }
-
-                     .day-title::before {display: none;}
-
-                     .day-title::after {
-                         content: "";
-                         position: absolute;
-                         bottom: 0;
-                         left: 15px;
-                         width: calc(100% - 15px);
-                         height: 2px;
-                         background: linear-gradient(90deg, var(--accent-color) 0%, rgba(255,255,255,0) 100%);
-                         border-radius: 1px;
-                     }
-
-                     .activacion-header td,
-                     .rutina-header td {
-                         color: white !important;
-                         font-weight: 600;
-                         text-align: center;
-                         font-size: 11px;
-                         padding: 14px 15px;
-                         letter-spacing: 0.6px;
-                         position: relative;
-                         text-transform: uppercase;
-                     }
-
-                     .activacion-header td {
-                         background-color: var(--activation-color) !important;
-                         border-bottom: 2px solid #1e88e5;
-                     }
-
-                     .rutina-header td {
-                         background-color: var(--routine-color) !important;
-                         border-bottom: 2px solid #0d47a1;
-                     }
-
-                     .activacion-header td::after,
-                     .rutina-header td::after {
-                         content: '';
-                         position: absolute;
-                         bottom: 0;
-                         left: 0;
-                         right: 0;
-                         height: 1px;
-                         background: rgba(255, 255, 255, 0.2);
-                     }
-
-                     th:not([colspan]) {
-                         background-color: var(--secondary-color);
-                         color: white;
-                         font-size: 10px;
-                         font-weight: 600;
-                         text-transform: uppercase;
-                         letter-spacing: 0.8px;
-                         padding: 13px 14px;
-                         position: relative;
-                     }
-
-                     th:not([colspan])::after {
-                         content: '';
-                         position: absolute;
-                         bottom: 0;
-                         left: 0;
-                         right: 0;
-                         height: 1px;
-                         background: rgba(255, 255, 255, 0.2);
-                     }
-
-                     tr:nth-child(even) td {background-color: var(--row-even);}
-                     tr:nth-child(odd) td {background-color: var(--row-odd);}
-
-                     td:hover {background-color: rgba(33, 150, 243, 0.07) !important;}
-
-                     tr td:first-child {
-                         border-left: none;
-                         font-weight: 500;
-                         background-color: var(--day-color);
-                         color: var(--day-text);
-                         border-right: 2px solid #e3f2fd;
-                     }
-
-                     tr td:last-child {border-right: none;}
-
-                     tr:last-child td:first-child {border-bottom-left-radius: calc(var(--border-radius) - 1px);}
-                     tr:last-child td:last-child {border-bottom-right-radius: calc(var(--border-radius) - 1px);}
-                     tr:first-child td:first-child:not(th) {border-top-left-radius: calc(var(--border-radius) - 1px);}
-                     tr:first-child td:last-child:not(th) {border-top-right-radius: calc(var(--border-radius) - 1px);}
-
-                     /* Colspan para títulos de sección dentro de tabla (si se usan) */
-                     th[colspan] {
-                         text-align: center;
-                         padding: 15px;
-                         background-color: var(--accent-color);
-                         color: white;
-                         font-weight: 600;
-                         letter-spacing: 0.7px;
-                         text-transform: uppercase;
-                         position: relative;
-                         border-bottom: 2px solid #1976d2;
-                     }
-
-                     th[colspan]::after {
-                         content: '';
-                         position: absolute;
-                         bottom: 0;
-                         left: 0;
-                         right: 0;
-                         height: 1px;
-                         background: rgba(255, 255, 255, 0.2);
-                     }
-
-                     .variants-container, .side-variants-container {
-                         background-color: white;
-                         border-radius: var(--border-radius);
-                         position: relative;
-                         overflow: hidden;
-                         border-left: none;
-                         box-shadow: none;
-                         page-break-inside: avoid;
-                         margin-top: 15px; /* Añadir margen superior */
-                         margin-bottom: 25px;
-                         padding: 15px 25px;
-                         border: 1px solid #eee; /* Borde sutil */
-                     }
-
-                      .variants-container::after, .side-variants-container::after {
-                         display: none; /* Ocultar pseudo-elementos si no se usan */
-                     }
-
-                     .variants-title, .side-variants-title {
-                         font-weight: 700;
-                         color: #333333;
-                         font-size: 14px;
-                         margin-bottom: 12px;
-                         letter-spacing: 0.8px;
-                         text-transform: uppercase;
-                         position: relative;
-                         padding-left: 0;
-                         display: inline-block;
-                     }
-
-                      .variants-title::after, .side-variants-title::after {
-                         content: "";
-                         position: absolute;
-                         bottom: -5px;
-                         left: 0;
-                         width: 100%;
-                         height: 2px;
-                         background: linear-gradient(90deg, var(--variant-accent) 0%, rgba(255, 214, 0, 0.3) 100%);
-                         border-radius: 2px;
-                     }
-
-                     .variant-item, .side-variant-item {
-                         margin-bottom: 8px;
-                         padding-bottom: 8px;
-                         border-bottom: none;
-                         position: relative;
-                     }
-
-                     .variant-item:last-child, .side-variant-item:last-child {
-                         margin-bottom: 0;
-                         padding-bottom: 0;
-                         border-bottom: none;
-                     }
-
-                     .variant-title, .side-variant-title {
-                         font-weight: 600;
-                         color: #333333;
-                         font-size: 11px;
-                         margin-bottom: 7px;
-                         letter-spacing: 0.4px;
-                         position: relative;
-                         padding-left: 12px;
-                     }
-
-                     .side-variant-title {display: flex; align-items: center;}
-
-                      .variant-title::before, .side-variant-title::before {
-                         content: '\\2022'; /* Bullet point */
-                         position: absolute;
-                         left: 0;
-                         top: 0;
-                         color: var(--variant-accent);
-                         font-size: 14px;
-                         font-weight: bold;
-                     }
-
-                     .variant-description, .side-variant-description {
-                         font-size: 10px;
-                         color: #333333;
-                         line-height: 1.4;
-                         padding-left: 12px;
-                     }
-
-                     .arrow-right {
-                         color: var(--accent-color);
-                         margin: 0 5px;
-                         font-weight: 600;
-                     }
-
-                     @page {
-                         margin: 0;
-                         size: A4;
-                     }
-
-                     /* No aplicar margen superior a la primera página (portada) */
-                      @page :first {
-                         margin-top: 0;
-                     }
-                     /* Aplicar margen superior a las páginas siguientes (rutina) */
-                      @page :not(:first) {
-                         margin-top: 0; /* El header/footer manejarán el espacio */
-                     }
-
-                     .training-day-container {
-                         page-break-inside: avoid;
-                         margin-bottom: 35px;
-                         position: relative;
-                     }
-
-                     /* Asegurar que los elementos dentro de un contenedor queden juntos */
-                     .training-day-container table,
-                     .training-day-container .variants-container,
-                     .training-day-container .side-variants-container {
-                         page-break-inside: avoid;
-                     }
-
-                     /* Elemento con margen superior para saltos de página */
-                     .page-break-spacer {
-                         height: 50px;
-                         width: 100%;
-                         display: block;
-                     }
-
-                     .footer {
-                         position: fixed;
-                         bottom: 0;
-                         left: 0;
-                         width: 100%;
-                         height: 55px; /* Altura fija del footer */
-                         background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-                         color: white;
-                         font-size: 10px;
-                         border-top: 3px solid var(--accent-color);
-                         display: flex;
-                         justify-content: space-between;
-                         align-items: center;
-                         z-index: 1000;
-                         box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
-                     }
-
-                     .footer-left, .footer-center, .footer-right {
-                         flex: 1;
-                         padding: 0 25px;
-                     }
-
-                     .footer-left {
-                         text-align: left;
-                         display: flex;
-                         align-items: center;
-                     }
-
-                     .footer-left img {
-                         height: 15px;
-                         width: auto;
-                         filter: brightness(0) invert(1);
-                     }
-
-                     .footer-left::before {display: none;}
-                     .footer-center {text-align: center;}
-                     .footer-right {text-align: right; font-weight: 400; letter-spacing: 0.5px;}
-
-                     /* Espaciador al final del contenido para que no se solape con el footer */
-                     .content-spacer {height: 60px; width: 100%; display: block;}
-
-                     .page-break {
-                         page-break-before: always;
-                         display: block;
-                         height: 0;
-                         width: 100%;
-                     }
-
-                     /* Clase para preservar los márgenes en los saltos de página */
-                     .page-content {
-                          padding-top: 50px; /* Margen superior para contenido después de salto */
-                     }
-
-                     @keyframes pulse {
-                         0% {opacity: 0.6;}
-                         50% {opacity: 1;}
-                         100% {opacity: 0.6;}
-                     }
-
-                     .loading-message {
-                         position: fixed;
-                         top: 50%;
-                         left: 50%;
-                         transform: translate(-50%, -50%);
-                         background-color: rgba(255, 255, 255, 0.9);
-                         padding: 20px 30px;
-                         border-radius: var(--border-radius);
-                         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-                         z-index: 9999;
-                         animation: pulse 2s infinite ease-in-out;
-                         text-align: center;
-                         font-weight: 500;
-                         color: var(--dark-gray); /* Asegurar que el texto sea visible */
-                     }
-                 </style>
-             </head>
-             <body>
-                 <div class="header">
-                     <div class="header-content">
-                         <img src="${logoBase64}" alt="Logo Fitform" onerror="this.style.display='none'" />
-                         <div class="info">
-                             <p><strong>Cliente:</strong> ${clientName}</p>
-                             <p><strong>Fecha:</strong> ${creationDate}</p>
-                         </div>
-                     </div>
-                 </div>
-
-                 <div class="content-wrapper">
-                     <div class="disclaimer-container">
-                         <div class="disclaimer-title">INFORMACIÓN IMPORTANTE</div>
-                         <div class="disclaimer-content">
-                             <p>Este programa de entrenamiento ha sido diseñado específicamente para ti a través del formulario que has respondido. Para maximizar tus resultados y garantizar tu seguridad, lee atentamente las siguientes recomendaciones:</p>
-                             <p><strong>Consulta médica:</strong> Antes de comenzar cualquier programa de ejercicio, especialmente si tienes condiciones médicas preexistentes, se recomienda consultar con un profesional de la salud.</p>
-                             <p><strong>Interpretación del programa:</strong> Este documento utiliza un sistema de colores para facilitar la comprensión:</p>
-                             <ul>
-                                 <li><strong>Azul claro:</strong> Indica los ejercicios de activación, diseñados para preparar el cuerpo para el entrenamiento.</li>
-                                 <li><strong>Azul oscuro:</strong> Señala los ejercicios principales que conforman tu rutina.</li>
-                                 <li><strong>Amarillo:</strong> Muestra variantes o alternativas para adaptar los ejercicios según sea necesario.</li>
-                             </ul>
-                             <p><strong>Progresión gradual:</strong> Comienza con intensidades moderadas y aumenta gradualmente según tu adaptación. Respeta los descansos indicados y las series recomendadas.</p>
-                             <p><strong>Técnica correcta:</strong> Prioriza siempre la ejecución adecuada de los movimientos sobre el peso o la intensidad. En caso de duda, consulta con un entrenador.</p>
-                             <p><strong>Escucha a tu cuerpo:</strong> Si experimentas dolor (distinto a la incomodidad normal del ejercicio), mareos o dificultad para respirar, detén el entrenamiento y consulta a un médico.</p>
-                             <div class="disclaimer-footer">
-                                 Este programa es propiedad intelectual de Fitform y está destinado únicamente para uso personal del cliente. Queda prohibida su reproducción o distribución sin autorización.
-                             </div>
-                         </div>
-                     </div>
-
-                     <div class="routine-content">${modifiedHtml}</div>
-
-                     <div class="content-spacer"></div>
-                 </div>
-
-                 <div class="footer">
-                     <div class="footer-left"><img src="${logoBase64}" alt="Logo Fitform" onerror="this.style.display='none'" /></div>
-                     <div class="footer-center"></div>
-                     <div class="footer-right">© ${currentYear} Fitform - Todos los derechos reservados</div>
-                 </div>
-             </body>
-             </html>
-            `;
-            console.log("HTML completo para PDF ensamblado.");
-
-            // --- Lanzar Puppeteer ---
-            console.log("Lanzando Puppeteer...");
-            browser = await puppeteer.launch({
-                headless: true,
-                args: [
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                    "--disable-web-security"
-                ],
-            });
-            console.log("Navegador Puppeteer lanzado.");
-
-            const page = await browser.newPage();
-            console.log("Nueva página creada.");
-
-            // Configurar viewport
-            await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 }); // A4 aprox
-
-            // --- Generar Portada ---
-            console.log("Estableciendo contenido de la PORTADA en Puppeteer...");
-            await page.setContent(coverPageCompleteHtml, { waitUntil: 'networkidle0', timeout: 60000 });
-            console.log("Contenido de la portada establecido. Esperando renderizado de gráficos...");
-
-            // --- INICIO: ESPERAS MEJORADAS PARA GRÁFICOS ---
-            try {
-                console.log("Esperando selectores de canvas...");
-                // Espera a que los elementos canvas sean visibles en la página
-                await page.waitForSelector('#radarChart', { visible: true, timeout: 15000 });
-                await page.waitForSelector('#volumeLineChart', { visible: true, timeout: 15000 });
-                console.log("Selectores de canvas encontrados.");
-
-                // Espera a que la variable global del gráfico radar exista.
-                // Esto indica que el script initRadarChart probablemente ha terminado.
-                console.log("Esperando inicialización del gráfico radar (variable window)...");
-                await page.waitForFunction(
-                    'window.myRadarChart !== undefined', // Verifica si la instancia del gráfico radar existe
-                    { timeout: 15000 } // Timeout para esta espera
-                );
-                console.log("Variable del gráfico radar encontrada.");
-
-                // Añade una pequeña espera fija adicional para asegurar que el renderizado finalice.
-                // Útil si hay animaciones o el gráfico de volumen tarda un poco más.
-                console.log("Pequeña espera adicional para renderizado (2s)...");
-                await page.waitForTimeout(2000); // 2 segundos
-
-                console.log("Esperas para gráficos completadas.");
-
-            } catch (waitError) {
-                console.error("Error durante las esperas para los gráficos:", waitError.message);
-                // Se decide continuar aunque haya error en la espera, pero se advierte.
-                console.warn("Continuando la generación del PDF, pero los gráficos podrían faltar.");
-            }
-            // --- FIN: ESPERAS MEJORADAS PARA GRÁFICOS ---
-
-      // Generar la primera página (Portada)
-      const coverPagePdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' }, // Sin márgenes para controlar todo con CSS
-        preferCSSPageSize: true, // Usar el tamaño definido en @page
-        timeout: 90000 // Timeout generoso
-      });
-      console.log("Buffer PDF de la portada generado.");
-
-      // --- Generar Páginas de Rutina ---
-      console.log("Estableciendo contenido de la RUTINA en Puppeteer...");
-      // Reutilizar la misma página para la rutina
-      await page.setContent(routinePageHtml, { waitUntil: 'networkidle0', timeout: 60000 });
-      console.log("Contenido de la rutina establecido.");
-
-      // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
-      // Este script es específico para la ESTRUCTURA de la rutina, no afecta la portada
-      console.log("Ejecutando script de evaluación para organizar días/variantes...");
-      await page.evaluate(() => {
-          // --- Inicio del script de evaluación para organizar la rutina ---
-          // Asegurarse de que este código SOLO se ejecute en la página de rutina
-          if (document.querySelector('.routine-content')) {
-              console.log("Ejecutando lógica de organización de días/variantes...");
-
-              // 1. Envolver cada día en un contenedor
-              document.querySelectorAll('.day-title').forEach((title, index) => {
-                  const dayContainer = document.createElement('div');
-                  dayContainer.className = 'training-day-container';
-                  // Extraer número de día si existe
-                  const dayNumberMatch = title.textContent.match(/Día\s+(\d+)/i);
-                  if (dayNumberMatch) {
-                      dayContainer.dataset.dayNumber = dayNumberMatch[1];
-                  }
-
-                  // Insertar contenedor antes del título y mover título dentro
-                  title.parentNode.insertBefore(dayContainer, title);
-                  dayContainer.appendChild(title);
-
-                  // Mover elementos siguientes (tablas, spacers) al contenedor del día
-                  let nextElement = dayContainer.nextElementSibling;
-                  while (nextElement && (nextElement.tagName === 'TABLE' || nextElement.classList.contains('table-spacer'))) {
-                      const currentElement = nextElement;
-                      nextElement = nextElement.nextElementSibling; // Avanzar antes de mover
-                      dayContainer.appendChild(currentElement);
-                  }
-              });
-
-              // 2. Mover variantes a su contenedor de día correspondiente
-              document.querySelectorAll('.variants-container, .side-variants-container').forEach(variant => {
-                const titleEl = variant.querySelector('.variants-title, .side-variants-title');
-                 if (titleEl) {
-                     // Cambiar título a "VARIANTES"
-                     titleEl.textContent = "VARIANTES";
-                     // Intentar encontrar el número de día dentro del contenido de la variante (menos fiable)
-                     const dayMatchInVariant = variant.innerHTML.match(/Día\s+(\d+)/i);
-                     const dayNumber = dayMatchInVariant ? dayMatchInVariant[1] : null;
-
-                     if (dayNumber) {
-                         // Encontrar el contenedor del día correspondiente
-                         const targetDayContainer = document.querySelector(`.training-day-container[data-day-number="${dayNumber}"]`);
-                         if (targetDayContainer) {
-                             // Mover la variante al final del contenedor del día
-                             targetDayContainer.appendChild(variant);
-                             console.log(`Variante movida al Día ${dayNumber}`);
-                         } else {
-                             console.warn(`No se encontró contenedor para el Día ${dayNumber} para mover la variante.`);
-                         }
-                     } else {
-                         console.warn("No se pudo determinar el número de día para la variante:", variant.id || variant.className);
-                     }
-                 } else {
-                      console.warn("Elemento de variante sin título encontrado:", variant.id || variant.className);
-                 }
-              });
-
-
-              // 3. Aplicar saltos de página ANTES de cada contenedor de día (excepto el primero)
-              document.querySelectorAll('.training-day-container').forEach((dayContainer, index) => {
-                  if (index > 0) { // No añadir salto antes del primer día
-                      const pageBreak = document.createElement('div');
-                      pageBreak.className = 'page-break';
-                      dayContainer.parentNode.insertBefore(pageBreak, dayContainer);
-
-                      // Añadir padding superior al contenedor para simular margen después del salto
-                      // dayContainer.style.paddingTop = '50px'; // O usar clase .page-content si se prefiere
-                      // Alternativa: Envolver en .page-content
-                       const pageContentWrapper = document.createElement('div');
-                       pageContentWrapper.className = 'page-content'; // Asegúrate que esta clase tenga padding-top
-                       dayContainer.parentNode.insertBefore(pageContentWrapper, dayContainer);
-                       pageContentWrapper.appendChild(dayContainer);
-
-                  }
-                  // Añadir espaciador al final de cada día para evitar solapamiento con footer
-                  const finalSpacer = document.createElement('div');
-                  finalSpacer.className = 'content-spacer'; // Asegúrate que esta clase tenga altura
-                  dayContainer.appendChild(finalSpacer);
-
-              });
-
-              console.log("Organización de días/variantes completada.");
-          } else {
-              console.log("No se encontró '.routine-content', saltando organización de días/variantes.");
-          }
-          // --- Fin del script de evaluación ---
-      });
-      console.log("Script de evaluación ejecutado.");
-
-      // Generar las páginas de la rutina
-      const routinePagesPdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' },
-        preferCSSPageSize: true,
-        timeout: 90000 // Timeout generoso
-      });
-      console.log("Buffer PDF de la rutina generado.");
-
-      // --- Combinar PDFs (Requiere una librería externa como 'pdf-lib' o 'hummus-recipe') ---
-      // Esta parte es más compleja y requiere instalar una dependencia adicional.
-      // Ejemplo conceptual (necesitas instalar 'pdf-lib'):
-      console.log("Intentando combinar PDFs...");
-      try {
-        const { PDFDocument } = require('pdf-lib'); // Asegúrate de instalar: npm install pdf-lib
-
-        const finalPdfDoc = await PDFDocument.create();
-
-        // Cargar portada
-        const coverDoc = await PDFDocument.load(coverPagePdfBuffer);
-        const [coverPage] = await finalPdfDoc.copyPages(coverDoc, [0]);
-        finalPdfDoc.addPage(coverPage);
-        console.log("Página de portada añadida al PDF final.");
-
-        // Cargar rutina
-        const routineDoc = await PDFDocument.load(routinePagesPdfBuffer);
-        const routinePages = await finalPdfDoc.copyPages(routineDoc, routineDoc.getPageIndices());
-        routinePages.forEach(page => finalPdfDoc.addPage(page));
-        console.log(`${routinePages.length} páginas de rutina añadidas al PDF final.`);
-
-        // Guardar el PDF combinado
-        const finalPdfBytes = await finalPdfDoc.save();
-        fs.writeFileSync(filePath, finalPdfBytes);
-        console.log("PDF combinado guardado correctamente en:", filePath);
-
-      } catch (mergeError) {
-          console.error("Error al combinar los PDFs:", mergeError);
-          console.warn("Guardando solo la rutina como fallback...");
-          // Fallback: guardar solo la rutina si la combinación falla
-          fs.writeFileSync(filePath, routinePagesPdfBuffer);
-          // O podrías guardar ambos por separado y notificar el error
-          reject(new Error(`Error al combinar PDFs: ${mergeError.message}. Se guardó solo la rutina.`));
-          return; // Salir para evitar cerrar el navegador antes de tiempo
-      }
-
-      // --- Limpieza ---
-      console.log("Cerrando navegador Puppeteer...");
-      await browser.close();
-      console.log("Navegador cerrado correctamente.");
-
-      resolve(filePath); // Resuelve con la ruta del PDF final combinado
-
-    } catch (error) {
-      console.error("Error general en generatePDF:", error);
-      if (browser) {
-        try {
-          console.log("Intentando cerrar navegador después de error...");
-          await browser.close();
-          console.log("Navegador cerrado después de error general.");
-        } catch (closeError) {
-          console.error("Error al cerrar el navegador después de un error:", closeError.message);
-        }
-      }
-      reject(error); // Rechaza la promesa con el error original
+function calculateTrainingComponentScores(routineHtml) {
+    // Initialize scores
+    const scores = {
+        fuerza: 0,
+        hipertrofia: 0,
+        movilidad: 0,
+        potencia: 0,
+        tecnica: 0,
+        cardio: 0
+    };
+
+    // Default balanced profile if no HTML is provided
+    if (!routineHtml || routineHtml.trim() === '') {
+        console.warn("[Scores Calculation] No routine HTML provided, returning default balanced scores.");
+        return {
+            fuerza: 50, hipertrofia: 50, movilidad: 50,
+            potencia: 50, tecnica: 50, cardio: 50,
+            mainComponents: [], mainComponentsDisplay: 'Equilibrado'
+        };
     }
-  });
+
+    // Keywords for each training component
+    const keywords = {
+        fuerza: ['fuerza', 'strength', 'carga', 'peso', 'resistencia', 'weight', 'sentadilla', 'squat', 'press', 'deadlift', 'peso muerto', 'power', 'potencia', 'rm', '1rm', 'máxima', 'maximales', 'intensidad alta', 'pesado', 'heavy'],
+        hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'volume', 'muscle', 'músculo', 'muscular', 'growth', 'crecimiento', 'tamaño', 'size', 'bodybuilding', 'culturismo', 'series', 'repeticiones', 'reps', 'rir'],
+        movilidad: ['movilidad', 'mobility', 'flexibility', 'flexibilidad', 'stretching', 'estiramiento', 'range', 'motion', 'rango', 'articular', 'joint', 'rom', 'elasticidad', 'elongación', 'estirar', 'stretch', 'yoga', 'pilates'],
+        potencia: ['potencia', 'power', 'explosiv', 'explosi[oó]n', 'velocidad', 'speed', 'fast', 'rápido', 'salto', 'jump', 'plyometric', 'pliometría', 'reactiv', 'sprint', 'lanzamiento', 'throw', 'tiempo', 'time', 'tempo.*[xX]', 'kettlebell swing'],
+        tecnica: ['técnica', 'technique', 'form', 'forma', 'skill', 'habilidad', 'balance', 'equilibrio', 'coordination', 'coordinación', 'control', 'pattern', 'patrón', 'motor', 'stability', 'estabilidad', 'aprendizaje', 'drills'],
+        cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'stamina', 'interval', 'intervalos', 'hiit', 'heart', 'rate', 'ritmo', 'cardiac', 'cardíaco', 'vo2', 'máximo', 'correr', 'run', 'nadar', 'swim', 'bicicleta', 'bike', 'cinta', 'eliptica']
+    };
+
+    // Counts for keyword occurrences
+    const counts = {
+        fuerza: 0, hipertrofia: 0, movilidad: 0,
+        potencia: 0, tecnica: 0, cardio: 0
+    };
+
+    // --- Keyword Analysis ---
+    Object.keys(keywords).forEach(component => {
+        keywords[component].forEach(keyword => {
+            try {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                const matches = routineHtml.match(regex) || [];
+                counts[component] += matches.length;
+            } catch (e) {
+                console.warn(`[Scores Calculation] Invalid regex for keyword: ${keyword}`, e);
+            }
+        });
+    });
+
+    // --- Additional Heuristics ---
+
+    // 1. Rep Range Analysis
+    const setRepMatches = routineHtml.match(/(\d+)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps|repeticiones|sets)?/gi) || [];
+    let lowRepSets = 0;
+    let midRepSets = 0;
+    let highRepSets = 0;
+
+    setRepMatches.forEach(match => {
+        const numbers = match.match(/\d+/g);
+        if (numbers && numbers.length >= 2) {
+            // Heuristic: Assume the first number is sets if it's reasonable (e.g., < 10)
+            // and the second number looks like reps (e.g., > 1 or a range).
+            const potentialSets = parseInt(numbers[0], 10);
+            const potentialReps = numbers[1]; // Keep as string to check for range '-'
+            if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 10) { // Check if first number looks like sets
+                 const repRange = potentialReps.split('-').map(Number);
+                 const maxReps = Math.max(...repRange);
+                 if (!isNaN(maxReps)) {
+                    if (maxReps <= 6) lowRepSets += potentialSets;
+                    else if (maxReps <= 15) midRepSets += potentialSets;
+                    else highRepSets += potentialSets;
+                 }
+            }
+        }
+    });
+    // Simple rep mentions (less reliable for sets, used for component scoring)
+     const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
+     simpleRepMatches.forEach(match => {
+         const repNumbers = match.match(/\d+/g);
+         if (repNumbers) {
+             const maxReps = Math.max(...repNumbers.map(Number));
+             if (maxReps <= 6) lowRepSets += 0.5; // Add fractional count for scoring
+             else if (maxReps <= 15) midRepSets += 0.5;
+             else highRepSets += 0.5;
+         }
+     });
+
+    counts.fuerza += lowRepSets * 2;
+    counts.hipertrofia += midRepSets * 1.5;
+    counts.cardio += highRepSets * 1; // High reps contribute a bit to cardio score
+
+    // 2. Specific Exercise Keywords
+    const specificExercises = {
+        fuerza: ['press de banca', 'bench press', 'sentadilla', 'squat', 'peso muerto', 'deadlift', 'press militar', 'overhead press', 'remo con barra', 'barbell row'],
+        hipertrofia: ['curl', 'elevaciones laterales', 'lateral raise', 'extensiones de triceps', 'tricep extension', 'remo con mancuernas', 'dumbbell row', 'aperturas', 'flyes', 'pulldown'],
+        movilidad: ['rotaciones', 'mobility drills', 'estiramiento dinámico', 'dynamic stretch', 'foam roller', 'yoga', 'pilates'],
+        potencia: ['salto al cajón', 'box jump', 'lanzamiento de balón', 'medicine ball throw', 'kettlebell swing', 'power clean', 'snatch', 'clean and jerk'],
+        tecnica: ['pistol squat', 'turkish get up', 'handstand', 'equilibrio', 'coordinación', 'propiocepción', 'isométrico', 'isometric'],
+        cardio: ['correr', 'running', 'burpee', 'jumping jack', 'ciclismo', 'natación', 'remo', 'rowing machine', 'assault bike']
+    };
+    Object.keys(specificExercises).forEach(component => {
+        specificExercises[component].forEach(ex => {
+            try {
+                const safeEx = ex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(safeEx.replace(/\s+/g, '\\s+'), 'gi');
+                const matches = routineHtml.match(regex) || [];
+                counts[component] += matches.length * 2.5; // Weight specific exercises more
+            } catch (e) {
+                console.warn(`[Scores Calculation] Invalid regex for exercise: ${ex}`, e);
+            }
+        });
+    });
+
+    // 3. Intensity/Tempo Indicators
+    if (routineHtml.match(/RIR\s+[0-2]/gi)) { counts.fuerza += 3; counts.hipertrofia += 5; }
+    if (routineHtml.match(/RIR\s+[3-4]/gi)) { counts.hipertrofia += 3; }
+    if (routineHtml.match(/RPE\s+[8-9]/gi)) { counts.fuerza += 2; counts.hipertrofia += 4; }
+    if (routineHtml.match(/RPE\s+[6-7]/gi)) { counts.hipertrofia += 2; }
+    if (routineHtml.match(/tempo.*[xX]/gi)) { counts.potencia += 6; } // Explosive tempo
+    if (routineHtml.match(/tempo\s+\d{4,}/gi)) { counts.tecnica += 3; counts.hipertrofia += 2; } // Controlled tempo
+    if (routineHtml.match(/descanso\s+(corto|30s|45s|60s)/gi)) { counts.hipertrofia += 1; counts.cardio += 1; }
+    if (routineHtml.match(/descanso\s+(largo|90s|120s|2-3\s*min)/gi)) { counts.fuerza += 2; }
+
+    // --- Normalization ---
+    const totalCount = Object.values(counts).reduce((sum, count) => sum + Math.max(0, count), 0);
+
+    if (totalCount === 0) {
+        console.warn("[Scores Calculation] Total count for normalization is zero, returning default balanced scores.");
+        // Return default balanced scores if no keywords/heuristics matched
+        return {
+            fuerza: 50, hipertrofia: 50, movilidad: 50,
+            potencia: 50, tecnica: 50, cardio: 50,
+            mainComponents: [], mainComponentsDisplay: 'Equilibrado'
+        };
+    }
+
+    // Calculate initial percentage scores
+    Object.keys(counts).forEach(component => {
+        scores[component] = Math.round((Math.max(0, counts[component]) / totalCount) * 100);
+    });
+
+    // --- Smoothing and Thresholding ---
+    const minThreshold = 5; // Minimum score if any count was found
+    let totalScore = 0;
+    Object.keys(scores).forEach(component => {
+        // If component had counts but score is below threshold, set to threshold
+        if (counts[component] > 0 && scores[component] < minThreshold) {
+            scores[component] = minThreshold;
+        }
+        // Ensure score doesn't exceed 100
+        scores[component] = Math.min(scores[component], 100);
+        totalScore += scores[component];
+    });
+
+    // Re-normalize if total score significantly deviates from 100 after thresholding
+    if (totalScore > 0 && Math.abs(totalScore - 100) > 10) { // Allow some tolerance
+        const scaleFactor = 100 / totalScore;
+        Object.keys(scores).forEach(component => {
+            scores[component] = Math.round(scores[component] * scaleFactor);
+             // Re-apply threshold and cap at 100
+            scores[component] = Math.max( (counts[component] > 0 ? minThreshold : 0) , Math.min(scores[component], 100));
+        });
+    }
+
+     // Final adjustment to ensure sum is exactly 100
+     let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
+     if (finalTotal !== 100 && finalTotal > 0) {
+         let diff = 100 - finalTotal;
+         // Distribute difference starting from the component with the highest score
+         let sortedComponents = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+
+         // Adjust the largest component(s) carefully
+         scores[sortedComponents[0]] = Math.min(100, Math.max(0, scores[sortedComponents[0]] + diff));
+
+         // Recalculate total and adjust second largest if still needed (rare)
+         finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
+         if (finalTotal !== 100) {
+             let secondDiff = 100 - finalTotal;
+             // Ensure there's a second component to adjust
+             if (sortedComponents.length > 1) {
+                scores[sortedComponents[1]] = Math.min(100, Math.max(0, scores[sortedComponents[1]] + secondDiff));
+             } else {
+                 // If only one component, force it to 100 (edge case)
+                 scores[sortedComponents[0]] = 100;
+             }
+         }
+     }
+
+    // --- Determine Main Components ---
+    let maxScore = 0;
+    let mainComponents = [];
+    const significanceThreshold = 25; // Threshold to be considered a "main" component
+    Object.entries(scores).forEach(([component, score]) => {
+         if (score >= significanceThreshold) {
+             if (score > maxScore) {
+                 maxScore = score;
+                 mainComponents = [component]; // New max, reset list
+             } else if (score === maxScore && !mainComponents.includes(component)) {
+                 mainComponents.push(component); // Add ties
+             }
+         }
+    });
+      // If no component reached the threshold, find the highest score(s) anyway
+      if (mainComponents.length === 0) {
+          maxScore = Math.max(...Object.values(scores));
+          if (maxScore > 0) { // Only if there are non-zero scores
+            Object.entries(scores).forEach(([component, score]) => {
+                if (score === maxScore) {
+                    mainComponents.push(component);
+                }
+            });
+          }
+      }
+
+
+    scores.mainComponents = mainComponents;
+    scores.mainComponentsDisplay = mainComponents.length > 0
+        ? mainComponents.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
+        : 'Equilibrado'; // Default if no clear focus
+
+    console.log("[Scores Calculation] Final Calculated Scores:", scores);
+    return scores;
 }
 
-module.exports = { generatePDF };
+
+/**
+ * Calculates approximate daily volume (total sets) from routine HTML using structural analysis.
+ * VERSION 10: Parses based on column index identified by "SERIES" header.
+ * @param {string} routineHtml - The HTML content of the generated routine.
+ * @returns {Object} - An object with day identifiers as keys and total daily sets as values.
+ */
+function calculateDailyVolume(routineHtml) {
+    // Use v10 logic - no changes needed here as it correctly identifies sets now
+    console.log("[Volume Calc v10] Starting...");
+    const dailyVolume = {};
+
+    if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
+        console.warn("[Volume Calc v10] No valid routine HTML provided.");
+        return {};
+    }
+    if (!/<table/i.test(routineHtml)) {
+        console.warn("[Volume Calc v10] Input HTML does not contain any '<table>' tags.");
+        return {};
+    }
+
+    const dayHeaderRegex = /<(?:th|td)[^>]*>.*?(\bD[Íí]a\s+\d+\b).*?<\/(?:th|td)>/i;
+    // Regex to check if a string looks like a time duration (for REPS column)
+    const timeDurationRegex = /\d+\s*(?:s|seg|sec|min)\b/i;
+
+    const tableRegex = /<table[\s\S]*?<\/table>/gi;
+    const tableMatches = routineHtml.match(tableRegex);
+    console.log(`[Volume Calc v10] Found ${tableMatches.length} table(s).`);
+
+    tableMatches.forEach((tableHtml, tableIndex) => {
+        console.log(`\n[Volume Debug v10] Processing Table ${tableIndex + 1}`);
+        let currentDay = null;
+        let setsColumnIndex = -1; // Index of the "SERIES" column (0-based)
+        let repsColumnIndex = -1; // Index of the "REPS" column
+
+        const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
+        const rowMatches = tableHtml.match(rowRegex);
+
+        if (!rowMatches) {
+            console.log(`[Volume Debug v10] No rows found in Table ${tableIndex + 1}.`);
+            return;
+        }
+
+        rowMatches.forEach((rowHtml, rowIndex) => {
+            // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: ${rowHtml.substring(0,100)}`);
+
+            // 1. Check for Day Header Row
+            const dayMatch = rowHtml.match(dayHeaderRegex);
+            if (dayMatch && dayMatch[1]) {
+                currentDay = dayMatch[1].trim(); // e.g., "Día 1"
+                if (!dailyVolume[currentDay]) {
+                    dailyVolume[currentDay] = 0;
+                }
+                setsColumnIndex = -1; // Reset column index for the new day/table
+                repsColumnIndex = -1;
+                console.log(`[Volume Debug v10] Found Day Header: "${currentDay}" in Row ${rowIndex + 1}`);
+                return; // Skip further processing of this header row
+            }
+
+            // If we haven't found a day header yet in this table, skip
+            if (!currentDay) {
+                return;
+            }
+
+            // 2. Check for Column Header Row (to find "SERIES" and "REPS" index)
+            // Look for <th> or <td> containing the exact words "SERIES" or "REPS"
+            const headerCellsRegex = /<(th|td)[\s\S]*?<\/\1>/gi; // Match th or td correctly
+            const headerCells = rowHtml.match(headerCellsRegex);
+            let isLikelyHeaderRow = false; // Flag to identify the header row
+
+            if (headerCells && (setsColumnIndex === -1 || repsColumnIndex === -1)) { // Find indices if not already found for this day
+                headerCells.forEach((cellHtml, index) => {
+                    const cellText = cellHtml.replace(/<[^>]+>/g, '').trim();
+                    if (/^SERIES$/i.test(cellText)) {
+                        setsColumnIndex = index;
+                        console.log(`[Volume Debug v10] Found 'SERIES' header at index ${setsColumnIndex} in Row ${rowIndex + 1}`);
+                        isLikelyHeaderRow = true;
+                    }
+                    if (/^REPS$/i.test(cellText)) {
+                        repsColumnIndex = index;
+                         console.log(`[Volume Debug v10] Found 'REPS' header at index ${repsColumnIndex} in Row ${rowIndex + 1}`);
+                         isLikelyHeaderRow = true;
+                    }
+                    // Also check for other common header words to be sure it's a header row
+                    if (/^EJERCICIO$|^DESCANSO$|^NOTAS CLAVE/i.test(cellText)) {
+                        isLikelyHeaderRow = true;
+                    }
+                });
+                 // If we identified this as the header row based on cell content, skip processing it as data
+                if (isLikelyHeaderRow) {
+                    console.log(`[Volume Debug v10] Identified Row ${rowIndex + 1} as column header row.`);
+                    return;
+                }
+            }
+
+
+            // 3. Process Data Row (if it's not a header and we know the sets column index)
+            if (!isLikelyHeaderRow && setsColumnIndex !== -1) {
+                const dataCellsRegex = /<td[\s\S]*?<\/td>/gi; // Look specifically for <td> in data rows
+                const dataCells = rowHtml.match(dataCellsRegex);
+
+                if (dataCells && dataCells.length > setsColumnIndex) {
+                    const setsCellHtml = dataCells[setsColumnIndex];
+                    const setsText = setsCellHtml.replace(/<[^>]+>/g, '').trim();
+                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Text in Sets Column (${setsColumnIndex}): "${setsText}"`); // Log text found
+
+                    // Attempt to parse the sets text as a number
+                    let setsFound = 0;
+                    if (setsText !== '') {
+                        const potentialSets = parseInt(setsText, 10);
+                        if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check
+                            setsFound = potentialSets;
+                            // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Parsed Sets: ${setsFound}`);
+
+                            // Optional: Check if REPS column indicates time (like Plancha) for logging/confirmation
+                            if (repsColumnIndex !== -1 && dataCells.length > repsColumnIndex) {
+                                const repsText = dataCells[repsColumnIndex].replace(/<[^>]+>/g, '').trim();
+                                if (timeDurationRegex.test(repsText)) {
+                                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Detected time-based exercise in Reps column ("${repsText}") with ${setsFound} sets.`);
+                                }
+                            }
+
+                        } else {
+                             // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
+                        }
+                    } else {
+                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
+                    }
+
+
+                    // Add valid sets found to the daily total
+                    if (setsFound > 0 && !isNaN(setsFound)) {
+                        dailyVolume[currentDay] += setsFound;
+                    } else {
+                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
+                    }
+
+                } else {
+                    // This row doesn't seem to have enough data cells or structure is unexpected
+                     // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
+                }
+            } else if (!isLikelyHeaderRow && setsColumnIndex === -1) {
+                 // This case should be less common now, means we are past day header but haven't found column headers yet
+                 // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping data row, 'SERIES' column index not identified yet.`);
+            }
+        }); // End loop through rows
+
+        if (currentDay) {
+             console.log(`[Volume Debug v10] Finished Table ${tableIndex + 1}. Total sets for ${currentDay}: ${dailyVolume[currentDay] || 0}`);
+        } else {
+             console.log(`[Volume Debug v10] Finished Table ${tableIndex + 1}. No 'Día N' header found in this table.`);
+        }
+    }); // End loop through tables
+
+    console.log("[Volume Calc v10] Final Daily Volume Object:", JSON.stringify(dailyVolume));
+
+    if (Object.keys(dailyVolume).length === 0 || Object.values(dailyVolume).every(v => v === 0)) {
+        console.warn("[Volume Calc v10] No sets were calculated for any day OR all days have zero sets. Returning empty object.");
+        return {};
+    }
+
+    return dailyVolume;
+}
+
+
+/**
+ * Genera el HTML para la portada, incluyendo placeholders para los gráficos.
+ * @param {Object} scores - Puntuaciones de componentes de entrenamiento.
+ * @param {string} clientName - Nombre del cliente.
+ * @returns {string} - HTML para la portada.
+ */
+function generateCoverPageHtml(scores, clientName = 'Cliente') {
+    const date = new Date().toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Dynamic description based on main components
+    let description = `¡Hola ${clientName}! Aquí tienes un resumen visual de tu nuevo plan de entrenamiento. `;
+    if (scores.mainComponents && scores.mainComponents.length > 0) {
+        description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡A darle con todo!`;
+    } else {
+        description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`;
+    }
+
+    // HTML Structure - COMMENT FULLY REMOVED
+    return `
+    <div class="cover-page-new">
+      <div class="cover-header-new">
+        <img class="cover-logo-new" src="LOGO_BASE_64_PLACEHOLDER" alt="Logo Fitform" onerror="this.style.display='none'">
+        <div class="client-info-new">
+          <h1>${clientName}</h1>
+          <p>${date}</p>
+        </div>
+      </div>
+
+      <div class="cover-main-new">
+        <div class="cover-text-content">
+          <h2>Tu Hoja de Ruta Fitness</h2>
+          <p class="cover-description-new">${description}</p>
+          <div class="components-legend-new">
+            <h3>Enfoque del Entrenamiento (%)</h3>
+            <div class="legend-grid">
+              <div class="component-item-new">
+                  <div class="component-dot-new fuerza-color"></div>
+                  <div class="component-label-new">Fuerza: <span>${scores.fuerza}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new potencia-color"></div>
+                  <div class="component-label-new">Potencia: <span>${scores.potencia}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new hipertrofia-color"></div>
+                  <div class="component-label-new">Hipertrofia: <span>${scores.hipertrofia}%</span></div>
+              </div>
+               <div class="component-item-new">
+                  <div class="component-dot-new tecnica-color"></div>
+                  <div class="component-label-new">Técnica: <span>${scores.tecnica}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new movilidad-color"></div>
+                  <div class="component-label-new">Movilidad: <span>${scores.movilidad}%</span></div>
+              </div>
+              <div class="component-item-new">
+                  <div class="component-dot-new cardio-color"></div>
+                  <div class="component-label-new">Cardio: <span>${scores.cardio}%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cover-visuals-content">
+          <div class="chart-container-new radar-chart-container-new">
+              <h3 class="chart-title">Distribución del Enfoque</h3>
+              <canvas id="radarChart"></canvas>
+          </div>
+          <div class="chart-container-new volume-chart-container-new">
+              <h3 class="chart-title">Volumen Total Estimado por Día (Series)</h3>
+              <canvas id="volumeLineChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="cover-footer-new">
+          <p>© ${new Date().getFullYear()} Fitform - Todos los derechos reservados</p>
+      </div>
+    </div>
+    `;
+}
+
+
+/**
+ * Genera estilos CSS para la portada (incluyendo gráficos).
+ * @returns {string} - Estilos CSS.
+ */
+function getCoverPageStyles() {
+    // Styles remain the same as the previous corrected version
+    return `
+    /* Estilos Mejorados Portada Completa v3 - Corregido Layout Gráficos */
+    :root {
+        /* Define color variables */
+        --primary-color: #2c3e50; /* Dark Blue-Gray for text */
+        --secondary-color: #34495e; /* Slightly lighter Blue-Gray */
+        --accent-color: #3498db;   /* Bright Blue */
+        --light-blue-bg: #e0f2f7; /* Light Sky Blue */
+        --medium-blue-bg: #b3e0f2; /* Medium Sky Blue */
+        --text-light: #ffffff;     /* White text (e.g., for buttons if added) */
+        --text-dark: #2c3e50;       /* Dark Blue-Gray for main text */
+        --text-medium-dark: #555;   /* Medium dark gray for less important text */
+        --text-light-gray: #95a5a6; /* Light gray for footer */
+        --border-light: rgba(0, 0, 0, 0.1);   /* Light border for dark on light */
+        --border-medium: #bdc3c7; /* Medium border */
+        --background-light-accent: rgba(0, 0, 0, 0.04); /* Subtle dark accent on light bg */
+        --background-chart-container: #ffffff; /* White background for charts */
+        --border-radius: 8px;
+        --border-radius-large: 12px;
+        --box-shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
+        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
+
+        /* Component Colors */
+        --fuerza-color: #3498db;
+        --hipertrofia-color: #2ecc71;
+        --movilidad-color: #f1c40f;
+        --potencia-color: #e74c3c;
+        --tecnica-color: #9b59b6;
+        --cardio-color: #e67e22;
+    }
+
+    /* Apply margin reset to body for PDF generation */
+    body {
+        margin: 0;
+        font-family: 'Inter', 'Arial', sans-serif; /* Ensure font is applied */
+        -webkit-print-color-adjust: exact; /* Important for background colors in PDF */
+         print-color-adjust: exact;
+    }
+
+
+    .cover-page-new {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh; /* Ensure full page height */
+        height: 100vh; /* Try explicit height */
+        width: 100%;
+        /* Lighter Sky Blue Gradient Background */
+        background: linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
+        color: var(--text-dark); /* Main text color changed to dark */
+        box-sizing: border-box;
+        page-break-after: always;
+        overflow: hidden; /* Prevent content spill */
+        padding: 30px 40px; /* Reduced padding slightly */
+    }
+
+    .cover-header-new {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px; /* Adjusted margin */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Darker border on light bg */
+        padding-bottom: 15px;
+        flex-shrink: 0; /* Prevent header from shrinking */
+    }
+
+    .cover-logo-new {
+        width: 100px; /* Further adjusted size */
+        height: auto;
+        opacity: 0.9;
+         /* Assuming logo needs to be dark on light bg, remove invert */
+         /* filter: brightness(0) invert(1); */
+    }
+
+    .client-info-new {
+        text-align: right;
+    }
+
+    .client-info-new h1 {
+        font-size: 24px; /* Adjusted size */
+        font-weight: 700;
+        color: var(--primary-color); /* Use primary dark color */
+        margin: 0 0 4px 0;
+        line-height: 1.2;
+    }
+
+    .client-info-new p {
+        margin: 0;
+        color: var(--text-medium-dark); /* Medium dark gray */
+        font-size: 13px; /* Adjusted */
+        font-weight: 400;
+    }
+
+    .cover-main-new {
+        flex-grow: 1; /* Allow main content to take available space */
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Adjusted gap */
+        width: 100%;
+        overflow: hidden; /* Prevent inner content from overflowing the page */
+        /* Removed margin-bottom to let flexbox handle space */
+    }
+
+    .cover-text-content {
+       flex-shrink: 0; /* Prevent text content from shrinking too much */
+       margin-bottom: 15px; /* Add some space below text */
+    }
+
+    .cover-text-content h2 {
+        font-size: 22px; /* Adjusted size */
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+        line-height: 1.3;
+        position: relative;
+        display: inline-block;
+        padding-bottom: 6px;
+    }
+
+    .cover-text-content h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 40px;
+        height: 3px;
+        background-color: var(--accent-color);
+        border-radius: 3px;
+    }
+
+    .cover-description-new {
+        font-size: 13px; /* Adjusted size */
+        color: var(--secondary-color); /* Use secondary dark color */
+        line-height: 1.5; /* Adjusted */
+        margin-bottom: 20px; /* Adjusted margin */
+        font-weight: 400;
+        max-width: 100%;
+    }
+
+    .cover-description-new strong {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .components-legend-new {
+        background-color: var(--background-light-accent);
+        padding: 15px 20px; /* Adjusted padding */
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-light);
+    }
+
+    .components-legend-new h3 {
+        font-size: 14px; /* Adjusted size */
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0 0 12px 0;
+        text-align: left;
+    }
+
+    .legend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Responsive columns */
+        gap: 8px 15px; /* Adjusted gap */
+    }
+
+
+    .component-item-new {
+        display: flex;
+        align-items: center;
+        gap: 7px; /* Adjusted gap */
+    }
+
+    .component-dot-new {
+        width: 9px; /* Adjusted */
+        height: 9px; /* Adjusted */
+        border-radius: 50%;
+        flex-shrink: 0;
+        border: 1px solid rgba(0, 0, 0, 0.3); /* Darker border for dots */
+    }
+
+    /* Component Colors remain the same */
+    .fuerza-color { background-color: var(--fuerza-color); }
+    .hipertrofia-color { background-color: var(--hipertrofia-color); }
+    .movilidad-color { background-color: var(--movilidad-color); }
+    .potencia-color { background-color: var(--potencia-color); }
+    .tecnica-color { background-color: var(--tecnica-color); }
+    .cardio-color { background-color: var(--cardio-color); }
+
+    .component-label-new {
+        font-size: 12px; /* Adjusted size */
+        font-weight: 500;
+        color: var(--secondary-color);
+    }
+
+    .component-label-new span {
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-left: 4px;
+    }
+
+    /* --- Layout Correction for Charts --- */
+    .cover-visuals-content {
+        display: flex; /* Use flexbox */
+        flex-direction: column; /* Stack charts vertically */
+        gap: 15px; /* Space between charts */
+        width: 100%;
+        flex-grow: 1; /* Allow this container to grow */
+        overflow: hidden; /* Prevent charts from overflowing */
+        /* align-items: stretch; Removed */
+    }
+
+    .chart-container-new {
+        /* flex: 1 1 300px; Removed - let flex column handle sizing */
+        background-color: var(--background-chart-container);
+        border-radius: var(--border-radius-large);
+        padding: 15px 20px 20px 20px; /* Adjusted padding */
+        box-shadow: var(--box-shadow-medium);
+        border: 1px solid var(--border-medium); /* Subtle border */
+        display: flex;
+        flex-direction: column;
+        /* min-width: 0; Removed */
+        height: auto; /* Let height be determined by content and available space */
+        min-height: 250px; /* Minimum height to ensure chart visibility */
+        max-height: 300px; /* **Adjust this value as needed** Maximum height per chart */
+        flex-shrink: 1; /* Allow charts to shrink if needed */
+        flex-grow: 1; /* Allow charts to grow to fill space */
+        /* margin-bottom: 20px; /* Add space below each chart */
+        /* Removed margin-bottom, using gap in parent instead */
+    }
+
+    /* .chart-container-new:last-child {
+       margin-bottom: 0; /* Remove margin from the last chart */
+    /* } */
+
+
+     .chart-title {
+        font-size: 13px; /* Adjusted size */
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 0 0 10px 0; /* Adjusted margin */
+        text-align: center;
+        flex-shrink: 0; /* Prevent title from shrinking */
+    }
+
+    #radarChart, #volumeLineChart {
+        max-width: 100%;
+        /* max-height: calc(100% - 30px); /* Removed fixed calc, let flexbox manage */
+        width: 100%; /* Ensure canvas tries to fill container width */
+        height: 100%; /* Ensure canvas tries to fill container height */
+        margin: auto;
+        display: block;
+        flex-grow: 1; /* Allow canvas to grow */
+        min-height: 0; /* Important for flex item sizing */
+    }
+    /* --- End Layout Correction --- */
+
+    .cover-footer-new {
+        width: 100%;
+        text-align: center;
+        padding-top: 10px; /* Adjusted padding */
+        margin-top: auto; /* Push footer to bottom */
+        border-top: 1px solid var(--border-light);
+        font-size: 10px; /* Adjusted size */
+        color: var(--text-light-gray);
+        flex-shrink: 0; /* Prevent footer from shrinking */
+    }
+    `;
+}
+
+/**
+ * Genera el script de inicialización de Chart.js para el gráfico radar.
+ * @param {Object} scores - Puntuaciones de componentes de entrenamiento.
+ * @returns {string} - Código JavaScript para inicializar el gráfico radar.
+ */
+function getRadarChartScript(scores) {
+    const chartData = [
+        scores.fuerza, scores.hipertrofia, scores.movilidad,
+        scores.potencia, scores.tecnica, scores.cardio
+    ];
+    const labels = ['Fuerza', 'Hipertrofia', 'Movilidad', 'Potencia', 'Técnica', 'Cardio'];
+
+    // Chart.js initialization script
+    return `
+    <script>
+      // Variable global para la instancia del gráfico radar
+      var myRadarChart;
+      // Function to initialize the radar chart
+      function initRadarChart() {
+        const canvasElement = document.getElementById('radarChart');
+        if (!canvasElement) {
+          console.error("Canvas element #radarChart not found.");
+          return;
+        }
+        const ctx = canvasElement.getContext('2d');
+        if (!ctx) {
+            console.error("Failed to get 2D context from radar canvas.");
+            return;
+        }
+
+        // Chart.js Configuration
+        try {
+            // Destruir gráfico existente si lo hay (para reinicialización)
+            if (window.myRadarChart) {
+                window.myRadarChart.destroy();
+            }
+            window.myRadarChart = new Chart(ctx, { // Asignar a la variable global
+                type: 'radar',
+                data: {
+                    labels: ${JSON.stringify(labels)},
+                    datasets: [{
+                        label: 'Enfoque (%)',
+                        data: ${JSON.stringify(chartData)},
+                        backgroundColor: 'rgba(10, 42, 94, 0.3)', // Keep dark fill for contrast
+                        borderColor: 'rgba(10, 42, 94, 0.9)',   // Keep dark border
+                        borderWidth: 1.5, // Reduced border width slightly
+                        pointBackgroundColor: 'rgba(10, 42, 94, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(10, 42, 94, 1)',
+                        pointRadius: 3, // Reduced point size
+                        pointHoverRadius: 5 // Reduced hover size
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: { // Radial axis
+                            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.08)' }, // Lighter lines
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            grid: { color: 'rgba(0, 0, 0, 0.08)' }, // Lighter grid
+                            ticks: {
+                                stepSize: 25, // Adjusted step size
+                                color: 'rgba(0, 0, 0, 0.5)', // Lighter ticks
+                                backdropColor: 'rgba(255, 255, 255, 0.6)', // More transparent backdrop
+                                padding: 5, // Reduced padding
+                                font: { size: 9 } // Smaller font
+                            },
+                            pointLabels: { // Labels around the edge
+                                font: { size: 11, weight: '500' }, // Adjusted font size
+                                color: 'rgba(0, 0, 0, 0.75)' // Slightly lighter labels
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Slightly lighter tooltip
+                            titleFont: { size: 12, weight: 'bold' }, // Adjusted size
+                            bodyFont: { size: 11 }, // Adjusted size
+                            padding: 8, // Adjusted padding
+                            boxPadding: 3,
+                            cornerRadius: 3,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.r !== null) {
+                                        label += context.parsed.r + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false // Crucial for resizing within flex container
+                }
+            });
+            console.log("Radar chart initialized successfully."); // Confirmation log
+        } catch (error) {
+             console.error("Error initializing Radar Chart:", error);
+        }
+      }
+
+      // Initialize chart when the DOM is ready
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initRadarChart);
+      } else {
+          // Delay slightly if DOM is already loaded, might help rendering in some cases
+          setTimeout(initRadarChart, 50); // Reduced delay
+      }
+    </script>
+    `;
+}
+
+/**
+ * Genera el script de inicialización de Chart.js para el gráfico de líneas de volumen DIARIO.
+ * INCLUYE MEJORAS VISUALES Y PLUGIN DATALABELS.
+ * @param {Object} dailyVolumeData - Datos de volumen diario (ej. {'Día 1': 20, 'Día 2': 18}).
+ * @returns {string} - Código JavaScript para inicializar el gráfico de líneas.
+ */
+function getVolumeLineChartScript(dailyVolumeData) {
+    // Extraer etiquetas (Día 1, Día 2...) y datos (total series)
+    const sortedDays = Object.keys(dailyVolumeData).sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+    });
+
+    const labels = sortedDays;
+    const data = sortedDays.map(day => dailyVolumeData[day]);
+
+    const displayLabels = labels.length > 0 ? labels : ['No Data'];
+    const displayData = data.length > 0 ? data : [0];
+    const noDataAvailable = (Object.keys(dailyVolumeData).length === 0 || data.every(v => v === 0));
+    console.log(`[Volume Script - Daily v11] Generating script. No data available: ${noDataAvailable}`);
+    console.log(`[Volume Script - Daily v11] dailyVolumeData for script: ${JSON.stringify(dailyVolumeData)}`);
+    console.log(`[Volume Script - Daily v11] Labels for chart: ${JSON.stringify(displayLabels)}`);
+    console.log(`[Volume Script - Daily v11] Data for chart: ${JSON.stringify(displayData)}`);
+
+
+    const lineChartColors = {
+        // Using a slightly more vibrant blue from the theme
+        main: 'rgba(52, 152, 219, 1)', // var(--accent-color) as solid
+        areaFill: 'rgba(52, 152, 219, 0.2)', // Lighter fill
+        pointBorder: '#ffffff',
+        pointHoverBackground: '#ffffff',
+        datalabelColor: '#333' // Darker color for data labels for contrast
+    };
+
+    return `
+    <script>
+      // Variable global para la instancia del gráfico de volumen
+      var myVolumeChart;
+      // Function to initialize the volume line chart
+      function initVolumeLineChart() {
+        const canvasElement = document.getElementById('volumeLineChart');
+        if (!canvasElement) {
+          console.error("Canvas element #volumeLineChart not found.");
+          return;
+        }
+        const ctx = canvasElement.getContext('2d');
+         if (!ctx) {
+             console.error("Failed to get 2D context from volume canvas.");
+             return;
+         }
+
+        // Display message if no data
+        const noData = ${noDataAvailable};
+        if (noData) {
+            console.log("[Volume Script - Daily v11] No data flag is true, displaying message on canvas.");
+             if (window.myVolumeChart) {
+                 window.myVolumeChart.destroy();
+                 window.myVolumeChart = null;
+             }
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasElement.width = canvasElement.offsetWidth;
+            canvasElement.height = canvasElement.offsetHeight;
+            ctx.font = "14px 'Inter', sans-serif";
+            ctx.fillStyle = '#777';
+            ctx.textAlign = 'center';
+            const centerX = canvasElement.width / 2;
+            const centerY = canvasElement.height / 2;
+            ctx.fillText("No se pudo calcular el volumen.", centerX, centerY);
+            console.warn("No volume data to display in line chart.");
+            return;
+        } else {
+             console.log("[Volume Script - Daily v11] Data is available, proceeding with chart initialization.");
+        }
+
+
+        // Chart.js Configuration with DataLabels plugin
+        try {
+            if (window.myVolumeChart) {
+                console.log("[Volume Script - Daily v11] Destroying existing volume chart instance.");
+                window.myVolumeChart.destroy();
+            }
+            console.log("[Volume Script - Daily v11] Creating new Chart instance.");
+            window.myVolumeChart = new Chart(ctx, {
+                type: 'line',
+                plugins: [ChartDataLabels], // Register plugin for this chart instance
+                data: {
+                    labels: ${JSON.stringify(displayLabels)},
+                    datasets: [{
+                        label: 'Series Totales por Día',
+                        data: ${JSON.stringify(displayData)},
+                        fill: true,
+                        backgroundColor: '${lineChartColors.areaFill}', // Use defined color
+                        borderColor: '${lineChartColors.main}', // Use defined color
+                        borderWidth: 2.5, // Slightly thicker line
+                        pointBackgroundColor: '${lineChartColors.main}',
+                        pointBorderColor: '${lineChartColors.pointBorder}',
+                        pointBorderWidth: 1.5, // Make point border visible
+                        pointHoverBackgroundColor: '${lineChartColors.pointHoverBackground}',
+                        pointHoverBorderColor: '${lineChartColors.main}',
+                        pointRadius: 4.5, // Larger points
+                        pointHoverRadius: 6.5, // Larger hover points
+                        tension: 0.2 // Slightly more curve
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Número Total de Series',
+                                font: { size: 11 },
+                                color: '#666',
+                                padding: { top: 0, bottom: 5 }
+                            },
+                            ticks: {
+                                color: 'rgba(0, 0, 0, 0.6)',
+                                precision: 0, // Ensure whole numbers
+                                font: { size: 10 }
+                            },
+                             grid: {
+                                 color: 'rgba(0, 0, 0, 0.08)' // Slightly more visible grid
+                             }
+                        },
+                        x: {
+                             title: {
+                                 display: true,
+                                 text: 'Día de Entrenamiento',
+                                 font: { size: 11 },
+                                 color: '#666',
+                                 padding: { top: 5, bottom: 0 }
+                             },
+                             ticks: {
+                                 color: 'rgba(0, 0, 0, 0.7)', // Slightly darker ticks
+                                 font: { size: 10 }
+                             },
+                             grid: {
+                                 display: false
+                             }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false, // Keep legend hidden for single dataset
+                        },
+                        tooltip: { // Keep tooltips for hover details
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            padding: 8,
+                            boxPadding: 3,
+                            cornerRadius: 3,
+                             callbacks: {
+                                 title: function(tooltipItems) {
+                                     return tooltipItems[0]?.label || '';
+                                 },
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) { label += ': '; }
+                                     if (context.parsed.y !== null) {
+                                         label += context.parsed.y + ' series';
+                                     }
+                                     return label;
+                                 }
+                             }
+                        },
+                        datalabels: { // Configuration for chartjs-plugin-datalabels
+                            display: true, // Show labels by default
+                            anchor: 'end', // Position label at the end of the data element
+                            align: 'top', // Align label above the anchor point
+                            color: '${lineChartColors.datalabelColor}', // Label text color
+                            font: {
+                                size: 10, // Slightly smaller font for labels
+                                weight: '600' // Make labels bold
+                            },
+                            formatter: (value, context) => {
+                                // Show the value directly (number of sets)
+                                return value;
+                                // Optional: Add suffix like ' series'
+                                // return value + ' s';
+                            },
+                            // Optional: Add padding or offset if needed
+                            // offset: 4,
+                            // padding: { top: 4 }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+             console.log("[Volume Script - Daily v11] Volume chart initialized successfully with datalabels.");
+        } catch (error) {
+             console.error("[Volume Script - Daily v11] Error initializing Volume Line Chart:", error);
+        }
+      }
+
+      // Initialize chart when the DOM is ready
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initVolumeLineChart);
+      } else {
+          // Delay slightly if DOM is already loaded
+          setTimeout(initVolumeLineChart, 50);
+      }
+    </script>
+    `;
+}
+
+
+/**
+ * Creates a complete cover page including radar and volume charts.
+ * @param {string} routineHtml - The HTML content of the routine.
+ * @param {string} clientName - The client's name.
+ * @param {string} logoBase64 - Base64 encoded logo image.
+ * @returns {object} - Object containing fullCoverPageHtml, styles, combined script, scores, and volumeData.
+ */
+function createCoverPage(routineHtml, clientName, logoBase64) {
+    // 1. Calculate component scores
+    const scores = calculateTrainingComponentScores(routineHtml);
+
+    // 2. Calculate DAILY volume using the revised function
+    const dailyVolumeData = calculateDailyVolume(routineHtml); // Use v10
+    console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
+
+
+    // 3. Generate cover page HTML (placeholders for charts) - Use v12 with comment removed
+    let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
+
+    // 4. Replace logo placeholder
+    if (logoBase64 && logoBase64.startsWith('data:image')) {
+        fullCoverPageHtml = fullCoverPageHtml.replace('LOGO_BASE_64_PLACEHOLDER', logoBase64);
+    } else {
+        fullCoverPageHtml = fullCoverPageHtml.replace(/<img class="cover-logo-new".*?>/g, '');
+        console.warn("Valid Logo Base64 not provided or invalid format. Removing logo element.");
+    }
+
+    // 5. Get CSS styles
+    const styles = getCoverPageStyles();
+
+    // 6. Get Chart.js initialization scripts
+    const radarScript = getRadarChartScript(scores);
+    // Pass the DAILY volume data to the updated script generator (v11 with datalabels)
+    const volumeScript = getVolumeLineChartScript(dailyVolumeData);
+
+    // 7. Combine scripts (including Chart.js AND the datalabels plugin)
+    const combinedScript = `
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+        <script> Chart.register(ChartDataLabels); </script> {/* Register plugin globally */}
+        ${radarScript}
+        ${volumeScript}
+    `;
+
+
+    return {
+        fullCoverPageHtml,
+        styles,
+        script: combinedScript,
+        scores, // Keep scores for radar chart
+        volumeData: dailyVolumeData // Return the calculated daily volume data
+    };
+}
+
+
+// Export the main function and the revised volume function name
+module.exports = {
+    calculateTrainingComponentScores,
+    calculateDailyVolume, // Export v10
+    createCoverPage,
+    // Keep other exports if they were needed for testing/other modules
+    generateCoverPageHtml,
+    getCoverPageStyles,
+    getRadarChartScript,
+    getVolumeLineChartScript // Export v11
+};
