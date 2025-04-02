@@ -1,4 +1,4 @@
-// chartService.js (Comment Removed & Visual Enhancements v12)
+// chartService.js (Fondo Blanco y Texto Negro v13)
 
 /**
  * Calculates training component scores based on keywords and heuristics in routine HTML.
@@ -71,27 +71,27 @@ function calculateTrainingComponentScores(routineHtml) {
             const potentialSets = parseInt(numbers[0], 10);
             const potentialReps = numbers[1]; // Keep as string to check for range '-'
             if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 10) { // Check if first number looks like sets
-                 const repRange = potentialReps.split('-').map(Number);
-                 const maxReps = Math.max(...repRange);
-                 if (!isNaN(maxReps)) {
+                const repRange = potentialReps.split('-').map(Number);
+                const maxReps = Math.max(...repRange);
+                if (!isNaN(maxReps)) {
                     if (maxReps <= 6) lowRepSets += potentialSets;
                     else if (maxReps <= 15) midRepSets += potentialSets;
                     else highRepSets += potentialSets;
-                 }
+                }
             }
         }
     });
     // Simple rep mentions (less reliable for sets, used for component scoring)
-     const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
-     simpleRepMatches.forEach(match => {
-         const repNumbers = match.match(/\d+/g);
-         if (repNumbers) {
-             const maxReps = Math.max(...repNumbers.map(Number));
-             if (maxReps <= 6) lowRepSets += 0.5; // Add fractional count for scoring
-             else if (maxReps <= 15) midRepSets += 0.5;
-             else highRepSets += 0.5;
-         }
-     });
+    const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
+    simpleRepMatches.forEach(match => {
+        const repNumbers = match.match(/\d+/g);
+        if (repNumbers) {
+            const maxReps = Math.max(...repNumbers.map(Number));
+            if (maxReps <= 6) lowRepSets += 0.5; // Add fractional count for scoring
+            else if (maxReps <= 15) midRepSets += 0.5;
+            else highRepSets += 0.5;
+        }
+    });
 
     counts.fuerza += lowRepSets * 2;
     counts.hipertrofia += midRepSets * 1.5;
@@ -165,60 +165,60 @@ function calculateTrainingComponentScores(routineHtml) {
         const scaleFactor = 100 / totalScore;
         Object.keys(scores).forEach(component => {
             scores[component] = Math.round(scores[component] * scaleFactor);
-             // Re-apply threshold and cap at 100
+            // Re-apply threshold and cap at 100
             scores[component] = Math.max( (counts[component] > 0 ? minThreshold : 0) , Math.min(scores[component], 100));
         });
     }
 
-     // Final adjustment to ensure sum is exactly 100
-     let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
-     if (finalTotal !== 100 && finalTotal > 0) {
-         let diff = 100 - finalTotal;
-         // Distribute difference starting from the component with the highest score
-         let sortedComponents = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+    // Final adjustment to ensure sum is exactly 100
+    let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    if (finalTotal !== 100 && finalTotal > 0) {
+        let diff = 100 - finalTotal;
+        // Distribute difference starting from the component with the highest score
+        let sortedComponents = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
 
-         // Adjust the largest component(s) carefully
-         scores[sortedComponents[0]] = Math.min(100, Math.max(0, scores[sortedComponents[0]] + diff));
+        // Adjust the largest component(s) carefully
+        scores[sortedComponents[0]] = Math.min(100, Math.max(0, scores[sortedComponents[0]] + diff));
 
-         // Recalculate total and adjust second largest if still needed (rare)
-         finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
-         if (finalTotal !== 100) {
-             let secondDiff = 100 - finalTotal;
-             // Ensure there's a second component to adjust
-             if (sortedComponents.length > 1) {
+        // Recalculate total and adjust second largest if still needed (rare)
+        finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
+        if (finalTotal !== 100) {
+            let secondDiff = 100 - finalTotal;
+            // Ensure there's a second component to adjust
+            if (sortedComponents.length > 1) {
                 scores[sortedComponents[1]] = Math.min(100, Math.max(0, scores[sortedComponents[1]] + secondDiff));
-             } else {
-                 // If only one component, force it to 100 (edge case)
-                 scores[sortedComponents[0]] = 100;
-             }
-         }
-     }
+            } else {
+                // If only one component, force it to 100 (edge case)
+                scores[sortedComponents[0]] = 100;
+            }
+        }
+    }
 
     // --- Determine Main Components ---
     let maxScore = 0;
     let mainComponents = [];
     const significanceThreshold = 25; // Threshold to be considered a "main" component
     Object.entries(scores).forEach(([component, score]) => {
-         if (score >= significanceThreshold) {
-             if (score > maxScore) {
-                 maxScore = score;
-                 mainComponents = [component]; // New max, reset list
-             } else if (score === maxScore && !mainComponents.includes(component)) {
-                 mainComponents.push(component); // Add ties
-             }
-         }
+        if (score >= significanceThreshold) {
+            if (score > maxScore) {
+                maxScore = score;
+                mainComponents = [component]; // New max, reset list
+            } else if (score === maxScore && !mainComponents.includes(component)) {
+                mainComponents.push(component); // Add ties
+            }
+        }
     });
-      // If no component reached the threshold, find the highest score(s) anyway
-      if (mainComponents.length === 0) {
-          maxScore = Math.max(...Object.values(scores));
-          if (maxScore > 0) { // Only if there are non-zero scores
+    // If no component reached the threshold, find the highest score(s) anyway
+    if (mainComponents.length === 0) {
+        maxScore = Math.max(...Object.values(scores));
+        if (maxScore > 0) { // Only if there are non-zero scores
             Object.entries(scores).forEach(([component, score]) => {
                 if (score === maxScore) {
                     mainComponents.push(component);
                 }
             });
-          }
-      }
+        }
+    }
 
 
     scores.mainComponents = mainComponents;
@@ -310,15 +310,15 @@ function calculateDailyVolume(routineHtml) {
                     }
                     if (/^REPS$/i.test(cellText)) {
                         repsColumnIndex = index;
-                         console.log(`[Volume Debug v10] Found 'REPS' header at index ${repsColumnIndex} in Row ${rowIndex + 1}`);
-                         isLikelyHeaderRow = true;
+                        console.log(`[Volume Debug v10] Found 'REPS' header at index ${repsColumnIndex} in Row ${rowIndex + 1}`);
+                        isLikelyHeaderRow = true;
                     }
                     // Also check for other common header words to be sure it's a header row
                     if (/^EJERCICIO$|^DESCANSO$|^NOTAS CLAVE/i.test(cellText)) {
                         isLikelyHeaderRow = true;
                     }
                 });
-                 // If we identified this as the header row based on cell content, skip processing it as data
+                // If we identified this as the header row based on cell content, skip processing it as data
                 if (isLikelyHeaderRow) {
                     console.log(`[Volume Debug v10] Identified Row ${rowIndex + 1} as column header row.`);
                     return;
@@ -353,10 +353,10 @@ function calculateDailyVolume(routineHtml) {
                             }
 
                         } else {
-                             // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
+                            // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
                         }
                     } else {
-                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
+                        // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
                     }
 
 
@@ -364,23 +364,23 @@ function calculateDailyVolume(routineHtml) {
                     if (setsFound > 0 && !isNaN(setsFound)) {
                         dailyVolume[currentDay] += setsFound;
                     } else {
-                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
+                        // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
                     }
 
                 } else {
                     // This row doesn't seem to have enough data cells or structure is unexpected
-                     // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
+                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
                 }
             } else if (!isLikelyHeaderRow && setsColumnIndex === -1) {
-                 // This case should be less common now, means we are past day header but haven't found column headers yet
-                 // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping data row, 'SERIES' column index not identified yet.`);
+                // This case should be less common now, means we are past day header but haven't found column headers yet
+                // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping data row, 'SERIES' column index not identified yet.`);
             }
         }); // End loop through rows
 
         if (currentDay) {
-             console.log(`[Volume Debug v10] Finished Table ${tableIndex + 1}. Total sets for ${currentDay}: ${dailyVolume[currentDay] || 0}`);
+            console.log(`[Volume Debug v10] Finished Table ${tableIndex + 1}. Total sets for ${currentDay}: ${dailyVolume[currentDay] || 0}`);
         } else {
-             console.log(`[Volume Debug v10] Finished Table ${tableIndex + 1}. No 'Día N' header found in this table.`);
+            console.log(`[Volume Debug v10] Finished Table ${tableIndex + 1}. No 'Día N' header found in this table.`);
         }
     }); // End loop through tables
 
@@ -484,33 +484,33 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
 
 /**
  * Genera estilos CSS para la portada (incluyendo gráficos).
+ * **MODIFICADO: Fondo blanco, texto negro.**
  * @returns {string} - Estilos CSS.
  */
 function getCoverPageStyles() {
-    // Styles remain the same as the previous corrected version
+    // Styles modified for white background and black text
     return `
-    /* Estilos Mejorados Portada Completa v3 - Corregido Layout Gráficos */
+    /* Estilos Mejorados Portada Completa v4 - Fondo Blanco */
     :root {
         /* Define color variables */
-        --primary-color: #2c3e50; /* Dark Blue-Gray for text */
-        --secondary-color: #34495e; /* Slightly lighter Blue-Gray */
-        --accent-color: #3498db;   /* Bright Blue */
-        --light-blue-bg: #e0f2f7; /* Light Sky Blue */
-        --medium-blue-bg: #b3e0f2; /* Medium Sky Blue */
+        --primary-color: #000000; /* Black for main headers/strong text */
+        --secondary-color: #333333; /* Dark Gray for body text */
+        --accent-color: #3498db;   /* Bright Blue for accents (like underlines, maybe chart elements) */
+        --background-color: #ffffff; /* White background */
         --text-light: #ffffff;     /* White text (e.g., for buttons if added) */
-        --text-dark: #2c3e50;       /* Dark Blue-Gray for main text */
-        --text-medium-dark: #555;   /* Medium dark gray for less important text */
-        --text-light-gray: #95a5a6; /* Light gray for footer */
-        --border-light: rgba(0, 0, 0, 0.1);   /* Light border for dark on light */
-        --border-medium: #bdc3c7; /* Medium border */
-        --background-light-accent: rgba(0, 0, 0, 0.04); /* Subtle dark accent on light bg */
+        --text-dark: #000000;       /* Black for main text */
+        --text-medium-dark: #555555; /* Medium dark gray for less important text */
+        --text-light-gray: #888888; /* Lighter gray for footer */
+        --border-light: rgba(0, 0, 0, 0.15); /* Slightly darker/more visible border on white */
+        --border-medium: #cccccc; /* Medium gray border */
+        --background-light-accent: rgba(0, 0, 0, 0.03); /* Very subtle gray accent for legend */
         --background-chart-container: #ffffff; /* White background for charts */
         --border-radius: 8px;
         --border-radius-large: 12px;
-        --box-shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
-        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
+        --box-shadow-light: 0 4px 15px rgba(0, 0, 0, 0.08); /* Adjusted shadow for white */
+        --box-shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.1); /* Adjusted shadow for white */
 
-        /* Component Colors */
+        /* Component Colors (Keep these vibrant for the charts/legend) */
         --fuerza-color: #3498db;
         --hipertrofia-color: #2ecc71;
         --movilidad-color: #f1c40f;
@@ -535,9 +535,9 @@ function getCoverPageStyles() {
         min-height: 100vh; /* Ensure full page height */
         height: 100vh; /* Try explicit height */
         width: 100%;
-        /* Lighter Sky Blue Gradient Background */
-        background: linear-gradient(145deg, var(--light-blue-bg) 0%, var(--medium-blue-bg) 100%);
-        color: var(--text-dark); /* Main text color changed to dark */
+        /* White Background */
+        background-color: var(--background-color);
+        color: var(--text-dark); /* Main text color set to black */
         box-sizing: border-box;
         page-break-after: always;
         overflow: hidden; /* Prevent content spill */
@@ -550,7 +550,7 @@ function getCoverPageStyles() {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 25px; /* Adjusted margin */
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Darker border on light bg */
+        border-bottom: 1px solid var(--border-light); /* Use defined light border */
         padding-bottom: 15px;
         flex-shrink: 0; /* Prevent header from shrinking */
     }
@@ -559,8 +559,8 @@ function getCoverPageStyles() {
         width: 100px; /* Further adjusted size */
         height: auto;
         opacity: 0.9;
-         /* Assuming logo needs to be dark on light bg, remove invert */
-         /* filter: brightness(0) invert(1); */
+        /* Logo should be visible on white, remove filter if it was for dark bg */
+        /* filter: brightness(0) invert(1); */
     }
 
     .client-info-new {
@@ -570,7 +570,7 @@ function getCoverPageStyles() {
     .client-info-new h1 {
         font-size: 24px; /* Adjusted size */
         font-weight: 700;
-        color: var(--primary-color); /* Use primary dark color */
+        color: var(--primary-color); /* Use primary text color (black) */
         margin: 0 0 4px 0;
         line-height: 1.2;
     }
@@ -600,7 +600,7 @@ function getCoverPageStyles() {
     .cover-text-content h2 {
         font-size: 22px; /* Adjusted size */
         font-weight: 700;
-        color: var(--primary-color);
+        color: var(--primary-color); /* Black */
         margin-bottom: 10px;
         line-height: 1.3;
         position: relative;
@@ -615,13 +615,13 @@ function getCoverPageStyles() {
         left: 0;
         width: 40px;
         height: 3px;
-        background-color: var(--accent-color);
+        background-color: var(--accent-color); /* Keep accent color */
         border-radius: 3px;
     }
 
     .cover-description-new {
         font-size: 13px; /* Adjusted size */
-        color: var(--secondary-color); /* Use secondary dark color */
+        color: var(--secondary-color); /* Use secondary dark color (dark gray) */
         line-height: 1.5; /* Adjusted */
         margin-bottom: 20px; /* Adjusted margin */
         font-weight: 400;
@@ -629,12 +629,12 @@ function getCoverPageStyles() {
     }
 
     .cover-description-new strong {
-        color: var(--primary-color);
+        color: var(--primary-color); /* Black for emphasis */
         font-weight: 600;
     }
 
     .components-legend-new {
-        background-color: var(--background-light-accent);
+        background-color: var(--background-light-accent); /* Subtle gray accent */
         padding: 15px 20px; /* Adjusted padding */
         border-radius: var(--border-radius);
         border: 1px solid var(--border-light);
@@ -643,7 +643,7 @@ function getCoverPageStyles() {
     .components-legend-new h3 {
         font-size: 14px; /* Adjusted size */
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--primary-color); /* Black */
         margin: 0 0 12px 0;
         text-align: left;
     }
@@ -666,7 +666,7 @@ function getCoverPageStyles() {
         height: 9px; /* Adjusted */
         border-radius: 50%;
         flex-shrink: 0;
-        border: 1px solid rgba(0, 0, 0, 0.3); /* Darker border for dots */
+        border: 1px solid rgba(0, 0, 0, 0.4); /* Slightly darker border for dots on white */
     }
 
     /* Component Colors remain the same */
@@ -680,12 +680,12 @@ function getCoverPageStyles() {
     .component-label-new {
         font-size: 12px; /* Adjusted size */
         font-weight: 500;
-        color: var(--secondary-color);
+        color: var(--secondary-color); /* Dark Gray */
     }
 
     .component-label-new span {
         font-weight: 700;
-        color: var(--primary-color);
+        color: var(--primary-color); /* Black */
         margin-left: 4px;
     }
 
@@ -697,37 +697,28 @@ function getCoverPageStyles() {
         width: 100%;
         flex-grow: 1; /* Allow this container to grow */
         overflow: hidden; /* Prevent charts from overflowing */
-        /* align-items: stretch; Removed */
     }
 
     .chart-container-new {
-        /* flex: 1 1 300px; Removed - let flex column handle sizing */
-        background-color: var(--background-chart-container);
+        background-color: var(--background-chart-container); /* White */
         border-radius: var(--border-radius-large);
         padding: 15px 20px 20px 20px; /* Adjusted padding */
-        box-shadow: var(--box-shadow-medium);
-        border: 1px solid var(--border-medium); /* Subtle border */
+        box-shadow: var(--box-shadow-medium); /* Use updated shadow */
+        border: 1px solid var(--border-medium); /* Use medium border */
         display: flex;
         flex-direction: column;
-        /* min-width: 0; Removed */
         height: auto; /* Let height be determined by content and available space */
         min-height: 250px; /* Minimum height to ensure chart visibility */
         max-height: 300px; /* **Adjust this value as needed** Maximum height per chart */
         flex-shrink: 1; /* Allow charts to shrink if needed */
         flex-grow: 1; /* Allow charts to grow to fill space */
-        /* margin-bottom: 20px; /* Add space below each chart */
-        /* Removed margin-bottom, using gap in parent instead */
     }
-
-    /* .chart-container-new:last-child {
-       margin-bottom: 0; /* Remove margin from the last chart */
-    /* } */
 
 
      .chart-title {
         font-size: 13px; /* Adjusted size */
         font-weight: 600;
-        color: var(--text-dark);
+        color: var(--text-dark); /* Black */
         margin: 0 0 10px 0; /* Adjusted margin */
         text-align: center;
         flex-shrink: 0; /* Prevent title from shrinking */
@@ -735,7 +726,6 @@ function getCoverPageStyles() {
 
     #radarChart, #volumeLineChart {
         max-width: 100%;
-        /* max-height: calc(100% - 30px); /* Removed fixed calc, let flexbox manage */
         width: 100%; /* Ensure canvas tries to fill container width */
         height: 100%; /* Ensure canvas tries to fill container height */
         margin: auto;
@@ -750,9 +740,9 @@ function getCoverPageStyles() {
         text-align: center;
         padding-top: 10px; /* Adjusted padding */
         margin-top: auto; /* Push footer to bottom */
-        border-top: 1px solid var(--border-light);
+        border-top: 1px solid var(--border-light); /* Use light border */
         font-size: 10px; /* Adjusted size */
-        color: var(--text-light-gray);
+        color: var(--text-light-gray); /* Light gray */
         flex-shrink: 0; /* Prevent footer from shrinking */
     }
     `;
@@ -760,6 +750,7 @@ function getCoverPageStyles() {
 
 /**
  * Genera el script de inicialización de Chart.js para el gráfico radar.
+ * **MODIFICADO: Ajustes menores de color para fondo blanco.**
  * @param {Object} scores - Puntuaciones de componentes de entrenamiento.
  * @returns {string} - Código JavaScript para inicializar el gráfico radar.
  */
@@ -801,34 +792,34 @@ function getRadarChartScript(scores) {
                     datasets: [{
                         label: 'Enfoque (%)',
                         data: ${JSON.stringify(chartData)},
-                        backgroundColor: 'rgba(10, 42, 94, 0.3)', // Keep dark fill for contrast
-                        borderColor: 'rgba(10, 42, 94, 0.9)',   // Keep dark border
-                        borderWidth: 1.5, // Reduced border width slightly
-                        pointBackgroundColor: 'rgba(10, 42, 94, 1)',
-                        pointBorderColor: '#fff',
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)', // Use accent color with transparency
+                        borderColor: 'rgba(52, 152, 219, 0.8)',   // Use accent color, slightly less opaque
+                        borderWidth: 1.5,
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)', // Solid accent color
+                        pointBorderColor: '#fff', // White border for points
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(10, 42, 94, 1)',
-                        pointRadius: 3, // Reduced point size
-                        pointHoverRadius: 5 // Reduced hover size
+                        pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
                     scales: {
                         r: { // Radial axis
-                            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.08)' }, // Lighter lines
+                            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' }, // Slightly darker lines on white
                             suggestedMin: 0,
                             suggestedMax: 100,
-                            grid: { color: 'rgba(0, 0, 0, 0.08)' }, // Lighter grid
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' }, // Slightly darker grid on white
                             ticks: {
-                                stepSize: 25, // Adjusted step size
-                                color: 'rgba(0, 0, 0, 0.5)', // Lighter ticks
-                                backdropColor: 'rgba(255, 255, 255, 0.6)', // More transparent backdrop
-                                padding: 5, // Reduced padding
-                                font: { size: 9 } // Smaller font
+                                stepSize: 25,
+                                color: 'rgba(0, 0, 0, 0.6)', // Darker ticks for readability
+                                backdropColor: 'rgba(255, 255, 255, 0.75)', // White backdrop
+                                padding: 5,
+                                font: { size: 9 }
                             },
                             pointLabels: { // Labels around the edge
-                                font: { size: 11, weight: '500' }, // Adjusted font size
-                                color: 'rgba(0, 0, 0, 0.75)' // Slightly lighter labels
+                                font: { size: 11, weight: '500' },
+                                color: 'rgba(0, 0, 0, 0.85)' // Darker labels for readability
                             }
                         }
                     },
@@ -836,10 +827,10 @@ function getRadarChartScript(scores) {
                         legend: { display: false },
                         tooltip: {
                             enabled: true,
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Slightly lighter tooltip
-                            titleFont: { size: 12, weight: 'bold' }, // Adjusted size
-                            bodyFont: { size: 11 }, // Adjusted size
-                            padding: 8, // Adjusted padding
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Keep dark tooltip
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            padding: 8,
                             boxPadding: 3,
                             cornerRadius: 3,
                             callbacks: {
@@ -877,7 +868,7 @@ function getRadarChartScript(scores) {
 
 /**
  * Genera el script de inicialización de Chart.js para el gráfico de líneas de volumen DIARIO.
- * INCLUYE MEJORAS VISUALES Y PLUGIN DATALABELS.
+ * **MODIFICADO: Ajustes menores de color para fondo blanco.**
  * @param {Object} dailyVolumeData - Datos de volumen diario (ej. {'Día 1': 20, 'Día 2': 18}).
  * @returns {string} - Código JavaScript para inicializar el gráfico de líneas.
  */
@@ -902,12 +893,12 @@ function getVolumeLineChartScript(dailyVolumeData) {
 
 
     const lineChartColors = {
-        // Using a slightly more vibrant blue from the theme
+        // Using the same accent blue
         main: 'rgba(52, 152, 219, 1)', // var(--accent-color) as solid
         areaFill: 'rgba(52, 152, 219, 0.2)', // Lighter fill
         pointBorder: '#ffffff',
         pointHoverBackground: '#ffffff',
-        datalabelColor: '#333' // Darker color for data labels for contrast
+        datalabelColor: '#333333' // Dark gray for data labels
     };
 
     return `
@@ -939,7 +930,7 @@ function getVolumeLineChartScript(dailyVolumeData) {
             canvasElement.width = canvasElement.offsetWidth;
             canvasElement.height = canvasElement.offsetHeight;
             ctx.font = "14px 'Inter', sans-serif";
-            ctx.fillStyle = '#777';
+            ctx.fillStyle = '#777'; // Keep gray for placeholder text
             ctx.textAlign = 'center';
             const centerX = canvasElement.width / 2;
             const centerY = canvasElement.height / 2;
@@ -969,15 +960,15 @@ function getVolumeLineChartScript(dailyVolumeData) {
                         fill: true,
                         backgroundColor: '${lineChartColors.areaFill}', // Use defined color
                         borderColor: '${lineChartColors.main}', // Use defined color
-                        borderWidth: 2.5, // Slightly thicker line
+                        borderWidth: 2.5,
                         pointBackgroundColor: '${lineChartColors.main}',
                         pointBorderColor: '${lineChartColors.pointBorder}',
-                        pointBorderWidth: 1.5, // Make point border visible
+                        pointBorderWidth: 1.5,
                         pointHoverBackgroundColor: '${lineChartColors.pointHoverBackground}',
                         pointHoverBorderColor: '${lineChartColors.main}',
-                        pointRadius: 4.5, // Larger points
-                        pointHoverRadius: 6.5, // Larger hover points
-                        tension: 0.2 // Slightly more curve
+                        pointRadius: 4.5,
+                        pointHoverRadius: 6.5,
+                        tension: 0.2
                     }]
                 },
                 options: {
@@ -988,16 +979,16 @@ function getVolumeLineChartScript(dailyVolumeData) {
                                 display: true,
                                 text: 'Número Total de Series',
                                 font: { size: 11 },
-                                color: '#666',
+                                color: '#555555', // Darker gray axis title
                                 padding: { top: 0, bottom: 5 }
                             },
                             ticks: {
-                                color: 'rgba(0, 0, 0, 0.6)',
-                                precision: 0, // Ensure whole numbers
+                                color: 'rgba(0, 0, 0, 0.7)', // Darker ticks
+                                precision: 0,
                                 font: { size: 10 }
                             },
                              grid: {
-                                 color: 'rgba(0, 0, 0, 0.08)' // Slightly more visible grid
+                                 color: 'rgba(0, 0, 0, 0.1)' // Slightly darker grid
                              }
                         },
                         x: {
@@ -1005,11 +996,11 @@ function getVolumeLineChartScript(dailyVolumeData) {
                                  display: true,
                                  text: 'Día de Entrenamiento',
                                  font: { size: 11 },
-                                 color: '#666',
+                                 color: '#555555', // Darker gray axis title
                                  padding: { top: 5, bottom: 0 }
                              },
                              ticks: {
-                                 color: 'rgba(0, 0, 0, 0.7)', // Slightly darker ticks
+                                 color: 'rgba(0, 0, 0, 0.8)', // Darker ticks
                                  font: { size: 10 }
                              },
                              grid: {
@@ -1019,7 +1010,7 @@ function getVolumeLineChartScript(dailyVolumeData) {
                     },
                     plugins: {
                         legend: {
-                            display: false, // Keep legend hidden for single dataset
+                            display: false,
                         },
                         tooltip: { // Keep tooltips for hover details
                             enabled: true,
@@ -1044,23 +1035,17 @@ function getVolumeLineChartScript(dailyVolumeData) {
                              }
                         },
                         datalabels: { // Configuration for chartjs-plugin-datalabels
-                            display: false, // Show labels by default
-                            anchor: 'end', // Position label at the end of the data element
-                            align: 'top', // Align label above the anchor point
+                            display: false, // Keep hidden by default, enable if needed
+                            anchor: 'end',
+                            align: 'top',
                             color: '${lineChartColors.datalabelColor}', // Label text color
                             font: {
-                                size: 10, // Slightly smaller font for labels
-                                weight: '600' // Make labels bold
+                                size: 10,
+                                weight: '600'
                             },
                             formatter: (value, context) => {
-                                // Show the value directly (number of sets)
                                 return value;
-                                // Optional: Add suffix like ' series'
-                                // return value + ' s';
                             },
-                            // Optional: Add padding or offset if needed
-                            // offset: 4,
-                            // padding: { top: 4 }
                         }
                     },
                     responsive: true,
@@ -1101,7 +1086,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     console.log(`[createCoverPage] dailyVolumeData received: ${JSON.stringify(dailyVolumeData)}`);
 
 
-    // 3. Generate cover page HTML (placeholders for charts) - Use v12 with comment removed
+    // 3. Generate cover page HTML (placeholders for charts)
     let fullCoverPageHtml = generateCoverPageHtml(scores, clientName);
 
     // 4. Replace logo placeholder
@@ -1112,12 +1097,11 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
         console.warn("Valid Logo Base64 not provided or invalid format. Removing logo element.");
     }
 
-    // 5. Get CSS styles
+    // 5. Get CSS styles (with white background modifications)
     const styles = getCoverPageStyles();
 
-    // 6. Get Chart.js initialization scripts
+    // 6. Get Chart.js initialization scripts (with color adjustments for white bg)
     const radarScript = getRadarChartScript(scores);
-    // Pass the DAILY volume data to the updated script generator (v11 with datalabels)
     const volumeScript = getVolumeLineChartScript(dailyVolumeData);
 
     // 7. Combine scripts (including Chart.js AND the datalabels plugin)
