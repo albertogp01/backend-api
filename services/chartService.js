@@ -1,7 +1,8 @@
-// chartService.js (Fondo Blanco y Texto Negro v13)
+// chartService.js (Fondo Blanco y Texto Negro v14 - Detección Enfoque Mejorada)
 
 /**
- * Calculates training component scores based on keywords and heuristics in routine HTML.
+ * Calculates training component scores based on routine HTML structure, parameters, and keywords.
+ * VERSION 2: More precise analysis based on table structure and parameters.
  * @param {string} routineHtml - The HTML content of the generated routine.
  * @returns {Object} - Scores for each training component (0-100) and main components.
  */
@@ -13,128 +14,236 @@ function calculateTrainingComponentScores(routineHtml) {
         movilidad: 0,
         potencia: 0,
         tecnica: 0,
-        cardio: 0
+        cardio: 0 // Includes general endurance/conditioning
     };
 
     // Default balanced profile if no HTML is provided
-    if (!routineHtml || routineHtml.trim() === '') {
-        console.warn("[Scores Calculation] No routine HTML provided, returning default balanced scores.");
+    if (!routineHtml || typeof routineHtml !== 'string' || routineHtml.trim() === '') {
+        console.warn("[Scores Calc v2] No routine HTML provided, returning default balanced scores.");
         return {
             fuerza: 50, hipertrofia: 50, movilidad: 50,
             potencia: 50, tecnica: 50, cardio: 50,
             mainComponents: [], mainComponentsDisplay: 'Equilibrado'
         };
     }
+     if (!/<table/i.test(routineHtml)) {
+         console.warn("[Scores Calc v2] Input HTML does not contain any '<table>' tags. Returning default scores.");
+         return {
+            fuerza: 50, hipertrofia: 50, movilidad: 50,
+            potencia: 50, tecnica: 50, cardio: 50,
+            mainComponents: [], mainComponentsDisplay: 'Equilibrado'
+        };
+     }
 
-    // Keywords for each training component
-    const keywords = {
-        fuerza: ['fuerza', 'strength', 'carga', 'peso', 'resistencia', 'weight', 'sentadilla', 'squat', 'press', 'deadlift', 'peso muerto', 'power', 'potencia', 'rm', '1rm', 'máxima', 'maximales', 'intensidad alta', 'pesado', 'heavy'],
-        hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'volume', 'muscle', 'músculo', 'muscular', 'growth', 'crecimiento', 'tamaño', 'size', 'bodybuilding', 'culturismo', 'series', 'repeticiones', 'reps', 'rir'],
-        movilidad: ['movilidad', 'mobility', 'flexibility', 'flexibilidad', 'stretching', 'estiramiento', 'range', 'motion', 'rango', 'articular', 'joint', 'rom', 'elasticidad', 'elongación', 'estirar', 'stretch', 'yoga', 'pilates'],
-        potencia: ['potencia', 'power', 'explosiv', 'explosi[oó]n', 'velocidad', 'speed', 'fast', 'rápido', 'salto', 'jump', 'plyometric', 'pliometría', 'reactiv', 'sprint', 'lanzamiento', 'throw', 'tiempo', 'time', 'tempo.*[xX]', 'kettlebell swing'],
-        tecnica: ['técnica', 'technique', 'form', 'forma', 'skill', 'habilidad', 'balance', 'equilibrio', 'coordination', 'coordinación', 'control', 'pattern', 'patrón', 'motor', 'stability', 'estabilidad', 'aprendizaje', 'drills'],
-        cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'stamina', 'interval', 'intervalos', 'hiit', 'heart', 'rate', 'ritmo', 'cardiac', 'cardíaco', 'vo2', 'máximo', 'correr', 'run', 'nadar', 'swim', 'bicicleta', 'bike', 'cinta', 'eliptica']
+    // --- Configuration ---
+    const weights = {
+        paramMatch: 5,       // Base weight for matching rep/rest parameters
+        keywordGeneral: 1,   // Weight for general keywords
+        keywordSpecificEx: 2,// Weight for specific exercise names
+        keywordNotes: 1.5,   // Weight for keywords in notes
+        tempoName: 3,        // Weight for tempo found in exercise name
+        activationSection: 2 // Extra weight for mobility/technique in activation
     };
 
-    // Counts for keyword occurrences
+    // Keywords (Refined and potentially reduced reliance)
+    const keywords = {
+        fuerza: ['fuerza', 'strength', 'carga', 'pesado', 'heavy', 'maximal', 'máxima'], // More specific
+        hipertrofia: ['hipertrofia', 'hypertrophy', 'volumen', 'muscular', 'culturismo', 'bodybuilding', 'crecimiento', 'tamaño'], // More specific
+        movilidad: ['movilidad', 'mobility', 'flexibilidad', 'flexibility', 'stretching', 'estiramiento', 'rango', 'rom', 'yoga', 'pilates', 'elongación', 'estirar'],
+        potencia: ['potencia', 'power', 'explosiv', 'velocidad', 'speed', 'salto', 'jump', 'pliometría', 'plyometric', 'lanzamiento', 'throw', 'kettlebell swing', 'clean', 'jerk', 'snatch'],
+        tecnica: ['técnica', 'technique', 'forma', 'form', 'skill', 'habilidad', 'balance', 'equilibrio', 'coordinación', 'control', 'patrón', 'motor', 'estabilidad', 'stability', 'aprendizaje', 'drills', 'isométrico', 'isometric'],
+        cardio: ['cardio', 'cardiovascular', 'aeróbico', 'aerobic', 'resistencia', 'endurance', 'intervalos', 'interval', 'hiit', 'correr', 'run', 'nadar', 'swim', 'bicicleta', 'bike', 'burpee', 'jumping jack', 'remo', 'rowing'] // Includes endurance
+    };
+     // Keywords specifically for "Notas Clave" column (error prevention / technique focus)
+     const notesKeywords = {
+        tecnica: ['controla', 'estable', 'alineado', 'neutra', 'retracción', 'core', 'activado', 'lento', 'cadera', 'rodilla', 'hombro', 'codo', 'muñeca', 'tobillo', 'evita', 'no arquear', 'sin impulso', 'completo'],
+        movilidad: ['rango completo', 'profundo', 'estira', 'movilidad'],
+        fuerza: ['empuja fuerte', 'tira fuerte', 'contrae'], // Less common in notes now
+        hipertrofia: ['conexión mente-músculo', 'aprieta', 'sensación'], // Less common
+        potencia: ['explosivo', 'rápido'] // Less common
+     };
+
+    // Counts for keyword occurrences and parameter matches
     const counts = {
         fuerza: 0, hipertrofia: 0, movilidad: 0,
         potencia: 0, tecnica: 0, cardio: 0
     };
 
-    // --- Keyword Analysis ---
-    Object.keys(keywords).forEach(component => {
-        keywords[component].forEach(keyword => {
-            try {
-                const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                const matches = routineHtml.match(regex) || [];
-                counts[component] += matches.length;
-            } catch (e) {
-                console.warn(`[Scores Calculation] Invalid regex for keyword: ${keyword}`, e);
+    // --- HTML Parsing and Analysis ---
+    const tableRegex = /<table[\s\S]*?<\/table>/gi;
+    const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
+    const cellRegex = /<(?:th|td)[\s\S]*?<\/\1>/gi; // Matches <th>...</th> or <td>...</td>
+    const cleanText = (html) => html ? html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase() : '';
+
+    const tables = routineHtml.match(tableRegex) || [];
+
+    tables.forEach((tableHtml) => {
+        let columnIndices = { exercise: -1, series: -1, reps: -1, rest: -1, notes: -1 };
+        let foundHeader = false;
+        let inActivationSection = false; // Flag for warmup/activation rows
+
+        const rows = tableHtml.match(rowRegex) || [];
+        rows.forEach((rowHtml) => {
+            const cells = rowHtml.match(cellRegex) || [];
+            const cellTexts = cells.map(cleanText);
+
+            // Check for Activation Section Header
+            if (cellTexts.some(text => /calentamiento|activación específica/i.test(text))) {
+                inActivationSection = true;
+                return; // Skip this header row
             }
-        });
-    });
+            // Check for Main Routine Header (to potentially reset activation flag, though usually it's per table)
+            if (cellTexts.some(text => /rutina principal/i.test(text))) {
+                inActivationSection = false;
+                return; // Skip this header row
+            }
 
-    // --- Additional Heuristics ---
-
-    // 1. Rep Range Analysis
-    const setRepMatches = routineHtml.match(/(\d+)\s*x\s*(\d+(?:-\d+)?)\s*(?:reps|repeticiones|sets)?/gi) || [];
-    let lowRepSets = 0;
-    let midRepSets = 0;
-    let highRepSets = 0;
-
-    setRepMatches.forEach(match => {
-        const numbers = match.match(/\d+/g);
-        if (numbers && numbers.length >= 2) {
-            // Heuristic: Assume the first number is sets if it's reasonable (e.g., < 10)
-            // and the second number looks like reps (e.g., > 1 or a range).
-            const potentialSets = parseInt(numbers[0], 10);
-            const potentialReps = numbers[1]; // Keep as string to check for range '-'
-            if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 10) { // Check if first number looks like sets
-                const repRange = potentialReps.split('-').map(Number);
-                const maxReps = Math.max(...repRange);
-                if (!isNaN(maxReps)) {
-                    if (maxReps <= 6) lowRepSets += potentialSets;
-                    else if (maxReps <= 15) midRepSets += potentialSets;
-                    else highRepSets += potentialSets;
+            // Find Header Row and Column Indices
+            if (!foundHeader && cells[0]?.toLowerCase().startsWith('<th')) {
+                cellTexts.forEach((text, index) => {
+                    if (/^ejercicio$/i.test(text)) columnIndices.exercise = index;
+                    else if (/^series$/i.test(text)) columnIndices.series = index;
+                    else if (/^reps$/i.test(text)) columnIndices.reps = index;
+                    else if (/^descanso$/i.test(text)) columnIndices.rest = index;
+                    else if (/^notas clave$/i.test(text)) columnIndices.notes = index;
+                });
+                // Check if we likely found the header row
+                if (columnIndices.exercise !== -1 || columnIndices.series !== -1 || columnIndices.reps !== -1 || columnIndices.rest !== -1 || columnIndices.notes !== -1) {
+                    foundHeader = true;
+                    // console.log("[Scores Calc v2] Found header indices:", columnIndices);
+                    return; // Skip header row from data processing
                 }
             }
-        }
-    });
-    // Simple rep mentions (less reliable for sets, used for component scoring)
-    const simpleRepMatches = routineHtml.match(/(\d+)\s+reps?/gi) || [];
-    simpleRepMatches.forEach(match => {
-        const repNumbers = match.match(/\d+/g);
-        if (repNumbers) {
-            const maxReps = Math.max(...repNumbers.map(Number));
-            if (maxReps <= 6) lowRepSets += 0.5; // Add fractional count for scoring
-            else if (maxReps <= 15) midRepSets += 0.5;
-            else highRepSets += 0.5;
-        }
-    });
 
-    counts.fuerza += lowRepSets * 2;
-    counts.hipertrofia += midRepSets * 1.5;
-    counts.cardio += highRepSets * 1; // High reps contribute a bit to cardio score
+            // Process Data Row (if header found and it's likely a data row - starts with <td>)
+            if (foundHeader && cells[0]?.toLowerCase().startsWith('<td')) {
+                const exerciseText = columnIndices.exercise !== -1 ? cellTexts[columnIndices.exercise] : '';
+                const repsText = columnIndices.reps !== -1 ? cellTexts[columnIndices.reps] : '';
+                const restText = columnIndices.rest !== -1 ? cellTexts[columnIndices.rest] : '';
+                const notesText = columnIndices.notes !== -1 ? cellTexts[columnIndices.notes] : '';
 
-    // 2. Specific Exercise Keywords
-    const specificExercises = {
-        fuerza: ['press de banca', 'bench press', 'sentadilla', 'squat', 'peso muerto', 'deadlift', 'press militar', 'overhead press', 'remo con barra', 'barbell row'],
-        hipertrofia: ['curl', 'elevaciones laterales', 'lateral raise', 'extensiones de triceps', 'tricep extension', 'remo con mancuernas', 'dumbbell row', 'aperturas', 'flyes', 'pulldown'],
-        movilidad: ['rotaciones', 'mobility drills', 'estiramiento dinámico', 'dynamic stretch', 'foam roller', 'yoga', 'pilates'],
-        potencia: ['salto al cajón', 'box jump', 'lanzamiento de balón', 'medicine ball throw', 'kettlebell swing', 'power clean', 'snatch', 'clean and jerk'],
-        tecnica: ['pistol squat', 'turkish get up', 'handstand', 'equilibrio', 'coordinación', 'propiocepción', 'isométrico', 'isometric'],
-        cardio: ['correr', 'running', 'burpee', 'jumping jack', 'ciclismo', 'natación', 'remo', 'rowing machine', 'assault bike']
-    };
-    Object.keys(specificExercises).forEach(component => {
-        specificExercises[component].forEach(ex => {
-            try {
-                const safeEx = ex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                const regex = new RegExp(safeEx.replace(/\s+/g, '\\s+'), 'gi');
-                const matches = routineHtml.match(regex) || [];
-                counts[component] += matches.length * 2.5; // Weight specific exercises more
-            } catch (e) {
-                console.warn(`[Scores Calculation] Invalid regex for exercise: ${ex}`, e);
+                // 1. Parameter Analysis (Reps & Rest) - HIGHEST PRIORITY
+                let repMax = NaN;
+                let restSeconds = NaN;
+
+                // Parse Reps
+                if (repsText) {
+                    const repMatch = repsText.match(/(\d+)(?:-(\d+))?/); // Matches "10" or "8-12"
+                    if (repMatch) {
+                        repMax = parseInt(repMatch[2] || repMatch[1], 10); // Use upper range or single value
+                    } else if (/\d+\s*seg|\d+s|al fallo|amrap/i.test(repsText)) {
+                         // Time-based reps or AMRAP - might indicate cardio/endurance or technique (isometrics)
+                         counts.cardio += weights.paramMatch * 0.5;
+                         if (/iso|mantener|hold/i.test(exerciseText) || /iso|mantener|hold/i.test(notesText)) {
+                            counts.tecnica += weights.paramMatch * 0.5;
+                         }
+                    }
+                }
+
+                // Parse Rest
+                if (restText) {
+                    const restMatch = restText.match(/(\d+)\s*(?:s|seg|sec)/i); // Match seconds
+                    if (restMatch) {
+                        restSeconds = parseInt(restMatch[1], 10);
+                    } else {
+                         const minMatch = restText.match(/(\d+)\s*(?:min)/i); // Match minutes
+                         if (minMatch) {
+                             restSeconds = parseInt(minMatch[1], 10) * 60;
+                         }
+                    }
+                }
+
+                // Apply scoring based on Reps/Rest combination
+                if (!isNaN(repMax) && !isNaN(restSeconds)) {
+                    if (repMax <= 6 && restSeconds >= 100) { // Low Reps, Long Rest -> Fuerza
+                        counts.fuerza += weights.paramMatch;
+                    } else if (repMax >= 6 && repMax <= 15 && restSeconds >= 50 && restSeconds <= 130) { // Mid Reps, Mod Rest -> Hipertrofia
+                        counts.hipertrofia += weights.paramMatch;
+                    } else if (repMax >= 12 && restSeconds <= 80) { // High Reps, Short/Mod Rest -> Cardio/Endurance
+                        counts.cardio += weights.paramMatch;
+                         // Slightly boost hipertrofia too for higher reps if rest isn't super short
+                         if (restSeconds >= 45) counts.hipertrofia += weights.paramMatch * 0.2;
+                    } else {
+                        // Less clear combinations - give smaller boosts based on individual params
+                        if (repMax <= 8) counts.fuerza += weights.paramMatch * 0.3;
+                        if (repMax >= 6 && repMax <= 18) counts.hipertrofia += weights.paramMatch * 0.3;
+                        if (repMax >= 12) counts.cardio += weights.paramMatch * 0.3;
+                        if (restSeconds >= 90) counts.fuerza += weights.paramMatch * 0.3;
+                        if (restSeconds <= 75) counts.cardio += weights.paramMatch * 0.3;
+                    }
+                } else if (!isNaN(repMax)) { // Only Reps info
+                     if (repMax <= 8) counts.fuerza += weights.paramMatch * 0.5;
+                     if (repMax >= 6 && repMax <= 18) counts.hipertrofia += weights.paramMatch * 0.5;
+                     if (repMax >= 12) counts.cardio += weights.paramMatch * 0.5;
+                } else if (!isNaN(restSeconds)) { // Only Rest info
+                     if (restSeconds >= 90) counts.fuerza += weights.paramMatch * 0.5;
+                     if (restSeconds <= 75) counts.cardio += weights.paramMatch * 0.5;
+                     if (restSeconds >= 50 && restSeconds <= 130) counts.hipertrofia += weights.paramMatch * 0.2;
+                }
+
+                // 2. Tempo in Exercise Name Analysis
+                if (exerciseText) {
+                    if (/tempo\s+\d{4,}/i.test(exerciseText)) { // Controlled tempo (e.g., Tempo 3110)
+                        counts.tecnica += weights.tempoName;
+                        counts.hipertrofia += weights.tempoName * 0.5; // TUT benefits hypertrophy
+                    }
+                    if (/tempo.*[xX]/i.test(exerciseText)) { // Explosive tempo (e.g., Tempo 20X1)
+                        counts.potencia += weights.tempoName;
+                    }
+                }
+
+                // 3. General Keyword Analysis (Exercise Name + Notes)
+                const combinedText = exerciseText + ' ' + notesText;
+                Object.keys(keywords).forEach(component => {
+                    keywords[component].forEach(keyword => {
+                        try {
+                            const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                            const matches = combinedText.match(regex) || [];
+                            counts[component] += matches.length * weights.keywordGeneral;
+                        } catch (e) { /* Ignore regex errors */ }
+                    });
+                });
+
+                 // 4. Specific Exercise Name Analysis (Higher weight)
+                 Object.keys(keywords).forEach(component => { // Re-using keywords structure for specific exercises
+                    keywords[component].forEach(exKeyword => { // Check if any part of the exercise name matches a keyword
+                        if (exerciseText.includes(exKeyword)) {
+                           // Check if it's a specific exercise match from a predefined list (optional, could reuse logic from v1)
+                           // For simplicity here, just give a boost based on keyword match in name
+                           counts[component] += weights.keywordSpecificEx * 0.5; // Smaller boost than full specific match
+                        }
+                    });
+                 });
+                 // Add back specific exercise list check if needed for higher accuracy
+
+
+                // 5. Notes Keyword Analysis (Focus on Technique/Error Prevention)
+                 if (notesText) {
+                    Object.keys(notesKeywords).forEach(component => {
+                        notesKeywords[component].forEach(keyword => {
+                            try {
+                                const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                                const matches = notesText.match(regex) || [];
+                                counts[component] += matches.length * weights.keywordNotes;
+                            } catch (e) { /* Ignore regex errors */ }
+                        });
+                    });
+                 }
+
+                 // 6. Boost for Activation Section
+                 if (inActivationSection) {
+                    counts.movilidad += weights.activationSection;
+                    counts.tecnica += weights.activationSection * 0.5; // Often involves control
+                 }
             }
-        });
-    });
+        }); // End row loop
+    }); // End table loop
 
-    // 3. Intensity/Tempo Indicators
-    if (routineHtml.match(/RIR\s+[0-2]/gi)) { counts.fuerza += 3; counts.hipertrofia += 5; }
-    if (routineHtml.match(/RIR\s+[3-4]/gi)) { counts.hipertrofia += 3; }
-    if (routineHtml.match(/RPE\s+[8-9]/gi)) { counts.fuerza += 2; counts.hipertrofia += 4; }
-    if (routineHtml.match(/RPE\s+[6-7]/gi)) { counts.hipertrofia += 2; }
-    if (routineHtml.match(/tempo.*[xX]/gi)) { counts.potencia += 6; } // Explosive tempo
-    if (routineHtml.match(/tempo\s+\d{4,}/gi)) { counts.tecnica += 3; counts.hipertrofia += 2; } // Controlled tempo
-    if (routineHtml.match(/descanso\s+(corto|30s|45s|60s)/gi)) { counts.hipertrofia += 1; counts.cardio += 1; }
-    if (routineHtml.match(/descanso\s+(largo|90s|120s|2-3\s*min)/gi)) { counts.fuerza += 2; }
-
-    // --- Normalization ---
+    // --- Normalization and Smoothing ---
     const totalCount = Object.values(counts).reduce((sum, count) => sum + Math.max(0, count), 0);
 
     if (totalCount === 0) {
-        console.warn("[Scores Calculation] Total count for normalization is zero, returning default balanced scores.");
-        // Return default balanced scores if no keywords/heuristics matched
+        console.warn("[Scores Calc v2] Total count for normalization is zero, returning default balanced scores.");
         return {
             fuerza: 50, hipertrofia: 50, movilidad: 50,
             potencia: 50, tecnica: 50, cardio: 50,
@@ -147,86 +256,79 @@ function calculateTrainingComponentScores(routineHtml) {
         scores[component] = Math.round((Math.max(0, counts[component]) / totalCount) * 100);
     });
 
-    // --- Smoothing and Thresholding ---
-    const minThreshold = 5; // Minimum score if any count was found
-    let totalScore = 0;
+    // Apply minimum threshold and cap at 100
+    const minThreshold = 5;
+    let currentTotal = 0;
     Object.keys(scores).forEach(component => {
-        // If component had counts but score is below threshold, set to threshold
         if (counts[component] > 0 && scores[component] < minThreshold) {
             scores[component] = minThreshold;
         }
-        // Ensure score doesn't exceed 100
         scores[component] = Math.min(scores[component], 100);
-        totalScore += scores[component];
+        currentTotal += scores[component];
     });
 
-    // Re-normalize if total score significantly deviates from 100 after thresholding
-    if (totalScore > 0 && Math.abs(totalScore - 100) > 10) { // Allow some tolerance
-        const scaleFactor = 100 / totalScore;
-        Object.keys(scores).forEach(component => {
-            scores[component] = Math.round(scores[component] * scaleFactor);
-            // Re-apply threshold and cap at 100
-            scores[component] = Math.max( (counts[component] > 0 ? minThreshold : 0) , Math.min(scores[component], 100));
-        });
-    }
-
-    // Final adjustment to ensure sum is exactly 100
-    let finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
-    if (finalTotal !== 100 && finalTotal > 0) {
-        let diff = 100 - finalTotal;
-        // Distribute difference starting from the component with the highest score
+    // Re-normalize to ensure sum is exactly 100
+    if (currentTotal !== 100 && currentTotal > 0) {
+        const diff = 100 - currentTotal;
         let sortedComponents = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
 
-        // Adjust the largest component(s) carefully
-        scores[sortedComponents[0]] = Math.min(100, Math.max(0, scores[sortedComponents[0]] + diff));
+        // Distribute difference proportionally (or just adjust largest)
+        // Simple adjustment to largest component(s)
+        const numLargest = sortedComponents.filter(c => scores[c] === scores[sortedComponents[0]]).length;
+        const adjustment = Math.round(diff / numLargest); // Distribute among ties
+        let remainder = diff % numLargest;
 
-        // Recalculate total and adjust second largest if still needed (rare)
-        finalTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
-        if (finalTotal !== 100) {
-            let secondDiff = 100 - finalTotal;
-            // Ensure there's a second component to adjust
-            if (sortedComponents.length > 1) {
-                scores[sortedComponents[1]] = Math.min(100, Math.max(0, scores[sortedComponents[1]] + secondDiff));
-            } else {
-                // If only one component, force it to 100 (edge case)
-                scores[sortedComponents[0]] = 100;
-            }
+        for (let i = 0; i < numLargest; i++) {
+            let currentAdjustment = adjustment + (remainder > 0 ? 1 : (remainder < 0 ? -1 : 0));
+             scores[sortedComponents[i]] = Math.min(100, Math.max(0, scores[sortedComponents[i]] + currentAdjustment));
+             if (remainder !==0) remainder > 0 ? remainder-- : remainder++;
+        }
+
+        // Final check and force sum to 100 if needed (due to rounding)
+        currentTotal = Object.values(scores).reduce((sum, score) => sum + score, 0);
+        if (currentTotal !== 100 && currentTotal > 0) {
+             let finalDiff = 100 - currentTotal;
+             scores[sortedComponents[0]] = Math.min(100, Math.max(0, scores[sortedComponents[0]] + finalDiff));
         }
     }
+     // Ensure no negative scores after adjustments
+     Object.keys(scores).forEach(component => {
+        scores[component] = Math.max(0, scores[component]);
+     });
+
 
     // --- Determine Main Components ---
     let maxScore = 0;
     let mainComponents = [];
     const significanceThreshold = 25; // Threshold to be considered a "main" component
-    Object.entries(scores).forEach(([component, score]) => {
-        if (score >= significanceThreshold) {
-            if (score > maxScore) {
-                maxScore = score;
-                mainComponents = [component]; // New max, reset list
-            } else if (score === maxScore && !mainComponents.includes(component)) {
-                mainComponents.push(component); // Add ties
-            }
-        }
-    });
-    // If no component reached the threshold, find the highest score(s) anyway
-    if (mainComponents.length === 0) {
-        maxScore = Math.max(...Object.values(scores));
-        if (maxScore > 0) { // Only if there are non-zero scores
-            Object.entries(scores).forEach(([component, score]) => {
-                if (score === maxScore) {
-                    mainComponents.push(component);
-                }
-            });
+
+    // Sort scores descending to find main components
+    let sortedScores = Object.entries(scores)
+        .filter(([key]) => ['fuerza', 'hipertrofia', 'movilidad', 'potencia', 'tecnica', 'cardio'].includes(key)) // Ensure only valid components
+        .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
+
+    if (sortedScores.length > 0) {
+        maxScore = sortedScores[0][1];
+        if (maxScore >= significanceThreshold) {
+            // Include all components with score >= threshold AND close to maxScore (e.g., within 10 points)
+            const thresholdMax = Math.max(significanceThreshold, maxScore - 10);
+             mainComponents = sortedScores
+                .filter(([, score]) => score >= thresholdMax)
+                .map(([component]) => component);
+        } else if (maxScore > 0) {
+            // If no score reaches threshold, take the highest score(s)
+             mainComponents = sortedScores
+                .filter(([, score]) => score === maxScore)
+                .map(([component]) => component);
         }
     }
 
-
     scores.mainComponents = mainComponents;
     scores.mainComponentsDisplay = mainComponents.length > 0
-        ? mainComponents.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
-        : 'Equilibrado'; // Default if no clear focus
+        ? mainComponents.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' + ') // Use ' + ' for multiple main components
+        : 'Equilibrado'; // Default if no clear focus or all scores are 0
 
-    console.log("[Scores Calculation] Final Calculated Scores:", scores);
+    console.log("[Scores Calc v2] Final Calculated Scores:", scores);
     return scores;
 }
 
@@ -256,7 +358,7 @@ function calculateDailyVolume(routineHtml) {
     const timeDurationRegex = /\d+\s*(?:s|seg|sec|min)\b/i;
 
     const tableRegex = /<table[\s\S]*?<\/table>/gi;
-    const tableMatches = routineHtml.match(tableRegex);
+    const tableMatches = routineHtml.match(tableRegex) || []; // Ensure it's an array
     console.log(`[Volume Calc v10] Found ${tableMatches.length} table(s).`);
 
     tableMatches.forEach((tableHtml, tableIndex) => {
@@ -299,10 +401,14 @@ function calculateDailyVolume(routineHtml) {
             const headerCellsRegex = /<(th|td)[\s\S]*?<\/\1>/gi; // Match th or td correctly
             const headerCells = rowHtml.match(headerCellsRegex);
             let isLikelyHeaderRow = false; // Flag to identify the header row
+             let isActivationHeader = false; // Flag for activation section header
 
             if (headerCells && (setsColumnIndex === -1 || repsColumnIndex === -1)) { // Find indices if not already found for this day
                 headerCells.forEach((cellHtml, index) => {
                     const cellText = cellHtml.replace(/<[^>]+>/g, '').trim();
+                     if (/calentamiento|activación específica/i.test(cellText)) {
+                        isActivationHeader = true; // Identify activation header
+                    }
                     if (/^SERIES$/i.test(cellText)) {
                         setsColumnIndex = index;
                         console.log(`[Volume Debug v10] Found 'SERIES' header at index ${setsColumnIndex} in Row ${rowIndex + 1}`);
@@ -319,62 +425,62 @@ function calculateDailyVolume(routineHtml) {
                     }
                 });
                 // If we identified this as the header row based on cell content, skip processing it as data
-                if (isLikelyHeaderRow) {
-                    console.log(`[Volume Debug v10] Identified Row ${rowIndex + 1} as column header row.`);
+                if (isLikelyHeaderRow || isActivationHeader) {
+                    // console.log(`[Volume Debug v10] Identified Row ${rowIndex + 1} as column or activation header row.`);
                     return;
                 }
             }
 
 
             // 3. Process Data Row (if it's not a header and we know the sets column index)
-            if (!isLikelyHeaderRow && setsColumnIndex !== -1) {
-                const dataCellsRegex = /<td[\s\S]*?<\/td>/gi; // Look specifically for <td> in data rows
-                const dataCells = rowHtml.match(dataCellsRegex);
+            if (!isLikelyHeaderRow && !isActivationHeader && setsColumnIndex !== -1 && rowHtml.toLowerCase().startsWith('<tr')) { // Ensure it's a data row (often starts with <tr><td>...)
+                 const dataCellsRegex = /<td[\s\S]*?<\/td>/gi; // Look specifically for <td> in data rows
+                 const dataCells = rowHtml.match(dataCellsRegex);
 
-                if (dataCells && dataCells.length > setsColumnIndex) {
-                    const setsCellHtml = dataCells[setsColumnIndex];
-                    const setsText = setsCellHtml.replace(/<[^>]+>/g, '').trim();
-                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Text in Sets Column (${setsColumnIndex}): "${setsText}"`); // Log text found
+                 if (dataCells && dataCells.length > setsColumnIndex) {
+                     const setsCellHtml = dataCells[setsColumnIndex];
+                     const setsText = setsCellHtml.replace(/<[^>]+>/g, '').trim();
+                     // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Text in Sets Column (${setsColumnIndex}): "${setsText}"`); // Log text found
 
-                    // Attempt to parse the sets text as a number
-                    let setsFound = 0;
-                    if (setsText !== '') {
-                        const potentialSets = parseInt(setsText, 10);
-                        if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check
-                            setsFound = potentialSets;
-                            // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Parsed Sets: ${setsFound}`);
+                     // Attempt to parse the sets text as a number
+                     let setsFound = 0;
+                     if (setsText !== '') {
+                         const potentialSets = parseInt(setsText, 10);
+                         if (!isNaN(potentialSets) && potentialSets > 0 && potentialSets < 50) { // Sanity check
+                             setsFound = potentialSets;
+                             // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Parsed Sets: ${setsFound}`);
 
-                            // Optional: Check if REPS column indicates time (like Plancha) for logging/confirmation
-                            if (repsColumnIndex !== -1 && dataCells.length > repsColumnIndex) {
-                                const repsText = dataCells[repsColumnIndex].replace(/<[^>]+>/g, '').trim();
-                                if (timeDurationRegex.test(repsText)) {
-                                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Detected time-based exercise in Reps column ("${repsText}") with ${setsFound} sets.`);
-                                }
-                            }
+                             // Optional: Check if REPS column indicates time (like Plancha) for logging/confirmation
+                             if (repsColumnIndex !== -1 && dataCells.length > repsColumnIndex) {
+                                 const repsText = dataCells[repsColumnIndex].replace(/<[^>]+>/g, '').trim();
+                                 if (timeDurationRegex.test(repsText)) {
+                                     // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Detected time-based exercise in Reps column ("${repsText}") with ${setsFound} sets.`);
+                                 }
+                             }
 
-                        } else {
-                            // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
-                        }
-                    } else {
-                        // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
-                    }
+                         } else {
+                             // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Text in sets column is not a valid set number: "${setsText}"`);
+                         }
+                     } else {
+                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: Sets column (${setsColumnIndex}) is empty.`);
+                     }
 
 
-                    // Add valid sets found to the daily total
-                    if (setsFound > 0 && !isNaN(setsFound)) {
-                        dailyVolume[currentDay] += setsFound;
-                    } else {
-                        // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
-                    }
+                     // Add valid sets found to the daily total
+                     if (setsFound > 0 && !isNaN(setsFound)) {
+                         dailyVolume[currentDay] += setsFound;
+                     } else {
+                         // console.log(`[Volume Debug v10] Row ${rowIndex + 1}: No valid sets added for this row.`);
+                     }
 
-                } else {
-                    // This row doesn't seem to have enough data cells or structure is unexpected
-                    // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
-                }
-            } else if (!isLikelyHeaderRow && setsColumnIndex === -1) {
-                // This case should be less common now, means we are past day header but haven't found column headers yet
-                // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping data row, 'SERIES' column index not identified yet.`);
-            }
+                 } else {
+                     // This row doesn't seem to have enough data cells or structure is unexpected
+                     // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping row, couldn't find enough <td> elements or structure mismatch.`);
+                 }
+             } else if (!isLikelyHeaderRow && !isActivationHeader && setsColumnIndex === -1) {
+                 // This case should be less common now, means we are past day header but haven't found column headers yet
+                 // console.log(`[Volume Debug v10] Row ${rowIndex + 1} (Day ${currentDay}): Skipping data row, 'SERIES' column index not identified yet.`);
+             }
         }); // End loop through rows
 
         if (currentDay) {
@@ -410,7 +516,7 @@ function generateCoverPageHtml(scores, clientName = 'Cliente') {
 
     // Dynamic description based on main components
     let description = `¡Hola ${clientName}! Aquí tienes un resumen visual de tu nuevo plan de entrenamiento. `;
-    if (scores.mainComponents && scores.mainComponents.length > 0) {
+    if (scores.mainComponents && scores.mainComponents.length > 0 && scores.mainComponentsDisplay !== 'Equilibrado') {
         description += `Nos enfocaremos principalmente en **${scores.mainComponentsDisplay}** para ayudarte a alcanzar tus metas. Los gráficos a continuación detallan la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡A darle con todo!`;
     } else {
         description += `Este plan está diseñado para ofrecerte un desarrollo equilibrado en todas las áreas clave. Los gráficos muestran la distribución del enfoque y el volumen semanal estimado por día de entrenamiento. ¡Disfruta del proceso!`;
@@ -775,92 +881,92 @@ function getRadarChartScript(scores) {
         }
         const ctx = canvasElement.getContext('2d');
         if (!ctx) {
-            console.error("Failed to get 2D context from radar canvas.");
-            return;
+             console.error("Failed to get 2D context from radar canvas.");
+             return;
         }
 
         // Chart.js Configuration
         try {
-            // Destruir gráfico existente si lo hay (para reinicialización)
-            if (window.myRadarChart) {
-                window.myRadarChart.destroy();
-            }
-            window.myRadarChart = new Chart(ctx, { // Asignar a la variable global
-                type: 'radar',
-                data: {
-                    labels: ${JSON.stringify(labels)},
-                    datasets: [{
-                        label: 'Enfoque (%)',
-                        data: ${JSON.stringify(chartData)},
-                        backgroundColor: 'rgba(52, 152, 219, 0.2)', // Use accent color with transparency
-                        borderColor: 'rgba(52, 152, 219, 0.8)',   // Use accent color, slightly less opaque
-                        borderWidth: 1.5,
-                        pointBackgroundColor: 'rgba(52, 152, 219, 1)', // Solid accent color
-                        pointBorderColor: '#fff', // White border for points
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    }]
-                },
-                options: {
-                    scales: {
-                        r: { // Radial axis
-                            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' }, // Slightly darker lines on white
-                            suggestedMin: 0,
-                            suggestedMax: 100,
-                            grid: { color: 'rgba(0, 0, 0, 0.1)' }, // Slightly darker grid on white
-                            ticks: {
-                                stepSize: 25,
-                                color: 'rgba(0, 0, 0, 0.6)', // Darker ticks for readability
-                                backdropColor: 'rgba(255, 255, 255, 0.75)', // White backdrop
-                                padding: 5,
-                                font: { size: 9 }
-                            },
-                            pointLabels: { // Labels around the edge
-                                font: { size: 11, weight: '500' },
-                                color: 'rgba(0, 0, 0, 0.85)' // Darker labels for readability
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Keep dark tooltip
-                            titleFont: { size: 12, weight: 'bold' },
-                            bodyFont: { size: 11 },
-                            padding: 8,
-                            boxPadding: 3,
-                            cornerRadius: 3,
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) { label += ': '; }
-                                    if (context.parsed.r !== null) {
-                                        label += context.parsed.r + '%';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: false // Crucial for resizing within flex container
-                }
-            });
-            console.log("Radar chart initialized successfully."); // Confirmation log
+             // Destruir gráfico existente si lo hay (para reinicialización)
+             if (window.myRadarChart) {
+                  window.myRadarChart.destroy();
+             }
+             window.myRadarChart = new Chart(ctx, { // Asignar a la variable global
+                 type: 'radar',
+                 data: {
+                     labels: ${JSON.stringify(labels)},
+                     datasets: [{
+                         label: 'Enfoque (%)',
+                         data: ${JSON.stringify(chartData)},
+                         backgroundColor: 'rgba(52, 152, 219, 0.2)', // Use accent color with transparency
+                         borderColor: 'rgba(52, 152, 219, 0.8)',   // Use accent color, slightly less opaque
+                         borderWidth: 1.5,
+                         pointBackgroundColor: 'rgba(52, 152, 219, 1)', // Solid accent color
+                         pointBorderColor: '#fff', // White border for points
+                         pointHoverBackgroundColor: '#fff',
+                         pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
+                         pointRadius: 3,
+                         pointHoverRadius: 5
+                     }]
+                 },
+                 options: {
+                     scales: {
+                         r: { // Radial axis
+                             angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' }, // Slightly darker lines on white
+                             suggestedMin: 0,
+                             suggestedMax: 100,
+                             grid: { color: 'rgba(0, 0, 0, 0.1)' }, // Slightly darker grid on white
+                             ticks: {
+                                 stepSize: 25,
+                                 color: 'rgba(0, 0, 0, 0.6)', // Darker ticks for readability
+                                 backdropColor: 'rgba(255, 255, 255, 0.75)', // White backdrop
+                                 padding: 5,
+                                 font: { size: 9 }
+                             },
+                             pointLabels: { // Labels around the edge
+                                 font: { size: 11, weight: '500' },
+                                 color: 'rgba(0, 0, 0, 0.85)' // Darker labels for readability
+                             }
+                         }
+                     },
+                     plugins: {
+                         legend: { display: false },
+                         tooltip: {
+                             enabled: true,
+                             backgroundColor: 'rgba(0, 0, 0, 0.8)', // Keep dark tooltip
+                             titleFont: { size: 12, weight: 'bold' },
+                             bodyFont: { size: 11 },
+                             padding: 8,
+                             boxPadding: 3,
+                             cornerRadius: 3,
+                             callbacks: {
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) { label += ': '; }
+                                     if (context.parsed.r !== null) {
+                                         label += context.parsed.r + '%';
+                                     }
+                                     return label;
+                                 }
+                             }
+                         }
+                     },
+                     responsive: true,
+                     maintainAspectRatio: false // Crucial for resizing within flex container
+                 }
+             });
+             console.log("Radar chart initialized successfully."); // Confirmation log
         } catch (error) {
-             console.error("Error initializing Radar Chart:", error);
+              console.error("Error initializing Radar Chart:", error);
         }
       }
 
       // Initialize chart when the DOM is ready
       if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initRadarChart);
+           document.addEventListener('DOMContentLoaded', initRadarChart);
       } else {
-          // Delay slightly if DOM is already loaded, might help rendering in some cases
-          setTimeout(initRadarChart, 50); // Reduced delay
+           // Delay slightly if DOM is already loaded, might help rendering in some cases
+           setTimeout(initRadarChart, 50); // Reduced delay
       }
     </script>
     `;
@@ -914,8 +1020,8 @@ function getVolumeLineChartScript(dailyVolumeData) {
         }
         const ctx = canvasElement.getContext('2d');
          if (!ctx) {
-             console.error("Failed to get 2D context from volume canvas.");
-             return;
+              console.error("Failed to get 2D context from volume canvas.");
+              return;
          }
 
         // Display message if no data
@@ -923,8 +1029,8 @@ function getVolumeLineChartScript(dailyVolumeData) {
         if (noData) {
             console.log("[Volume Script - Daily v11] No data flag is true, displaying message on canvas.");
              if (window.myVolumeChart) {
-                 window.myVolumeChart.destroy();
-                 window.myVolumeChart = null;
+                  window.myVolumeChart.destroy();
+                  window.myVolumeChart = null;
              }
             ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasElement.width = canvasElement.offsetWidth;
@@ -944,126 +1050,126 @@ function getVolumeLineChartScript(dailyVolumeData) {
 
         // Chart.js Configuration with DataLabels plugin
         try {
-            if (window.myVolumeChart) {
-                console.log("[Volume Script - Daily v11] Destroying existing volume chart instance.");
-                window.myVolumeChart.destroy();
-            }
-            console.log("[Volume Script - Daily v11] Creating new Chart instance.");
-            window.myVolumeChart = new Chart(ctx, {
-                type: 'line',
-                plugins: [ChartDataLabels], // Register plugin for this chart instance
-                data: {
-                    labels: ${JSON.stringify(displayLabels)},
-                    datasets: [{
-                        label: 'Series Totales por Día',
-                        data: ${JSON.stringify(displayData)},
-                        fill: true,
-                        backgroundColor: '${lineChartColors.areaFill}', // Use defined color
-                        borderColor: '${lineChartColors.main}', // Use defined color
-                        borderWidth: 2.5,
-                        pointBackgroundColor: '${lineChartColors.main}',
-                        pointBorderColor: '${lineChartColors.pointBorder}',
-                        pointBorderWidth: 1.5,
-                        pointHoverBackgroundColor: '${lineChartColors.pointHoverBackground}',
-                        pointHoverBorderColor: '${lineChartColors.main}',
-                        pointRadius: 4.5,
-                        pointHoverRadius: 6.5,
-                        tension: 0.2
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Número Total de Series',
-                                font: { size: 11 },
-                                color: '#555555', // Darker gray axis title
-                                padding: { top: 0, bottom: 5 }
-                            },
-                            ticks: {
-                                color: 'rgba(0, 0, 0, 0.7)', // Darker ticks
-                                precision: 0,
-                                font: { size: 10 }
-                            },
-                             grid: {
-                                 color: 'rgba(0, 0, 0, 0.1)' // Slightly darker grid
-                             }
-                        },
-                        x: {
+             if (window.myVolumeChart) {
+                 console.log("[Volume Script - Daily v11] Destroying existing volume chart instance.");
+                 window.myVolumeChart.destroy();
+             }
+             console.log("[Volume Script - Daily v11] Creating new Chart instance.");
+             window.myVolumeChart = new Chart(ctx, {
+                 type: 'line',
+                 plugins: [ChartDataLabels], // Register plugin for this chart instance
+                 data: {
+                     labels: ${JSON.stringify(displayLabels)},
+                     datasets: [{
+                         label: 'Series Totales por Día',
+                         data: ${JSON.stringify(displayData)},
+                         fill: true,
+                         backgroundColor: '${lineChartColors.areaFill}', // Use defined color
+                         borderColor: '${lineChartColors.main}', // Use defined color
+                         borderWidth: 2.5,
+                         pointBackgroundColor: '${lineChartColors.main}',
+                         pointBorderColor: '${lineChartColors.pointBorder}',
+                         pointBorderWidth: 1.5,
+                         pointHoverBackgroundColor: '${lineChartColors.pointHoverBackground}',
+                         pointHoverBorderColor: '${lineChartColors.main}',
+                         pointRadius: 4.5,
+                         pointHoverRadius: 6.5,
+                         tension: 0.2
+                     }]
+                 },
+                 options: {
+                     scales: {
+                         y: {
+                             beginAtZero: true,
                              title: {
                                  display: true,
-                                 text: 'Día de Entrenamiento',
+                                 text: 'Número Total de Series',
                                  font: { size: 11 },
                                  color: '#555555', // Darker gray axis title
-                                 padding: { top: 5, bottom: 0 }
+                                 padding: { top: 0, bottom: 5 }
                              },
                              ticks: {
-                                 color: 'rgba(0, 0, 0, 0.8)', // Darker ticks
+                                 color: 'rgba(0, 0, 0, 0.7)', // Darker ticks
+                                 precision: 0,
                                  font: { size: 10 }
                              },
-                             grid: {
-                                 display: false
-                             }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false,
-                        },
-                        tooltip: { // Keep tooltips for hover details
-                            enabled: true,
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleFont: { size: 12, weight: 'bold' },
-                            bodyFont: { size: 11 },
-                            padding: 8,
-                            boxPadding: 3,
-                            cornerRadius: 3,
-                             callbacks: {
-                                 title: function(tooltipItems) {
-                                     return tooltipItems[0]?.label || '';
-                                 },
-                                 label: function(context) {
-                                     let label = context.dataset.label || '';
-                                     if (label) { label += ': '; }
-                                     if (context.parsed.y !== null) {
-                                         label += context.parsed.y + ' series';
-                                     }
-                                     return label;
-                                 }
-                             }
-                        },
-                        datalabels: { // Configuration for chartjs-plugin-datalabels
-                            display: false, // Keep hidden by default, enable if needed
-                            anchor: 'end',
-                            align: 'top',
-                            color: '${lineChartColors.datalabelColor}', // Label text color
-                            font: {
-                                size: 10,
-                                weight: '600'
-                            },
-                            formatter: (value, context) => {
-                                return value;
-                            },
-                        }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-             console.log("[Volume Script - Daily v11] Volume chart initialized successfully with datalabels.");
+                              grid: {
+                                  color: 'rgba(0, 0, 0, 0.1)' // Slightly darker grid
+                              }
+                         },
+                         x: {
+                              title: {
+                                  display: true,
+                                  text: 'Día de Entrenamiento',
+                                  font: { size: 11 },
+                                  color: '#555555', // Darker gray axis title
+                                  padding: { top: 5, bottom: 0 }
+                              },
+                              ticks: {
+                                  color: 'rgba(0, 0, 0, 0.8)', // Darker ticks
+                                  font: { size: 10 }
+                              },
+                              grid: {
+                                  display: false
+                              }
+                         }
+                     },
+                     plugins: {
+                         legend: {
+                             display: false,
+                         },
+                         tooltip: { // Keep tooltips for hover details
+                             enabled: true,
+                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                             titleFont: { size: 12, weight: 'bold' },
+                             bodyFont: { size: 11 },
+                             padding: 8,
+                             boxPadding: 3,
+                             cornerRadius: 3,
+                              callbacks: {
+                                  title: function(tooltipItems) {
+                                       return tooltipItems[0]?.label || '';
+                                  },
+                                  label: function(context) {
+                                       let label = context.dataset.label || '';
+                                       if (label) { label += ': '; }
+                                       if (context.parsed.y !== null) {
+                                           label += context.parsed.y + ' series';
+                                       }
+                                       return label;
+                                  }
+                              }
+                         },
+                         datalabels: { // Configuration for chartjs-plugin-datalabels
+                             display: false, // Keep hidden by default, enable if needed
+                             anchor: 'end',
+                             align: 'top',
+                             color: '${lineChartColors.datalabelColor}', // Label text color
+                             font: {
+                                 size: 10,
+                                 weight: '600'
+                             },
+                             formatter: (value, context) => {
+                                 return value;
+                             },
+                         }
+                     },
+                     responsive: true,
+                     maintainAspectRatio: false
+                 }
+             });
+              console.log("[Volume Script - Daily v11] Volume chart initialized successfully with datalabels.");
         } catch (error) {
-             console.error("[Volume Script - Daily v11] Error initializing Volume Line Chart:", error);
+              console.error("[Volume Script - Daily v11] Error initializing Volume Line Chart:", error);
         }
       }
 
       // Initialize chart when the DOM is ready
       if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initVolumeLineChart);
+           document.addEventListener('DOMContentLoaded', initVolumeLineChart);
       } else {
-          // Delay slightly if DOM is already loaded
-          setTimeout(initVolumeLineChart, 50);
+           // Delay slightly if DOM is already loaded
+           setTimeout(initVolumeLineChart, 50);
       }
     </script>
     `;
@@ -1078,8 +1184,8 @@ function getVolumeLineChartScript(dailyVolumeData) {
  * @returns {object} - Object containing fullCoverPageHtml, styles, combined script, scores, and volumeData.
  */
 function createCoverPage(routineHtml, clientName, logoBase64) {
-    // 1. Calculate component scores
-    const scores = calculateTrainingComponentScores(routineHtml);
+    // 1. Calculate component scores using the improved function
+    const scores = calculateTrainingComponentScores(routineHtml); // Use v2
 
     // 2. Calculate DAILY volume using the revised function
     const dailyVolumeData = calculateDailyVolume(routineHtml); // Use v10
@@ -1108,7 +1214,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
     const combinedScript = `
         <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-        <script> Chart.register(ChartDataLabels); </script> {/* Register plugin globally */}
+        <script> Chart.register(ChartDataLabels); </script>{/* Register plugin globally */}
         ${radarScript}
         ${volumeScript}
     `;
@@ -1126,7 +1232,7 @@ function createCoverPage(routineHtml, clientName, logoBase64) {
 
 // Export the main function and the revised volume function name
 module.exports = {
-    calculateTrainingComponentScores,
+    calculateTrainingComponentScores, // Export v2
     calculateDailyVolume, // Export v10
     createCoverPage,
     // Keep other exports if they were needed for testing/other modules
