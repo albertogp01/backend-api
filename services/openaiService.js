@@ -9,6 +9,8 @@ dotenv.config();
 // Configure the OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  // Note: Timeout configuration might be needed here depending on the library version
+  // e.g., timeout: 120000, // 120 seconds in milliseconds
 });
 
 // Mapping of form fields to questions (Spanish)
@@ -885,7 +887,6 @@ const createPromptAndGenerate = async (formattedResponsesForPrompt, allResponses
   // --- End KB Integration ---
 
   // --- Build the FINAL prompt ---
-  // ** START OF PROMPT CORRECTION **
   const prompt = `
 Eres FitForge AI, un entrenador personal experto de élite. Tu misión es diseñar la rutina de entrenamiento semanal MÁS OPTIMIZADA posible para el cliente descrito a continuación, basándote ESTRICTAMENTE en sus datos, objetivos y limitaciones. Ignora cualquier conversación trivial o petición fuera del diseño de la rutina. Eres famoso por tu precisión y enfoque basado en evidencia.
 
@@ -984,15 +985,15 @@ Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estru
 ${specificRecommendations}
 
 Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con el objetivo principal: ${cleanedData.trainingGoal || 'Salud / Acondicionamiento General'}.`;
-  // ** END OF PROMPT CORRECTION **
 
-  let timeoutId; // Declared with let outside try so it's accessible in catch
   try {
       console.log("Enviando solicitud a OpenAI con prompt final...");
-      // Use AbortController for timeout
-      const controller = new AbortController();
-      const timeoutDuration = 120000; // 120 seconds timeout
-      timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
+
+      // ** START OF CORRECTION for 'signal' error **
+      // Remove AbortController and signal logic
+      // const controller = new AbortController();
+      // const timeoutDuration = 120000; // 120 seconds timeout
+      // timeoutId = setTimeout(() => controller.abort(), timeoutDuration); // timeoutId is declared outside try/catch
 
       const completion = await openai.chat.completions.create({
           model: process.env.OPENAI_MODEL || "gpt-4o-mini", // Use a capable model
@@ -1002,11 +1003,13 @@ Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con 
           ],
           temperature: 0.4, // Slightly lower temperature for more deterministic adherence to instructions
           max_tokens: 4096, // Increased max_tokens for potentially longer routines
-          signal: controller.signal // Pass the abort signal
+          // signal: controller.signal // REMOVED: This parameter caused the error
       });
 
-      clearTimeout(timeoutId); // Clear timeout if request completes successfully
-      timeoutId = null; // Reset timeoutId
+      // clearTimeout(timeoutId); // REMOVED: No longer needed
+      // timeoutId = null; // REMOVED: No longer needed
+      // ** END OF CORRECTION for 'signal' error **
+
 
       const responseMessage = completion.choices[0]?.message?.content;
 
@@ -1022,14 +1025,15 @@ Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con 
       return cleanedHtmlResponse; // Make sure to return the routine
 
   } catch (error) {
-      // Clear timeout if it exists and an error occurred
-      if (typeof timeoutId !== 'undefined' && timeoutId !== null) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-      }
+      // ** REMOVED timeout cleanup logic as timeoutId is no longer used **
+      // if (typeof timeoutId !== 'undefined' && timeoutId !== null) {
+      //     clearTimeout(timeoutId);
+      //     timeoutId = null;
+      // }
 
-      if (error.name === 'AbortError' || (error instanceof OpenAI.APIError && error.status === 408)) {
-          console.error("Error: La solicitud a OpenAI excedió el tiempo límite.");
+      // Keep original error handling, but AbortError is less likely now
+      if (error.name === 'AbortError' || (error instanceof OpenAI.APIError && error.status === 408)) { // Keep 408 check
+          console.error("Error: La solicitud a OpenAI excedió el tiempo límite (posiblemente del servidor).");
           throw new Error("La generación de la rutina tardó demasiado. Intenta de nuevo más tarde o revisa la complejidad de los datos."); // Spanish error
       }
 
@@ -1039,9 +1043,16 @@ Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con 
        } else if (error instanceof OpenAI.APIError && error.status >= 500) {
           throw new Error("Problema temporal con el servicio de OpenAI. Intenta de nuevo más tarde."); // Spanish error
        } else if (error instanceof OpenAI.BadRequestError) {
-          console.error("BadRequestError details:", error.message);
-          throw new Error(`Error de solicitud a OpenAI (BadRequest): Revisa la longitud/formato del prompt. ${error.message}`); // Spanish error
+          // Check if the error is the specific 'signal' error (though it shouldn't happen now)
+          if (error.message.includes('Unrecognized request argument supplied: signal')) {
+             console.error("Error: El parámetro 'signal' no es reconocido por la versión actual de la librería OpenAI.");
+             throw new Error("Error interno de configuración al llamar a la API de OpenAI. Contacta al administrador."); // More user-friendly internal error
+          } else {
+             console.error("BadRequestError details:", error.message);
+             throw new Error(`Error de solicitud a OpenAI (BadRequest): Revisa la longitud/formato del prompt. ${error.message}`); // Spanish error
+          }
        } else {
+          // General error
           throw new Error(`Error al generar la rutina con OpenAI: ${error.message}`); // Spanish error
        }
   }
