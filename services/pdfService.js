@@ -1,4 +1,4 @@
-// pdfService.js (Actualizado con Esperas para Gráficos)
+// pdfService.js (Actualizado con Esperas para Gráficos y Footer Modificado)
 
 const fs = require("fs");
 const path = require("path");
@@ -48,20 +48,20 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
             // --- Procesamiento del HTML de la rutina (Mantener tu lógica) ---
             let modifiedHtml = htmlContent.replace(/<\/table>\s*<table>/g, "</table><div class='table-spacer'></div><table>");
             if (modifiedHtml.startsWith("<table>")) {
-             const firstDayMatch = modifiedHtml.match(/<th colspan="5">(Día 1:.+?)<\/th>/);
-             if (firstDayMatch) {
-               modifiedHtml = `<h2 class="day-title first-day-title">${firstDayMatch[1]}</h2>${modifiedHtml}`;
-               modifiedHtml = modifiedHtml.replace(/<th colspan="5">Día 1:.+?<\/th>/, '');
-             }
+                const firstDayMatch = modifiedHtml.match(/<th colspan="5">(Día 1:.+?)<\/th>/);
+                if (firstDayMatch) {
+                    modifiedHtml = `<h2 class="day-title first-day-title">${firstDayMatch[1]}</h2>${modifiedHtml}`;
+                    modifiedHtml = modifiedHtml.replace(/<th colspan="5">Día 1:.+?<\/th>/, '');
+                }
             }
             modifiedHtml = modifiedHtml.replace(
-             /<th colspan="5">(Día \d+:.+?)<\/th>/g,
-             '</table><h2 class="day-title">$1</h2><table>'
+                /<th colspan="5">(Día \d+:.+?)<\/th>/g,
+                '</table><h2 class="day-title">$1</h2><table>'
             );
             console.log("HTML de la rutina procesado.");
 
 
-            const currentYear = new Date().getFullYear();
+            // const currentYear = new Date().getFullYear(); // Ya no se necesita para el footer
             const creationDate = new Date().toLocaleDateString("es-ES", {
                 year: "numeric", month: "long", day: "numeric"
             });
@@ -690,7 +690,7 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
                  <div class="footer">
                      <div class="footer-left"><img src="${logoBase64}" alt="Logo Fitform" onerror="this.style.display='none'" /></div>
                      <div class="footer-center"></div>
-                     <div class="footer-right">© ${currentYear} Fitform - Todos los derechos reservados</div>
+                     <div class="footer-right">Todos los derechos reservados</div>
                  </div>
              </body>
              </html>
@@ -753,181 +753,181 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
             }
             // --- FIN: ESPERAS MEJORADAS PARA GRÁFICOS ---
 
-      // Generar la primera página (Portada)
-      const coverPagePdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' }, // Sin márgenes para controlar todo con CSS
-        preferCSSPageSize: true, // Usar el tamaño definido en @page
-        timeout: 90000 // Timeout generoso
-      });
-      console.log("Buffer PDF de la portada generado.");
+            // Generar la primera página (Portada)
+            const coverPagePdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '0', right: '0', bottom: '0', left: '0' }, // Sin márgenes para controlar todo con CSS
+                preferCSSPageSize: true, // Usar el tamaño definido en @page
+                timeout: 90000 // Timeout generoso
+            });
+            console.log("Buffer PDF de la portada generado.");
 
-      // --- Generar Páginas de Rutina ---
-      console.log("Estableciendo contenido de la RUTINA en Puppeteer...");
-      // Reutilizar la misma página para la rutina
-      await page.setContent(routinePageHtml, { waitUntil: 'networkidle0', timeout: 60000 });
-      console.log("Contenido de la rutina establecido.");
+            // --- Generar Páginas de Rutina ---
+            console.log("Estableciendo contenido de la RUTINA en Puppeteer...");
+            // Reutilizar la misma página para la rutina
+            await page.setContent(routinePageHtml, { waitUntil: 'networkidle0', timeout: 60000 });
+            console.log("Contenido de la rutina establecido.");
 
-      // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
-      // Este script es específico para la ESTRUCTURA de la rutina, no afecta la portada
-      console.log("Ejecutando script de evaluación para organizar días/variantes...");
-      await page.evaluate(() => {
-          // --- Inicio del script de evaluación para organizar la rutina ---
-          // Asegurarse de que este código SOLO se ejecute en la página de rutina
-          if (document.querySelector('.routine-content')) {
-              console.log("Ejecutando lógica de organización de días/variantes...");
+            // Ejecutar script para organizar días/variantes en el NAVEGADOR (Puppeteer)
+            // Este script es específico para la ESTRUCTURA de la rutina, no afecta la portada
+            console.log("Ejecutando script de evaluación para organizar días/variantes...");
+            await page.evaluate(() => {
+                // --- Inicio del script de evaluación para organizar la rutina ---
+                // Asegurarse de que este código SOLO se ejecute en la página de rutina
+                if (document.querySelector('.routine-content')) {
+                    console.log("Ejecutando lógica de organización de días/variantes...");
 
-              // 1. Envolver cada día en un contenedor
-              document.querySelectorAll('.day-title').forEach((title, index) => {
-                  const dayContainer = document.createElement('div');
-                  dayContainer.className = 'training-day-container';
-                  // Extraer número de día si existe
-                  const dayNumberMatch = title.textContent.match(/Día\s+(\d+)/i);
-                  if (dayNumberMatch) {
-                      dayContainer.dataset.dayNumber = dayNumberMatch[1];
-                  }
+                    // 1. Envolver cada día en un contenedor
+                    document.querySelectorAll('.day-title').forEach((title, index) => {
+                        const dayContainer = document.createElement('div');
+                        dayContainer.className = 'training-day-container';
+                        // Extraer número de día si existe
+                        const dayNumberMatch = title.textContent.match(/Día\s+(\d+)/i);
+                        if (dayNumberMatch) {
+                            dayContainer.dataset.dayNumber = dayNumberMatch[1];
+                        }
 
-                  // Insertar contenedor antes del título y mover título dentro
-                  title.parentNode.insertBefore(dayContainer, title);
-                  dayContainer.appendChild(title);
+                        // Insertar contenedor antes del título y mover título dentro
+                        title.parentNode.insertBefore(dayContainer, title);
+                        dayContainer.appendChild(title);
 
-                  // Mover elementos siguientes (tablas, spacers) al contenedor del día
-                  let nextElement = dayContainer.nextElementSibling;
-                  while (nextElement && (nextElement.tagName === 'TABLE' || nextElement.classList.contains('table-spacer'))) {
-                      const currentElement = nextElement;
-                      nextElement = nextElement.nextElementSibling; // Avanzar antes de mover
-                      dayContainer.appendChild(currentElement);
-                  }
-              });
+                        // Mover elementos siguientes (tablas, spacers) al contenedor del día
+                        let nextElement = dayContainer.nextElementSibling;
+                        while (nextElement && (nextElement.tagName === 'TABLE' || nextElement.classList.contains('table-spacer'))) {
+                            const currentElement = nextElement;
+                            nextElement = nextElement.nextElementSibling; // Avanzar antes de mover
+                            dayContainer.appendChild(currentElement);
+                        }
+                    });
 
-              // 2. Mover variantes a su contenedor de día correspondiente
-              document.querySelectorAll('.variants-container, .side-variants-container').forEach(variant => {
-                const titleEl = variant.querySelector('.variants-title, .side-variants-title');
-                 if (titleEl) {
-                     // Cambiar título a "VARIANTES"
-                     titleEl.textContent = "VARIANTES";
-                     // Intentar encontrar el número de día dentro del contenido de la variante (menos fiable)
-                     const dayMatchInVariant = variant.innerHTML.match(/Día\s+(\d+)/i);
-                     const dayNumber = dayMatchInVariant ? dayMatchInVariant[1] : null;
+                    // 2. Mover variantes a su contenedor de día correspondiente
+                    document.querySelectorAll('.variants-container, .side-variants-container').forEach(variant => {
+                        const titleEl = variant.querySelector('.variants-title, .side-variants-title');
+                         if (titleEl) {
+                             // Cambiar título a "VARIANTES"
+                             titleEl.textContent = "VARIANTES";
+                             // Intentar encontrar el número de día dentro del contenido de la variante (menos fiable)
+                             const dayMatchInVariant = variant.innerHTML.match(/Día\s+(\d+)/i);
+                             const dayNumber = dayMatchInVariant ? dayMatchInVariant[1] : null;
 
-                     if (dayNumber) {
-                         // Encontrar el contenedor del día correspondiente
-                         const targetDayContainer = document.querySelector(`.training-day-container[data-day-number="${dayNumber}"]`);
-                         if (targetDayContainer) {
-                             // Mover la variante al final del contenedor del día
-                             targetDayContainer.appendChild(variant);
-                             console.log(`Variante movida al Día ${dayNumber}`);
+                             if (dayNumber) {
+                                 // Encontrar el contenedor del día correspondiente
+                                 const targetDayContainer = document.querySelector(`.training-day-container[data-day-number="${dayNumber}"]`);
+                                 if (targetDayContainer) {
+                                     // Mover la variante al final del contenedor del día
+                                     targetDayContainer.appendChild(variant);
+                                     console.log(`Variante movida al Día ${dayNumber}`);
+                                 } else {
+                                     console.warn(`No se encontró contenedor para el Día ${dayNumber} para mover la variante.`);
+                                 }
+                             } else {
+                                 console.warn("No se pudo determinar el número de día para la variante:", variant.id || variant.className);
+                             }
                          } else {
-                             console.warn(`No se encontró contenedor para el Día ${dayNumber} para mover la variante.`);
+                              console.warn("Elemento de variante sin título encontrado:", variant.id || variant.className);
                          }
-                     } else {
-                         console.warn("No se pudo determinar el número de día para la variante:", variant.id || variant.className);
-                     }
-                 } else {
-                      console.warn("Elemento de variante sin título encontrado:", variant.id || variant.className);
-                 }
-              });
+                    });
 
 
-              // 3. Aplicar saltos de página ANTES de cada contenedor de día (excepto el primero)
-              document.querySelectorAll('.training-day-container').forEach((dayContainer, index) => {
-                  if (index > 0) { // No añadir salto antes del primer día
-                      const pageBreak = document.createElement('div');
-                      pageBreak.className = 'page-break';
-                      dayContainer.parentNode.insertBefore(pageBreak, dayContainer);
+                    // 3. Aplicar saltos de página ANTES de cada contenedor de día (excepto el primero)
+                    document.querySelectorAll('.training-day-container').forEach((dayContainer, index) => {
+                        if (index > 0) { // No añadir salto antes del primer día
+                            const pageBreak = document.createElement('div');
+                            pageBreak.className = 'page-break';
+                            dayContainer.parentNode.insertBefore(pageBreak, dayContainer);
 
-                      // Añadir padding superior al contenedor para simular margen después del salto
-                      // dayContainer.style.paddingTop = '50px'; // O usar clase .page-content si se prefiere
-                      // Alternativa: Envolver en .page-content
-                       const pageContentWrapper = document.createElement('div');
-                       pageContentWrapper.className = 'page-content'; // Asegúrate que esta clase tenga padding-top
-                       dayContainer.parentNode.insertBefore(pageContentWrapper, dayContainer);
-                       pageContentWrapper.appendChild(dayContainer);
+                            // Añadir padding superior al contenedor para simular margen después del salto
+                            // dayContainer.style.paddingTop = '50px'; // O usar clase .page-content si se prefiere
+                            // Alternativa: Envolver en .page-content
+                             const pageContentWrapper = document.createElement('div');
+                             pageContentWrapper.className = 'page-content'; // Asegúrate que esta clase tenga padding-top
+                             dayContainer.parentNode.insertBefore(pageContentWrapper, dayContainer);
+                             pageContentWrapper.appendChild(dayContainer);
 
-                  }
-                  // Añadir espaciador al final de cada día para evitar solapamiento con footer
-                  const finalSpacer = document.createElement('div');
-                  finalSpacer.className = 'content-spacer'; // Asegúrate que esta clase tenga altura
-                  dayContainer.appendChild(finalSpacer);
+                        }
+                        // Añadir espaciador al final de cada día para evitar solapamiento con footer
+                        const finalSpacer = document.createElement('div');
+                        finalSpacer.className = 'content-spacer'; // Asegúrate que esta clase tenga altura
+                        dayContainer.appendChild(finalSpacer);
 
-              });
+                    });
 
-              console.log("Organización de días/variantes completada.");
-          } else {
-              console.log("No se encontró '.routine-content', saltando organización de días/variantes.");
-          }
-          // --- Fin del script de evaluación ---
-      });
-      console.log("Script de evaluación ejecutado.");
+                    console.log("Organización de días/variantes completada.");
+                } else {
+                    console.log("No se encontró '.routine-content', saltando organización de días/variantes.");
+                }
+                // --- Fin del script de evaluación ---
+            });
+            console.log("Script de evaluación ejecutado.");
 
-      // Generar las páginas de la rutina
-      const routinePagesPdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' },
-        preferCSSPageSize: true,
-        timeout: 90000 // Timeout generoso
-      });
-      console.log("Buffer PDF de la rutina generado.");
+            // Generar las páginas de la rutina
+            const routinePagesPdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '0', right: '0', bottom: '0', left: '0' },
+                preferCSSPageSize: true,
+                timeout: 90000 // Timeout generoso
+            });
+            console.log("Buffer PDF de la rutina generado.");
 
-      // --- Combinar PDFs (Requiere una librería externa como 'pdf-lib' o 'hummus-recipe') ---
-      // Esta parte es más compleja y requiere instalar una dependencia adicional.
-      // Ejemplo conceptual (necesitas instalar 'pdf-lib'):
-      console.log("Intentando combinar PDFs...");
-      try {
-        const { PDFDocument } = require('pdf-lib'); // Asegúrate de instalar: npm install pdf-lib
+            // --- Combinar PDFs (Requiere una librería externa como 'pdf-lib' o 'hummus-recipe') ---
+            // Esta parte es más compleja y requiere instalar una dependencia adicional.
+            // Ejemplo conceptual (necesitas instalar 'pdf-lib'):
+            console.log("Intentando combinar PDFs...");
+            try {
+                const { PDFDocument } = require('pdf-lib'); // Asegúrate de instalar: npm install pdf-lib
 
-        const finalPdfDoc = await PDFDocument.create();
+                const finalPdfDoc = await PDFDocument.create();
 
-        // Cargar portada
-        const coverDoc = await PDFDocument.load(coverPagePdfBuffer);
-        const [coverPage] = await finalPdfDoc.copyPages(coverDoc, [0]);
-        finalPdfDoc.addPage(coverPage);
-        console.log("Página de portada añadida al PDF final.");
+                // Cargar portada
+                const coverDoc = await PDFDocument.load(coverPagePdfBuffer);
+                const [coverPage] = await finalPdfDoc.copyPages(coverDoc, [0]);
+                finalPdfDoc.addPage(coverPage);
+                console.log("Página de portada añadida al PDF final.");
 
-        // Cargar rutina
-        const routineDoc = await PDFDocument.load(routinePagesPdfBuffer);
-        const routinePages = await finalPdfDoc.copyPages(routineDoc, routineDoc.getPageIndices());
-        routinePages.forEach(page => finalPdfDoc.addPage(page));
-        console.log(`${routinePages.length} páginas de rutina añadidas al PDF final.`);
+                // Cargar rutina
+                const routineDoc = await PDFDocument.load(routinePagesPdfBuffer);
+                const routinePages = await finalPdfDoc.copyPages(routineDoc, routineDoc.getPageIndices());
+                routinePages.forEach(page => finalPdfDoc.addPage(page));
+                console.log(`${routinePages.length} páginas de rutina añadidas al PDF final.`);
 
-        // Guardar el PDF combinado
-        const finalPdfBytes = await finalPdfDoc.save();
-        fs.writeFileSync(filePath, finalPdfBytes);
-        console.log("PDF combinado guardado correctamente en:", filePath);
+                // Guardar el PDF combinado
+                const finalPdfBytes = await finalPdfDoc.save();
+                fs.writeFileSync(filePath, finalPdfBytes);
+                console.log("PDF combinado guardado correctamente en:", filePath);
 
-      } catch (mergeError) {
-          console.error("Error al combinar los PDFs:", mergeError);
-          console.warn("Guardando solo la rutina como fallback...");
-          // Fallback: guardar solo la rutina si la combinación falla
-          fs.writeFileSync(filePath, routinePagesPdfBuffer);
-          // O podrías guardar ambos por separado y notificar el error
-          reject(new Error(`Error al combinar PDFs: ${mergeError.message}. Se guardó solo la rutina.`));
-          return; // Salir para evitar cerrar el navegador antes de tiempo
-      }
+            } catch (mergeError) {
+                 console.error("Error al combinar los PDFs:", mergeError);
+                 console.warn("Guardando solo la rutina como fallback...");
+                 // Fallback: guardar solo la rutina si la combinación falla
+                 fs.writeFileSync(filePath, routinePagesPdfBuffer);
+                 // O podrías guardar ambos por separado y notificar el error
+                 reject(new Error(`Error al combinar PDFs: ${mergeError.message}. Se guardó solo la rutina.`));
+                 return; // Salir para evitar cerrar el navegador antes de tiempo
+            }
 
-      // --- Limpieza ---
-      console.log("Cerrando navegador Puppeteer...");
-      await browser.close();
-      console.log("Navegador cerrado correctamente.");
+            // --- Limpieza ---
+            console.log("Cerrando navegador Puppeteer...");
+            await browser.close();
+            console.log("Navegador cerrado correctamente.");
 
-      resolve(filePath); // Resuelve con la ruta del PDF final combinado
+            resolve(filePath); // Resuelve con la ruta del PDF final combinado
 
-    } catch (error) {
-      console.error("Error general en generatePDF:", error);
-      if (browser) {
-        try {
-          console.log("Intentando cerrar navegador después de error...");
-          await browser.close();
-          console.log("Navegador cerrado después de error general.");
-        } catch (closeError) {
-          console.error("Error al cerrar el navegador después de un error:", closeError.message);
+        } catch (error) {
+            console.error("Error general en generatePDF:", error);
+            if (browser) {
+                try {
+                    console.log("Intentando cerrar navegador después de error...");
+                    await browser.close();
+                    console.log("Navegador cerrado después de error general.");
+                } catch (closeError) {
+                    console.error("Error al cerrar el navegador después de un error:", closeError.message);
+                }
+            }
+            reject(error); // Rechaza la promesa con el error original
         }
-      }
-      reject(error); // Rechaza la promesa con el error original
-    }
-  });
+    });
 }
 
 module.exports = { generatePDF };
