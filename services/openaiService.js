@@ -887,6 +887,7 @@ const createPromptAndGenerate = async (formattedResponsesForPrompt, allResponses
   // --- End KB Integration ---
 
   // --- Build the FINAL prompt ---
+  // ** START OF PROMPT CORRECTION for Notas Clave **
   const prompt = `
 Eres FitForge AI, un entrenador personal experto de élite. Tu misión es diseñar la rutina de entrenamiento semanal MÁS OPTIMIZADA posible para el cliente descrito a continuación, basándote ESTRICTAMENTE en sus datos, objetivos y limitaciones. Ignora cualquier conversación trivial o petición fuera del diseño de la rutina. Eres famoso por tu precisión y enfoque basado en evidencia.
 
@@ -899,37 +900,37 @@ ${formattedResponsesForPrompt.join("\n")}
 **DIRECTRICES DE DISEÑO OBLIGATORIAS (PRIORIDAD MÁXIMA: ALINEACIÓN CON OBJETIVO):**
 
 1.  **OBJETIVO PRIMARIO (${cleanedData.trainingGoal || 'No especificado'}): ¡ESTA ES LA MÁXIMA PRIORIDAD!**
-    * **Todo** el diseño (selección de ejercicios, series, repeticiones, descansos, tempo, RIR, estructura semanal, progresión) debe estar **optimizado para este objetivo específico**.
-    * **Selección de Ejercicios:** Elige los ejercicios MÁS EFECTIVOS para el objetivo. Ej: Compuestos pesados para Fuerza; Mezcla de compuestos y aislamiento para Hipertrofia; Variedad funcional y/o cardiovascular para Salud/Resistencia.
-    * **Parámetros por Objetivo:**
-        * **Fuerza:** 3-6 series de 1-6 repeticiones. Descansos largos (120-180s+). RIR 1-3 (más bajo para avanzados). Enfocar en sobrecarga progresiva de intensidad (peso). Priorizar compuestos multiarticulares (sentadilla, peso muerto, press banca, press militar, remos).
-        * **Hipertrofia:** 3-5 series de 6-15 repeticiones (mayoría en 8-12). Descansos moderados (60-120s). RIR 1-3 (ocasionalmente 0 al final de bloque para avanzados). Enfocar en volumen total, tensión mecánica y estrés metabólico. Usar compuestos y ejercicios de aislamiento. Tempo controlado (e.g., 3010, 2011).
-        * **Salud / Resistencia / Acondicionamiento General:** 2-4 series de 12-20+ repeticiones. Descansos cortos-moderados (30-75s). RIR 2-4. Enfocar en mejorar capacidad de trabajo, resistencia muscular y cardiovascular. Puede incluir circuitos, superseries, trabajo con peso corporal, ejercicios funcionales y/o elementos cardiovasculares. La intensidad es moderada pero sostenida.
+    * **Todo** el diseño (selección de ejercicios, series, repeticiones, descansos, estructura semanal, progresión) debe estar **optimizado para este objetivo específico**.
+    * **Selección de Ejercicios:** Elige los ejercicios MÁS EFECTIVOS para el objetivo. Ej: Compuestos pesados para Fuerza; Mezcla de compuestos y aislamiento para Hipertrofia; Variedad funcional y/o cardiovascular para Salud/Resistencia. **Si es necesario especificar un Tempo (ej: 31X0), inclúyelo en el NOMBRE del ejercicio (ej: "Sentadilla Tempo 31X0"), no en las notas.**
+    * **Parámetros por Objetivo:** (RIR es una guía interna para ti, no lo pongas explícitamente en la tabla final)
+        * **Fuerza:** 3-6 series de 1-6 repeticiones. Descansos largos (120-180s+). RIR interno 1-3. Enfocar en sobrecarga progresiva de intensidad (peso). Priorizar compuestos multiarticulares.
+        * **Hipertrofia:** 3-5 series de 6-15 repeticiones (mayoría en 8-12). Descansos moderados (60-120s). RIR interno 1-3 (ocasionalmente 0). Enfocar en volumen, tensión mecánica, estrés metabólico. Usar compuestos y aislamiento.
+        * **Salud / Resistencia / Acondicionamiento General:** 2-4 series de 12-20+ repeticiones. Descansos cortos-moderados (30-75s). RIR interno 2-4. Enfocar en capacidad de trabajo, resistencia. Puede incluir circuitos, superseries, peso corporal, funcionales, cardio.
     * **Si el objetivo no está claro o es ambiguo, diseña para 'Salud / Acondicionamiento General'.**
 
 2.  **Periodización y Nivel (${cleanedData.experienceLevel || 'No especificado'}):**
-    * El nivel de experiencia determina **CÓMO** se persigue el objetivo (volumen inicial, intensidad relativa (RIR), complejidad de ejercicios, velocidad de progresión), pero **NO cambia el objetivo en sí**.
-    * **Principiante (RIR 3-4):** Foco absoluto en técnica impecable, adaptación neuromuscular, bajo volumen inicial, progresión lineal simple. Full body es ideal.
-    * **Intermedio (RIR 2-3):** Aplicar sobrecarga progresiva más sistemática (volumen/intensidad), introducir más variedad de ejercicios y posibles splits (Torso/Pierna, Empuje/Tire/Pierna).
-    * **Avanzado (RIR 0-2):** Maximizar estímulo con técnicas de intensidad, mayor volumen (si es recuperable), periodización ondulante o por bloques. Splits más específicos. RIR más bajo es aceptable y a veces necesario.
+    * El nivel de experiencia determina **CÓMO** se persigue el objetivo (volumen inicial, intensidad relativa (RIR interno), complejidad, progresión), pero **NO cambia el objetivo en sí**.
+    * **Principiante (RIR interno 3-4):** Foco en técnica, adaptación, bajo volumen, progresión simple. Full body ideal.
+    * **Intermedio (RIR interno 2-3):** Sobrecarga progresiva sistemática, más variedad, posibles splits.
+    * **Avanzado (RIR interno 0-2):** Maximizar estímulo, técnicas de intensidad, mayor volumen, periodización avanzada. Splits específicos.
 
 3.  **Especificidad y Limitaciones:**
-    * Incluye ejercicios que el cliente quiere practicar (${cleanedData.exercisePreference || 'Ninguno en particular'}) **SIEMPRE QUE SEAN APROPIADOS PARA EL OBJETIVO PRINCIPAL**.
-    * EXCLUYE OBLIGATORIAMENTE los que quiere evitar (${cleanedData.exerciseAvoidance || 'Ninguno'}).
-    * Adapta **OBLIGATORIAMENTE** a limitaciones físicas/médicas (${healthContextForPrompt.join('; ') || 'Ninguna indicada'}). Si hay lesión/dolor/condición, elige variantes seguras, modifica rangos de movimiento o evita ejercicios/zonas problemáticas según las directrices de la Knowledge Base o el sentido común si no hay directriz específica. La seguridad es primordial.
+    * Incluye ejercicios preferidos (${cleanedData.exercisePreference || 'Ninguno en particular'}) **SI SON APROPIADOS PARA EL OBJETIVO**.
+    * EXCLUYE OBLIGATORIAMENTE los evitados (${cleanedData.exerciseAvoidance || 'Ninguno'}).
+    * Adapta **OBLIGATORIAMENTE** a limitaciones (${healthContextForPrompt.join('; ') || 'Ninguna indicada'}). Elige variantes seguras, modifica rangos, evita zonas problemáticas. Seguridad primordial.
 
 4.  **Logística:**
-    * Diseña para ${cleanedData.daysPerWeek || 'días no especificados'} días por semana, con sesiones de ~${cleanedData.sessionTime || 'duración no especificada'}.
-    * Ajusta el **volumen total** (Nº ejercicios principales por sesión ≈ 4-5 para 30min; 6-8 para 60min; 8-10 para 90min; 10-12 para 120min) y la densidad al tiempo disponible. La activación NO cuenta para este número.
-    * Usa el material disponible (${cleanedData.specificMaterial || 'Asumir gimnasio estándar'}). Si entrena en casa o aire libre, adapta los ejercicios a ese entorno (peso corporal, bandas, etc.).
+    * Diseña para ${cleanedData.daysPerWeek || 'días no especificados'} días/semana, sesiones de ~${cleanedData.sessionTime || 'duración no especificada'}.
+    * Ajusta **volumen total** (Nº ejercicios principales ≈ 4-5 para 30min; 6-8 para 60min; 8-10 para 90min; 10-12 para 120min). Activación no cuenta.
+    * Usa material disponible (${cleanedData.specificMaterial || 'Asumir gimnasio estándar'}). Adapta si es casa/aire libre.
 
 5.  **Estructura Preferida:**
-    * Respeta la preferencia de estructura (${cleanedData.trainingPreference || 'No especificada, elige la más adecuada'}) **SIEMPRE QUE SEA EFECTIVA para el objetivo y nivel**.
-    * Si no hay preferencia o la preferencia no es óptima, elige la más adecuada: Principiante -> Full Body; Intermedio/Avanzado -> Split según días/objetivo (e.g., Empuje/Tire/Pierna, Torso/Pierna, Dividida por grupos musculares si el objetivo es hipertrofia y hay suficientes días).
+    * Respeta preferencia (${cleanedData.trainingPreference || 'No especificada, elige la más adecuada'}) **SI ES EFECTIVA** para objetivo/nivel.
+    * Si no, elige la más adecuada (Principiante: Full Body; Intermedio/Avanzado: Split según días/objetivo).
 
-6.  **IMC y Consideraciones:** ${cleanedData.imc ? `Considera el IMC de ${cleanedData.imc}. Si es >30 (Obesidad), prioriza ejercicios de bajo impacto articular inicialmente y enfoca en consistencia. Si es <18.5 (Bajo peso), asegura suficiente estímulo para el objetivo (fuerza/hipertrofia) y menciona la importancia de la nutrición (sin dar consejos específicos).` : 'IMC no disponible.'}
+6.  **IMC y Consideraciones:** ${cleanedData.imc ? `Considera IMC ${cleanedData.imc}. >30: bajo impacto inicial. <18.5: asegura estímulo suficiente.` : 'IMC no disponible.'}
 
-**RECUERDA: La adecuación al OBJETIVO PRIMARIO (${cleanedData.trainingGoal || 'No especificado'}) es el criterio MÁS IMPORTANTE y debe guiar todas las decisiones de diseño.**
+**RECUERDA: La adecuación al OBJETIVO PRIMARIO (${cleanedData.trainingGoal || 'No especificado'}) es el criterio MÁS IMPORTANTE.**
 
 **FORMATO DE SALIDA (HTML ESTRICTO - SIN MARKDOWN):**
 Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estructura de tabla EXACTA:
@@ -948,8 +949,8 @@ Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estru
         <th>Descanso</th>
         <th>Notas Clave</th>
     </tr>
-    <tr><td>[Ejercicio Calentamiento/Activación 1]</td><td>1-2</td><td>10-15</td><td>30s</td><td>[Movilidad articular, activación muscular específica]</td></tr>
-    <tr><td>[Ejercicio Calentamiento/Activación 2]</td><td>1-2</td><td>10-15</td><td>30s</td><td>[Preparar patrones de movimiento del día]</td></tr>
+    <tr><td>[Ejercicio Calentamiento/Activación 1]</td><td>1-2</td><td>10-15</td><td>30s</td><td>[Movilidad articular, activación muscular]</td></tr>
+    <tr><td>[Ejercicio Calentamiento/Activación 2]</td><td>1-2</td><td>10-15</td><td>30s</td><td>[Preparar patrones de movimiento]</td></tr>
     <tr class="rutina-header">
         <td colspan="5"><b>Rutina Principal</b></td>
     </tr>
@@ -958,10 +959,8 @@ Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estru
         <th>Series</th>
         <th>Reps</th>
         <th>Descanso</th>
-        <th>Notas Clave / RIR / Tempo</th> </tr>
-    <tr><td>[Ejercicio Principal 1 - Clave para Objetivo]</td><td>[Nº según Objetivo/Nivel]</td><td>[Rango según Objetivo]</td><td>[Tiempo según Objetivo]s</td><td>[Técnica / RIR X / Tempo YZAB]</td></tr>
-    <tr><td>[Ejercicio Principal 2 - Clave para Objetivo]</td><td>[Nº]</td><td>[Rango]</td><td>[Tiempo]s</td><td>[Técnica / RIR X / Tempo YZAB]</td></tr>
-    </table>
+        <th>Notas Clave</th> </tr>
+    <tr><td>[Ejercicio Principal 1 - Clave para Objetivo]</td><td>[Nº según Objetivo/Nivel]</td><td>[Rango según Objetivo]</td><td>[Tiempo según Objetivo]s</td><td>[Nota breve sobre técnica o error común a evitar (máx 15-20 palabras)]</td></tr> <tr><td>[Ejercicio Principal 2 - Clave para Objetivo]</td><td>[Nº]</td><td>[Rango]</td><td>[Tiempo]s</td><td>[Nota breve sobre técnica o error común a evitar (máx 15-20 palabras)]</td></tr> </table>
 
 <div class="side-variants-container">
     <div class="side-variants-title">Alternativas y Progresiones (Día X)</div>
@@ -976,40 +975,30 @@ Genera ÚNICAMENTE código HTML. Para CADA DÍA de entrenamiento, usa esta estru
     </div>
 
 **REGLAS ADICIONALES CRÍTICAS:**
-* **Precisión:** Nombres técnicos correctos. Parámetros exactos (Series, Rango Reps, Descanso en segundos). Usa RIR (Reps In Reserve) y/o Tempo (e.g., 31X0) en Notas Clave, ajustados al objetivo y nivel.
+* **Precisión:** Nombres técnicos correctos. Parámetros exactos (Series, Rango Reps, Descanso en segundos).
 * **Volumen:** Cumple el número MÍNIMO de ejercicios PRINCIPALES según duración y objetivo.
-* **Notas Clave:** Breves, cruciales y específicas (máx 15 palabras). Enfocadas en ejecución, intención o seguridad.
-* **Variantes:** Una variante ÚTIL (progresión/regresión/equipo/adaptación a limitación) por cada ejercicio principal. Lenguaje directo.
-* **SIN EXTRAS:** Solo HTML. Sin saludos, explicaciones fuera de las notas, intros, conclusiones, resúmenes. NO uses markdown (\`\`\`).
+* **Notas Clave:** **¡MUY IMPORTANTE!** Deben ser breves (máx 15-20 palabras), enfocadas ÚNICAMENTE en la **prevención de errores comunes** o el **punto técnico más crucial**. **NO incluir RIR ni Tempo aquí.**
+* **Variantes:** Una variante ÚTIL (progresión/regresión/equipo/adaptación) por cada ejercicio principal. Lenguaje directo.
+* **SIN EXTRAS:** Solo HTML. Sin saludos, explicaciones fuera de notas, intros, conclusiones, resúmenes. NO uses markdown (\`\`\`).
 
 ${specificRecommendations}
 
 Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con el objetivo principal: ${cleanedData.trainingGoal || 'Salud / Acondicionamiento General'}.`;
+  // ** END OF PROMPT CORRECTION for Notas Clave **
 
   try {
       console.log("Enviando solicitud a OpenAI con prompt final...");
 
-      // ** START OF CORRECTION for 'signal' error **
-      // Remove AbortController and signal logic
-      // const controller = new AbortController();
-      // const timeoutDuration = 120000; // 120 seconds timeout
-      // timeoutId = setTimeout(() => controller.abort(), timeoutDuration); // timeoutId is declared outside try/catch
-
+      // Call OpenAI API (Timeout logic removed previously)
       const completion = await openai.chat.completions.create({
-          model: process.env.OPENAI_MODEL || "gpt-4o-mini", // Use a capable model
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
           messages: [
-              { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas con enfoque en el objetivo principal." }, // System message reinforces role
+              { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas con enfoque en el objetivo principal." },
               { role: "user", content: prompt }
           ],
-          temperature: 0.4, // Slightly lower temperature for more deterministic adherence to instructions
-          max_tokens: 4096, // Increased max_tokens for potentially longer routines
-          // signal: controller.signal // REMOVED: This parameter caused the error
+          temperature: 0.4,
+          max_tokens: 4096,
       });
-
-      // clearTimeout(timeoutId); // REMOVED: No longer needed
-      // timeoutId = null; // REMOVED: No longer needed
-      // ** END OF CORRECTION for 'signal' error **
-
 
       const responseMessage = completion.choices[0]?.message?.content;
 
@@ -1017,43 +1006,29 @@ Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con 
           throw new Error("Respuesta vacía de OpenAI");
       }
 
-      // Clean possible residual markdown (although prompt forbids it)
+      // Clean possible residual markdown
       const cleanedHtmlResponse = responseMessage.replace(/```html|```/g, '').trim();
 
       console.log("Rutina generada exitosamente.");
-      // Return the clean HTML response
-      return cleanedHtmlResponse; // Make sure to return the routine
+      return cleanedHtmlResponse;
 
   } catch (error) {
-      // ** REMOVED timeout cleanup logic as timeoutId is no longer used **
-      // if (typeof timeoutId !== 'undefined' && timeoutId !== null) {
-      //     clearTimeout(timeoutId);
-      //     timeoutId = null;
-      // }
-
-      // Keep original error handling, but AbortError is less likely now
-      if (error.name === 'AbortError' || (error instanceof OpenAI.APIError && error.status === 408)) { // Keep 408 check
+      // Error handling (Timeout logic removed previously)
+      if (error.name === 'AbortError' || (error instanceof OpenAI.APIError && error.status === 408)) {
           console.error("Error: La solicitud a OpenAI excedió el tiempo límite (posiblemente del servidor).");
-          throw new Error("La generación de la rutina tardó demasiado. Intenta de nuevo más tarde o revisa la complejidad de los datos."); // Spanish error
+          throw new Error("La generación de la rutina tardó demasiado. Intenta de nuevo más tarde o revisa la complejidad de los datos.");
       }
 
       console.error("Error en la llamada a OpenAI API:", error);
        if (error instanceof OpenAI.RateLimitError) {
-          throw new Error("Límite de uso de la API de OpenAI alcanzado. Espera un momento y reintenta."); // Spanish error
+          throw new Error("Límite de uso de la API de OpenAI alcanzado. Espera un momento y reintenta.");
        } else if (error instanceof OpenAI.APIError && error.status >= 500) {
-          throw new Error("Problema temporal con el servicio de OpenAI. Intenta de nuevo más tarde."); // Spanish error
+          throw new Error("Problema temporal con el servicio de OpenAI. Intenta de nuevo más tarde.");
        } else if (error instanceof OpenAI.BadRequestError) {
-          // Check if the error is the specific 'signal' error (though it shouldn't happen now)
-          if (error.message.includes('Unrecognized request argument supplied: signal')) {
-             console.error("Error: El parámetro 'signal' no es reconocido por la versión actual de la librería OpenAI.");
-             throw new Error("Error interno de configuración al llamar a la API de OpenAI. Contacta al administrador."); // More user-friendly internal error
-          } else {
-             console.error("BadRequestError details:", error.message);
-             throw new Error(`Error de solicitud a OpenAI (BadRequest): Revisa la longitud/formato del prompt. ${error.message}`); // Spanish error
-          }
+           console.error("BadRequestError details:", error.message);
+           throw new Error(`Error de solicitud a OpenAI (BadRequest): Revisa la longitud/formato del prompt. ${error.message}`);
        } else {
-          // General error
-          throw new Error(`Error al generar la rutina con OpenAI: ${error.message}`); // Spanish error
+          throw new Error(`Error al generar la rutina con OpenAI: ${error.message}`);
        }
   }
 };
