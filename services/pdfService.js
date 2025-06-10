@@ -739,7 +739,7 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
                 // Añade una pequeña espera fija adicional para asegurar que el renderizado finalice.
                 // Útil si hay animaciones o el gráfico de volumen tarda un poco más.
                 console.log("Pequeña espera adicional para renderizado (2s)...");
-                await page.waitForTimeout(3000); // 3 segundos
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos
 
                 console.log("Esperas para gráficos completadas.");
 

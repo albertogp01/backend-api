@@ -150,16 +150,9 @@ function generateCoverPageHtml(clientName, scores, logoBase64) {
     <div class="cover-page">
         <header class="cover-header">
             ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" class="logo">` : ''}
-            <h1>Plan de Entrenamiento Personalizado</h1>
         </header>
         
-        <main class="cover-main">
-            <div class="client-info">
-                <p><strong>Cliente:</strong> ${clientName}</p>
-                <p><strong>Fecha:</strong> ${date}</p>
-                <p><strong>Enfoque Principal:</strong> <span class="focus-highlight">${focusText}</span></p>
-            </div>
-            
+        <main class="cover-main">            
             <div class="charts-container">
                 <div class="chart-wrapper">
                     <h3>Distribución del Enfoque</h3>
@@ -173,7 +166,7 @@ function generateCoverPageHtml(clientName, scores, logoBase64) {
         </main>
         
         <footer class="cover-footer">
-            <p>© ${new Date().getFullYear()} FitForm Coach - Tu hoja de ruta hacia el éxito.</p>
+            <p>© ${new Date().getFullYear()} FitForm Coach.</p>
         </footer>
     </div>
     `;
