@@ -719,15 +719,15 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
 
             // --- Generar Portada ---
             console.log("Estableciendo contenido de la PORTADA en Puppeteer...");
-            await page.setContent(coverPageCompleteHtml, { waitUntil: 'networkidle0', timeout: 60000 });
+            await page.setContent(coverPageCompleteHtml, { waitUntil: 'networkidle0', timeout: 90000 });
             console.log("Contenido de la portada establecido. Esperando renderizado de gráficos...");
 
             // --- INICIO: ESPERAS MEJORADAS PARA GRÁFICOS ---
             try {
                 console.log("Esperando selectores de canvas...");
                 // Espera a que los elementos canvas sean visibles en la página
-                await page.waitForSelector('#radarChart', { visible: true, timeout: 15000 });
-                await page.waitForSelector('#volumeLineChart', { visible: true, timeout: 15000 });
+                await page.waitForSelector('#radarChart', { visible: true, timeout: 30000 });
+                await page.waitForSelector('#volumeLineChart', { visible: true, timeout: 30000 });
                 console.log("Selectores de canvas encontrados.");
 
                 // Espera a que la variable global del gráfico radar exista.
@@ -735,14 +735,14 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
                 console.log("Esperando inicialización del gráfico radar (variable window)...");
                 await page.waitForFunction(
                     'window.myRadarChart !== undefined', // Verifica si la instancia del gráfico radar existe
-                    { timeout: 15000 } // Timeout para esta espera
+                    { timeout: 30000 } // Timeout para esta espera
                 );
                 console.log("Variable del gráfico radar encontrada.");
 
                 // Añade una pequeña espera fija adicional para asegurar que el renderizado finalice.
                 // Útil si hay animaciones o el gráfico de volumen tarda un poco más.
                 console.log("Pequeña espera adicional para renderizado (2s)...");
-                await page.waitForTimeout(2000); // 2 segundos
+                await page.waitForTimeout(3000); // 3 segundos
 
                 console.log("Esperas para gráficos completadas.");
 
