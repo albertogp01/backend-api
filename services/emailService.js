@@ -114,20 +114,9 @@ const sendEmail = async (email, clientName, pdfPath, requestId = null) => {
           <li style="margin-bottom: 8px;">Recomendaciones técnicas para maximizar tus resultados</li>
         </ul>
         
-        <div style="background-color: #fff9e6; padding: 18px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #ffc107;">
-          <p style="margin: 0; font-weight: bold; font-size: 16px;">📋 Fase de prototipo - ¡Tu opinión es valiosa!</p>
-          <p style="margin-top: 8px;">Gracias por completar nuestro primer formulario. Lo que has visto hasta ahora es un prototipo en el que seguimos trabajando activamente. Semanalmente trataremos de actualizar el código para que las respuestas sean cada vez más precisas.</p>
-          <p>Por eso, nos encantaría que nos ayudaras con un último paso: completar un segundo cuestionario que nos permitirá ajustar y perfeccionar nuestro servicio.</p>
-          <p style="margin-bottom: 5px;">Puedes acceder al cuestionario aquí:</p>
-          <div style="text-align: center; margin: 15px 0;">
-            <a href="http://fitform.coach/cuestionario" style="background-color: #0a2a5e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Completar cuestionario</a>
-          </div>
-          <p style="font-size: 13px; color: #666; margin-top: 10px;">O copia y pega este enlace: <a href="http://fitform.coach/cuestionario" style="color: #0a2a5e;">http://fitform.coach/cuestionario</a></p>
-        </div>
-        
         <p>Si tienes alguna duda sobre los ejercicios o necesitas ajustes adicionales, no dudes en contactarnos respondiendo a este correo.</p>
         
-        <p>¡Te deseamos mucho éxito en tu camino fitness!</p>
+        <p>¡Te deseamos mucho éxito en tu camino!</p>
         
         <div style="margin-top: 25px;">
           <p style="margin-bottom: 5px;">Saludos cordiales,</p>
