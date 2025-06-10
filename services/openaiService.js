@@ -1500,7 +1500,7 @@ function processTextLines(textLines) {
             return { question: "¿Cuál es tu dirección de correo electrónico?", answer: line };
         }
         
-        // Default to additional info
+        
         return { question: "¿Hay algo más que debamos saber?", answer: line };
     });
     
