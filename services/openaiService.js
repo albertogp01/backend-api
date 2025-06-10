@@ -112,7 +112,7 @@ async function createPromptAndGenerate(formattedResponses, responses, options = 
     // Load knowledge base if available
     let knowledgeBase = [];
     try {
-      const knowledgeBaseData = require('./knowledge_base.json');
+      const knowledgeBaseData = require('../knowledge_base.json');
       knowledgeBase = Array.isArray(knowledgeBaseData) ? knowledgeBaseData : [];
       console.log(`Base de conocimiento cargada con ${knowledgeBase.length} entradas`);
     } catch (error) {
@@ -911,15 +911,7 @@ function getPriorityCapacities(condition) {
   return priorities[conditionLower] || priorities['default'];
 }
 
-// Export the main function and helpers
-module.exports = {
-  generateRoutine,
-  findRelevantGuidelines,
-  getTrainingParameters,
-  getDefaultParameters,
-  formatParametersForPrompt,
-  getPriorityCapacities
-};// Import necessary modules
+// Import necessary modules
 const OpenAI = require("openai");
 const dotenv = require('dotenv');
 const fs = require('fs'); // Import 'fs' to check for knowledge_base.json existence
@@ -1506,3 +1498,12 @@ function processTextLines(textLines) {
     
     return mappedResults.filter(r => r.question && r.answer);
 }
+
+module.exports = {
+  generateRoutine,
+  findRelevantGuidelines,
+  getTrainingParameters,
+  getDefaultParameters,
+  formatParametersForPrompt,
+  getPriorityCapacities
+};
