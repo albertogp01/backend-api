@@ -727,7 +727,7 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
                 console.log("Esperando selectores de canvas...");
                 // Espera a que los elementos canvas sean visibles en la página
                 await page.waitForSelector('#radarChart', { visible: true, timeout: 30000 });
-                await page.waitForSelector('#volumeLineChart', { visible: true, timeout: 30000 });
+                await page.waitForSelector('#volumeBarChart', { visible: true, timeout: 30000 });
                 console.log("Selectores de canvas encontrados.");
 
                 // Espera a que la variable global del gráfico radar exista.

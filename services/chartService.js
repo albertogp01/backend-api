@@ -220,7 +220,7 @@ function getCoverPageStyles() {
  */
 function getChartJsLibrary() {
     try {
-        const chartJsPath = path.resolve(__dirname, './assets/js/chart.umd.min.js');
+        const chartJsPath = path.resolve(__dirname, '../../controllers/assets/js/chart.umd.min.js');
         if (fs.existsSync(chartJsPath)) {
             return fs.readFileSync(chartJsPath, 'utf8');
         }
