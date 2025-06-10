@@ -733,11 +733,8 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
                 // Espera a que la variable global del gráfico radar exista.
                 // Esto indica que el script initRadarChart probablemente ha terminado.
                 console.log("Esperando inicialización del gráfico radar (variable window)...");
-                await page.waitForFunction(
-                    'window.myRadarChart !== undefined', // Verifica si la instancia del gráfico radar existe
-                    { timeout: 30000 } // Timeout para esta espera
-                );
-                console.log("Variable del gráfico radar encontrada.");
+                await page.waitForFunction('window.chartsReady === true', { timeout: 30000 });
+                console.log("Señal 'chartsReady' recibida. Los gráficos están renderizados.");
 
                 // Añade una pequeña espera fija adicional para asegurar que el renderizado finalice.
                 // Útil si hay animaciones o el gráfico de volumen tarda un poco más.
