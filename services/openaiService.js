@@ -991,13 +991,13 @@ Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con 
 
       // Call OpenAI API (Timeout logic removed previously)
       const completion = await openai.chat.completions.create({
-          model: process.env.OPENAI_MODEL || "o3‑mini",
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
           messages: [
               { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas con enfoque en el objetivo principal." },
               { role: "user", content: prompt }
           ],
-          temperature: 0.6,
-          max_tokens: 9000,
+          temperature: 0.4,
+          max_tokens: 6096,
       });
 
       const responseMessage = completion.choices[0]?.message?.content;
