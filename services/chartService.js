@@ -220,14 +220,14 @@ function getCoverPageStyles() {
  */
 function getChartJsLibrary() {
     try {
-        const chartJsPath = path.resolve(__dirname, '../../controllers/assets/js/chart.umd.min.js');
+        const chartJsPath = path.resolve(__dirname, '../controllers/assets/js/chart.umd.min.js');
         if (fs.existsSync(chartJsPath)) {
             return fs.readFileSync(chartJsPath, 'utf8');
         }
     } catch (e) {
         console.error("No se pudo leer la librería Chart.js localmente.", e);
     }
-    console.error("ERROR CRÍTICO: No se encontró 'chart.umd.min.js' en 'services/assets/js/'. La portada no podrá generar gráficos.");
+    console.error("ERROR CRÍTICO: No se encontró 'chart.umd.min.js' en '../controllers/assets/js/chart.umd.min.js'. La portada no podrá generar gráficos.");
     return ''; // Devolver vacío para que no se rompa el script
 }
 
