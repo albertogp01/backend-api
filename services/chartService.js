@@ -1,254 +1,274 @@
 /**
- * services/chartService.js (Versión 3.0 - Lógica de Análisis Robusta y Diseño Mejorado)
+ * services/chartService.js (Versión 2.2 - Corregido el análisis y las dependencias)
  *
- * Servicio de élite para analizar rutinas HTML, extraer métricas precisas y generar
- * una portada con gráficos dinámicos, informativos y visualmente impactantes.
+ * Servicio robusto para analizar una rutina de entrenamiento en HTML, extraer datos clave,
+ * inyectar dependencias locales y generar una portada visualmente atractiva para PDF.
  */
 const fs = require('fs');
 const path = require('path');
 
-// --- LÓGICA DE ANÁLISIS DE RUTINA (REDISEÑADA) ---
+// --- FUNCIONES DE CÁLCULO DE DATOS ---
 
 /**
- * Analiza el HTML de la rutina de forma robusta, dividiéndolo por días para garantizar la precisión.
- * @param {string} routineHtml - El contenido HTML de la rutina.
- * @returns {{scores: object, dailyVolume: object, mainFocus: string}} - Datos extraídos y calculados.
+ * Analiza el HTML de la rutina para extraer las variables clave del entrenamiento (series, repeticiones, etc.)
+ * y calcular las puntuaciones de los componentes del entrenamiento.
+ *
+ * @param {string} routineHtml - El contenido HTML de la rutina generada por la IA.
+ * @returns {{scores: object, dailyVolume: object}} - Un objeto con las puntuaciones normalizadas y el volumen diario.
  */
 function analyzeRoutine(routineHtml) {
     const scores = { fuerza: 0, hipertrofia: 0, resistencia: 0, potencia: 0, movilidad: 0, tecnica: 0 };
     const dailyVolume = {};
+    const daysFound = [];
 
     if (!routineHtml || typeof routineHtml !== 'string') {
-        return { scores, dailyVolume, mainFocus: 'Indefinido' };
+        console.error("[ChartService] Error: routineHtml no es válido o está vacío.");
+        return { scores, dailyVolume };
     }
 
-    // DIVIDIR el HTML por los títulos de los días. Es la clave para la robustez.
-    // La expresión regular captura el título del día para que no se pierda en el split.
-    const daySplitRegex = /(<th colspan="5">Día \d+:.+?<\/th>|<h[1-4][^>]*>.*?D[íi]a\s+\d+.*?<\/h[1-4]>)/i;
-    const parts = routineHtml.split(daySplitRegex).filter(p => p && p.trim() !== '');
+    // Expresión regular mejorada para encontrar bloques de día completos.
+    // Captura el título del día y todo el contenido hasta el siguiente día o el final del body.
+    const dayBlockRegex = /<th colspan="5">\s*(D[íi]a\s+\d+:[^<]+)\s*<\/th>([\s\S]*?)(?=<th colspan="5">|<\/body>)/gi;
 
-    for (let i = 0; i < parts.length; i += 2) {
-        const titleHtml = parts[i];
-        const contentHtml = parts[i + 1];
-
-        if (!titleHtml || !contentHtml) continue;
-
-        const dayTitleMatch = titleHtml.match(/D[íi]a\s+\d+/i);
-        if (!dayTitleMatch) continue;
-
-        const currentDay = dayTitleMatch[0];
+    let match;
+    while ((match = dayBlockRegex.exec(routineHtml)) !== null) {
+        const currentDay = match[1].trim().replace(/:$/, '').trim();
+        const dayContentHtml = match[2];
+        
         if (!dailyVolume[currentDay]) {
             dailyVolume[currentDay] = 0;
+            daysFound.push(currentDay);
         }
 
-        // Analizar todas las tablas DENTRO del contenido de este día
-        const tableRegex = /<table[\s\S]*?<\/table>/gi;
-        const tables = contentHtml.match(tableRegex) || [];
+        const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
+        const cellRegex = /<(?:td|th)[\s\S]*?<\/(?:td|th)>/gi;
+        const rows = dayContentHtml.match(rowRegex) || [];
+        
+        let headers = { exercise: 0, series: 1, reps: 2, rest: 3, notes: 4 };
 
-        tables.forEach(tableHtml => {
-            const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
-            const rows = tableHtml.match(rowRegex) || [];
-            let headers = {};
+        rows.forEach(rowHtml => {
+            const cells = rowHtml.match(cellRegex) || [];
+            if (cells.length < 4) return;
 
-            rows.forEach(rowHtml => {
-                const cellRegex = /<(?:td|th)[\s\S]*?<\/(?:td|th)>/gi;
-                const cells = rowHtml.match(cellRegex) || [];
-                if (cells.length === 0) return;
+            if (cells.some(cell => /<th/i.test(cell) && !/colspan/i.test(cell))) {
+                cells.forEach((cell, index) => {
+                    const text = cell.replace(/<[^>]+>/g, ' ').trim().toLowerCase();
+                    if (/ejercicio/i.test(text)) headers.exercise = index;
+                    if (/series/i.test(text)) headers.series = index;
+                    if (/reps|repeticiones/i.test(text)) headers.reps = index;
+                    if (/descanso/i.test(text)) headers.rest = index;
+                    if (/notas/i.test(text)) headers.notes = index;
+                });
+                return;
+            }
+            
+            if (cells.some(cell => /colspan/i.test(cell))) {
+                return;
+            }
 
-                const cellTexts = cells.map(cell => cell.replace(/<[^>]+>/g, ' ').trim().toLowerCase());
-                const isHeaderRow = /<th/i.test(rowHtml);
+            const cellTexts = cells.map(cell => cell.replace(/<[^>]+>/g, ' ').trim());
+            const exercise = cellTexts[headers.exercise] || '';
+            const seriesText = cellTexts[headers.series] || '0';
+            const repsText = cellTexts[headers.reps] || '';
+            const restText = cellTexts[headers.rest] || '';
+            const notes = cellTexts[headers.notes] || '';
+            const combinedText = `${exercise.toLowerCase()} ${notes.toLowerCase()}`;
 
-                if (isHeaderRow) {
-                    cellTexts.forEach((text, index) => {
-                        if (/ejercicio/i.test(text)) headers.exercise = index;
-                        if (/series/i.test(text)) headers.series = index;
-                        if (/reps|repeticiones/i.test(text)) headers.reps = index;
-                        if (/descanso/i.test(text)) headers.rest = index;
-                        if (/notas/i.test(text)) headers.notes = index;
-                    });
-                    return;
-                }
-                
-                // Procesar solo si tenemos una cabecera y una fila de datos válida
-                if (Object.keys(headers).length === 0 || /<td[^>]+colspan/i.test(rowHtml)) return;
+            if (!exercise || seriesText.trim() === '') {
+                return;
+            }
 
-                const seriesText = cellTexts[headers.series] || '0';
-                const seriesMatch = seriesText.match(/(\d+)/);
-                if (seriesMatch) {
-                    dailyVolume[currentDay] += parseInt(seriesMatch[1], 10);
-                }
+            const seriesMatch = seriesText.match(/(\d+)/);
+            if (seriesMatch) {
+                dailyVolume[currentDay] += parseInt(seriesMatch[1], 10);
+            }
 
-                const repsText = cellTexts[headers.reps] || '';
-                const restText = cellTexts[headers.rest] || '';
-                const combinedText = `${cellTexts[headers.exercise] || ''} ${cellTexts[headers.notes] || ''}`;
-                
-                const repMatch = repsText.match(/(\d+)(?:[ -]+(\d+))?/);
-                const repMax = repMatch ? parseInt(repMatch[2] || repMatch[1], 10) : 0;
-                if (repMax > 0) {
-                    if (repMax <= 6) scores.fuerza += 2;
-                    if (repMax >= 6 && repMax <= 15) scores.hipertrofia++;
-                    if (repMax > 15) scores.resistencia += 2;
-                    if (repMax <= 8) scores.potencia++;
-                }
+            const repMatch = repsText.match(/(\d+)(?:[ -]+(\d+))?/);
+            const repMax = repMatch ? parseInt(repMatch[2] || repMatch[1], 10) : 0;
+            const restMatch = restText.match(/(\d+)/);
+            const restSeconds = restMatch ? parseInt(restMatch[1], 10) : 0;
 
-                const restMatch = restText.match(/(\d+)/);
-                const restSeconds = restMatch ? parseInt(restMatch[1], 10) : 0;
-                if (restSeconds > 0) {
-                    if (restSeconds >= 120) scores.fuerza++;
-                    if (restSeconds >= 60 && restSeconds < 120) scores.hipertrofia++;
-                    if (restSeconds < 60) scores.resistencia++;
-                }
-
-                if (/explosivo|salto|pliométrico|balístico|máxima velocidad/i.test(combinedText)) scores.potencia += 3;
-                if (/movilidad|estiramiento|yoga|rango de movimiento|flexibilidad/i.test(combinedText)) scores.movilidad += 3;
-                if (/controlado|lento|isométrico|técnica|tempo/i.test(combinedText)) scores.tecnica += 2;
-            });
+            if (repMax > 0) {
+                if (repMax <= 6) scores.fuerza += 2;
+                if (repMax >= 6 && repMax <= 15) scores.hipertrofia++;
+                if (repMax > 15) scores.resistencia += 2;
+                if (repMax <= 8) scores.potencia++;
+            }
+            if (restSeconds > 0) {
+                if (restSeconds >= 120) scores.fuerza++;
+                if (restSeconds >= 60 && restSeconds < 120) scores.hipertrofia++;
+                if (restSeconds < 60) scores.resistencia++;
+            }
+            if (/explosivo|salto|pliométrico|balístico|máxima velocidad/i.test(combinedText)) scores.potencia += 3;
+            if (/movilidad|estiramiento|yoga|rango de movimiento|flexibilidad/i.test(combinedText)) scores.movilidad += 3;
+            if (/controlado|lento|isométrico|técnica|tempo/i.test(combinedText)) scores.tecnica += 2;
         });
     }
 
+    console.log("[ChartService] Análisis completado. Días encontrados: " + (daysFound.length > 0 ? daysFound.join(', ') : 'Ninguno'));
+    
     const totalScore = Object.values(scores).reduce((sum, value) => sum + value, 0);
     if (totalScore > 0) {
-        Object.keys(scores).forEach(key => {
+        for (const key in scores) {
             scores[key] = Math.round((scores[key] / totalScore) * 100);
-        });
+        }
     }
     
     let currentTotal = Object.values(scores).reduce((a, b) => a + b, 0);
     if (currentTotal > 0 && currentTotal !== 100) {
         let diff = 100 - currentTotal;
-        let sortedKeys = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
-        scores[sortedKeys[0]] += diff;
+        let sorted = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+        if(sorted.length > 0) {
+            scores[sorted[0]] += diff;
+        }
     }
 
-    const mainFocus = Object.entries(scores)
-        .filter(([, score]) => score >= 20)
-        .sort((a, b) => b[1] - a[1])
-        .map(([name]) => name.charAt(0).toUpperCase() + name.slice(1))
-        .join(' + ') || 'Equilibrado';
-
-    return { scores, dailyVolume, mainFocus };
+    return { scores, dailyVolume };
 }
 
+// --- FUNCIONES DE GENERACIÓN DE HTML, CSS Y JS ---
 
-// --- GENERACIÓN DE LA PORTADA (HTML, CSS, JS) ---
-
-function generateCoverPageHtml(clientName, mainFocus, logoBase64) {
+/**
+ * Genera el HTML de la portada.
+ * @param {string} clientName - Nombre del cliente.
+ * @param {object} scores - Puntuaciones de los componentes.
+ * @param {string} logoBase64 - Logo en formato Base64.
+ * @returns {string} - El HTML completo de la portada.
+ */
+function generateCoverPageHtml(clientName, scores, logoBase64) {
     const date = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    return `
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Plan de Entrenamiento - ${clientName}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>${getCoverPageStyles()}</style>
-    </head>
-    <body>
-        <div class="page">
-            <header class="header">
-                ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" class="logo">` : '<h1>FitForm Coach</h1>'}
-                <div class="header-info">
-                    <span>Plan de Entrenamiento Personalizado</span>
-                </div>
-            </header>
-            
-            <main class="main-content">
-                <div class="info-panel">
-                    <div class="info-item">
-                        <span class="info-label">Cliente</span>
-                        <span class="info-value">${clientName}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Fecha</span>
-                        <span class="info-value">${date}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Enfoque Principal</span>
-                        <span class="info-value focus">${mainFocus}</span>
-                    </div>
-                </div>
-                
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h2>Distribución de Estímulos</h2>
-                        <canvas id="focusDonutChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h2>Volumen Semanal por Día</h2>
-                        <canvas id="volumeBarChart"></canvas>
-                    </div>
-                </div>
-            </main>
-            
-            <footer class="footer">
-                <p>© ${new Date().getFullYear()} FitForm Coach. Este es el comienzo de tu transformación.</p>
-            </footer>
-        </div>
-    </body>
-    </html>`;
-}
+    
+    const mainComponents = Object.entries(scores)
+        .filter(([, score]) => score >= 15) // Umbral para considerar un componente principal
+        .sort((a, b) => b[1] - a[1])
+        .map(([name]) => name.charAt(0).toUpperCase() + name.slice(1));
+    
+    const focusText = mainComponents.length > 0 ? mainComponents.join(' + ') : 'Equilibrado';
 
-function getCoverPageStyles() {
+    // No se incluye el <script> aquí, se generará y añadirá después
     return `
-        :root {
-            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --primary: #0a2a5e; --secondary: #2c4b7c; --accent: #2196f3;
-            --text-dark: #2c3e50; --text-light: #8492a6; --background: #f8f9fa; --white: #ffffff;
-            --border-color: #e9ecef; --shadow: 0 4px 6px rgba(0,0,0,0.04), 0 5px 15px rgba(0,0,0,0.08);
-        }
-        body { margin: 0; font-family: var(--font-family); background-color: #ccc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .page { display: flex; flex-direction: column; width: 210mm; height: 297mm; background: var(--white); margin: 0 auto; box-sizing: border-box; padding: 25mm; page-break-after: always; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 20px; }
-        .logo { max-height: 45px; }
-        .header h1 { color: var(--primary); font-size: 24px; margin: 0; }
-        .header-info span { font-size: 14px; color: var(--text-light); font-weight: 500; }
-        .main-content { flex-grow: 1; padding-top: 25mm; }
-        .info-panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; background: var(--background); padding: 20px; border-radius: 12px; margin-bottom: 25mm; }
-        .info-item { display: flex; flex-direction: column; gap: 4px; }
-        .info-label { font-size: 12px; color: var(--text-light); font-weight: 500; text-transform: uppercase; }
-        .info-value { font-size: 18px; color: var(--text-dark); font-weight: 600; }
-        .info-value.focus { color: var(--primary); }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25mm; align-items: start; }
-        .chart-container { background: var(--white); padding: 25px; border-radius: 12px; box-shadow: var(--shadow); }
-        .chart-container h2 { font-size: 16px; color: var(--text-dark); margin: 0 0 20px; text-align: center; font-weight: 600; }
-        .footer { text-align: center; padding-top: 20px; margin-top: auto; border-top: 1px solid var(--border-color); color: var(--text-light); font-size: 12px; }
+    <div class="cover-page">
+        <header class="cover-header">
+            ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" class="logo">` : ''}
+            <h1>Plan de Entrenamiento Personalizado</h1>
+        </header>
+        
+        <main class="cover-main">
+            <div class="client-info">
+                <p><strong>Cliente:</strong> ${clientName}</p>
+                <p><strong>Fecha:</strong> ${date}</p>
+                <p><strong>Enfoque Principal:</strong> <span class="focus-highlight">${focusText}</span></p>
+            </div>
+            
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>Distribución del Enfoque</h3>
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Volumen Semanal (Series por Día)</h3>
+                    <canvas id="volumeBarChart"></canvas>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="cover-footer">
+            <p>© ${new Date().getFullYear()} FitForm Coach - Tu hoja de ruta hacia el éxito.</p>
+        </footer>
+    </div>
     `;
 }
 
-function getChartsScript(scores, dailyVolume) {
-    const focusData = {
-        labels: ['Fuerza', 'Hipertrofia', 'Resistencia', 'Potencia', 'Movilidad', 'Técnica'],
-        values: [scores.fuerza, scores.hipertrofia, scores.resistencia, scores.potencia, scores.movilidad, scores.tecnica],
-        colors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c']
-    };
-    const volumeData = {
-        labels: Object.keys(dailyVolume).sort((a, b) => (a.match(/\d+/)?.[0] || 0) - (b.match(/\d+/)?.[0] || 0)),
-        values: Object.values(dailyVolume)
-    };
+
+/**
+ * Devuelve los estilos CSS para la portada.
+ * @returns {string} - Una cadena con todo el CSS.
+ */
+function getCoverPageStyles() {
     return `
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+        :root {
+            --primary-text: #2c3e50;
+            --secondary-text: #7f8c8d;
+            --background: #ffffff;
+            --panel-bg: #f8f9fa;
+            --border-color: #e9ecef;
+            --accent-color: #3498db;
+            --font-family: 'Inter', sans-serif;
+        }
+        body { margin: 0; font-family: var(--font-family); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .cover-page { display: flex; flex-direction: column; width: 100%; height: 100vh; background: var(--background); padding: 50px; box-sizing: border-box; page-break-after: always; }
+        .cover-header { display: flex; align-items: center; gap: 20px; padding-bottom: 25px; border-bottom: 2px solid var(--border-color); }
+        .logo { max-width: 150px; max-height: 50px; }
+        .cover-header h1 { font-size: 28px; color: var(--primary-text); font-weight: 700; margin: 0; }
+        .cover-main { flex-grow: 1; padding: 40px 0; }
+        .client-info { background: var(--panel-bg); padding: 20px; border-radius: 8px; margin-bottom: 40px; border: 1px solid var(--border-color); }
+        .client-info p { margin: 0 0 10px; font-size: 16px; color: var(--secondary-text); }
+        .client-info p:last-child { margin-bottom: 0; }
+        .client-info strong { color: var(--primary-text); }
+        .focus-highlight { color: var(--accent-color); font-weight: 600; }
+        .charts-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: flex-start; }
+        .chart-wrapper { border: 1px solid var(--border-color); padding: 25px; border-radius: 8px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .chart-wrapper h3 { text-align: center; margin: 0 0 20px; font-size: 16px; color: var(--primary-text); font-weight: 600; }
+        canvas { max-width: 100%; }
+        .cover-footer { text-align: center; padding-top: 25px; border-top: 1px solid var(--border-color); margin-top: auto; color: var(--secondary-text); font-size: 12px; }
+    `;
+}
+
+/**
+ * Lee la librería de Chart.js desde un archivo local.
+ * @returns {string} - El código de la librería o una cadena vacía si falla.
+ */
+function getChartJsLibrary() {
+    try {
+        const chartJsPath = path.resolve(__dirname, './assets/js/chart.umd.min.js');
+        if (fs.existsSync(chartJsPath)) {
+            return fs.readFileSync(chartJsPath, 'utf8');
+        }
+    } catch (e) {
+        console.error("No se pudo leer la librería Chart.js localmente.", e);
+    }
+    console.error("ERROR CRÍTICO: No se encontró 'chart.umd.min.js' en 'services/assets/js/'. La portada no podrá generar gráficos.");
+    return ''; // Devolver vacío para que no se rompa el script
+}
+
+/**
+ * Genera el script de Chart.js para ambos gráficos.
+ * @param {object} scores - Puntuaciones de los componentes.
+ * @param {object} dailyVolume - Datos de volumen diario.
+ * @returns {string} - El código JavaScript para renderizar los gráficos.
+ */
+function getChartsScript(scores, dailyVolume) {
+    const radarData = [scores.fuerza, scores.hipertrofia, scores.resistencia, scores.potencia, scores.movilidad, scores.tecnica];
+    const radarLabels = ['Fuerza', 'Hipertrofia', 'Resistencia', 'Potencia', 'Movilidad', 'Técnica'];
+    
+    const volumeLabels = Object.keys(dailyVolume).sort((a, b) => (a.match(/\d+/)?.[0] || 0) - (b.match(/\d+/)?.[0] || 0));
+    const volumeData = volumeLabels.map(day => dailyVolume[day]);
+
+    return `
     <script>
       function initCharts() {
         try {
-          Chart.register(ChartDataLabels);
-          const commonOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
-
-          const focusCtx = document.getElementById('focusDonutChart')?.getContext('2d');
-          if (focusCtx) {
-            new Chart(focusCtx, {
-              type: 'doughnut',
+          const radarCtx = document.getElementById('radarChart')?.getContext('2d');
+          if (radarCtx) {
+            new Chart(radarCtx, {
+              type: 'radar',
               data: {
-                labels: ${JSON.stringify(focusData.labels)},
+                labels: ${JSON.stringify(radarLabels)},
                 datasets: [{
-                  data: ${JSON.stringify(focusData.values)},
-                  backgroundColor: ${JSON.stringify(focusData.colors)},
-                  borderWidth: 2, borderColor: '#fff'
+                  label: 'Enfoque %',
+                  data: ${JSON.stringify(radarData)},
+                  backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                  borderColor: 'rgba(52, 152, 219, 1)',
+                  borderWidth: 2,
+                  pointBackgroundColor: 'rgba(52, 152, 219, 1)'
                 }]
               },
-              options: { ...commonOptions, plugins: { legend: { position: 'bottom', labels: { padding: 15, font: { size: 11 } } }, datalabels: {
-                formatter: (value) => value > 5 ? value + '%' : '', color: '#fff', font: { weight: 'bold' }
-              }}}
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: { r: { beginAtZero: true, suggestedMax: 50, ticks: { backdropColor: 'transparent' } } },
+                plugins: { legend: { display: false } }
+              }
             });
           }
 
@@ -257,29 +277,37 @@ function getChartsScript(scores, dailyVolume) {
             new Chart(volumeCtx, {
               type: 'bar',
               data: {
-                labels: ${JSON.stringify(volumeData.labels)},
+                labels: ${JSON.stringify(volumeLabels)},
                 datasets: [{
                   label: 'Series Totales',
-                  data: ${JSON.stringify(volumeData.values)},
-                  backgroundColor: '#3498db',
-                  borderRadius: 4
+                  data: ${JSON.stringify(volumeData)},
+                  backgroundColor: 'rgba(46, 204, 113, 0.6)',
+                  borderColor: 'rgba(46, 204, 113, 1)',
+                  borderWidth: 1
                 }]
               },
-              options: { ...commonOptions, scales: { y: { beginAtZero: true, grace: '5%' } }, plugins: { datalabels: {
-                anchor: 'end', align: 'end', color: '#555', font: { weight: 'bold' },
-                formatter: (value) => value > 0 ? value : ''
-              }}}
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 5 } } },
+                plugins: { legend: { display: false } }
+              }
             });
           }
           
-          window.chartsReady = true; // Señal para Puppeteer
+          window.chartsReady = true;
+
         } catch (e) {
           console.error('Error al inicializar gráficos:', e);
           window.chartsReady = false;
         }
       }
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCharts);
-      else initCharts();
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCharts);
+      } else {
+        initCharts();
+      }
     </script>
     `;
 }
@@ -287,28 +315,42 @@ function getChartsScript(scores, dailyVolume) {
 // --- FUNCIÓN PRINCIPAL EXPORTADA ---
 
 /**
- * Orquesta la creación de la portada completa.
- * @param {string} routineHtml - HTML de la rutina.
+ * Orquesta la creación de la portada, combinando datos y elementos visuales.
+ * @param {string} routineHtml - HTML completo de la rutina.
  * @param {string} clientName - Nombre del cliente.
- * @returns {object} Objeto con HTML, datos de scores y volumen.
+ * @returns {object} - Objeto que contiene el HTML completo de la portada con sus estilos y scripts.
  */
 function createCoverPage(routineHtml, clientName) {
-    const { scores, dailyVolume, mainFocus } = analyzeRoutine(routineHtml);
-    console.log("[ChartService] Análisis completado. Días encontrados:", Object.keys(dailyVolume).join(', ') || 'Ninguno');
-    console.log("[ChartService] Volumen por día:", JSON.stringify(dailyVolume));
-    console.log("[ChartService] Enfoque principal:", mainFocus);
+    // 1. Analizar la rutina para obtener datos
+    const { scores, dailyVolume } = analyzeRoutine(routineHtml);
+    console.log("[ChartService] Puntuaciones calculadas:", scores);
+    console.log("[ChartService] Volumen por día:", dailyVolume);
 
+    // 2. Cargar el logo
     const logoPath = path.resolve(__dirname, "../assets/logo.png");
-    const logoBase64 = fs.existsSync(logoPath) ? `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}` : "";
+    let logoBase64 = "";
+    if (fs.existsSync(logoPath)) {
+        logoBase64 = `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}`;
+    } else {
+        console.warn("[ChartService] Logo no encontrado en:", logoPath);
+    }
 
-    let fullCoverPageHtml = generateCoverPageHtml(clientName, mainFocus, logoBase64);
-    const script = getChartsScript(scores, dailyVolume);
+    // 3. Generar los componentes de la portada
+    const fullCoverPageHtml = generateCoverPageHtml(clientName, scores, logoBase64);
+    const styles = getCoverPageStyles();
     
-    // Incrustar el script justo antes de cerrar el </body>
-    fullCoverPageHtml = fullCoverPageHtml.replace('</body>', `${script}</body>`);
+    // 4. Obtener la librería de Chart.js y el script que la usa
+    const chartJsLibraryCode = getChartJsLibrary();
+    const chartScriptCode = getChartsScript(scores, dailyVolume);
+
+    // 5. Ensamblar todo el script
+    // Inyectamos la librería primero, y luego el script que la utiliza
+    const script = `<script>${chartJsLibraryCode}</script>${chartScriptCode}`;
 
     return {
         fullCoverPageHtml,
+        styles,
+        script,
         scores,
         volumeData: dailyVolume
     };
