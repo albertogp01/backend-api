@@ -222,7 +222,7 @@ Por favor, genera una rutina de entrenamiento personalizada siguiendo las pautas
         { role: "user", content: userPrompt }
       ],
       temperature: options.temperature || 0.7,
-      max_tokens: options.maxTokens || 15000,
+      max_tokens: options.maxTokens || 6783,
     });
 
     const generatedRoutine = response.choices[0]?.message?.content;
