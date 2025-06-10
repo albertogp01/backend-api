@@ -1296,15 +1296,22 @@ const generateRoutine = async (formData, options = {}) => {
 
     // Format responses for the prompt, excluding sensitive data and empty answers
     const formattedResponsesForPrompt = responses
-      .filter(item =>
-           item && // Ensure item exists
-           item.answer && String(item.answer).trim() !== '' && // Exclude empty or null answers
-           item.field !== 'nombre' && // Exclude name
-           item.field !== 'email' && // Exclude email
-           item.question && // Ensure question exists
+      .filter(item => {
+        // Añadimos una validación explícita para asegurar que 'question' sea un string no vacío.
+        const isQuestionValid = item && item.question && typeof item.question === 'string' && item.question.trim() !== '';
+        
+        if (!isQuestionValid) {
+          return false; // Descartar items con 'question' inválida.
+        }
+
+        return (
+           item.answer && String(item.answer).trim() !== '' &&
+           item.field !== 'nombre' &&
+           item.field !== 'email' &&
            !item.question.toLowerCase().includes("cómo te llamas") &&
            !item.question.toLowerCase().includes("dirección de correo electrónico")
-      )
+        );
+      })
       .map(item => `Pregunta: ${item.question}\nRespuesta: ${item.answer}`);
 
     console.log(`Procesando ${formattedResponsesForPrompt.length} respuestas para prompt (filtradas)`);
