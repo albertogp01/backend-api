@@ -917,7 +917,7 @@ ${formattedResponsesForPrompt.join("\n")}
 
 4.  **IMPORTANTE:**
     * Diseña para ${cleanedData.daysPerWeek || 'días no especificados'} días/semana, sesiones de ~${cleanedData.sessionTime || 'duración no especificada'}.
-    * IMPORTANTE: Ajusta **volumen total** (Nº ejercicios principales ≈ 4-5 para 30min; 6-8 para 60min; 8-10 para 90min; 10-12 para 120min). Activación no cuenta.
+    * IMPORTANTE: Ajusta **volumen total** (Nº ejercicios principales ≈ 6-8 para 30min; 8-10 para 60min; 10-12 para 90min; 12-14 para 120min). 
     * Usa material disponible (${cleanedData.specificMaterial || 'Asumir gimnasio estándar'}). Adapta si es casa/aire libre.
 
 5.  **Estructura Preferida:**
@@ -989,10 +989,10 @@ Diseña la rutina SEMANAL completa AHORA, asegurando la MÁXIMA alineación con 
       const completion = await openai.chat.completions.create({
           model: process.env.OPENAI_MODEL || "gpt-4o-mini",
           messages: [
-              { role: "system", content: "Eres FitForge AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas con enfoque en el objetivo principal." },
+              { role: "system", content: "Eres FitForme AI, un creador experto de rutinas de entrenamiento personalizadas en formato HTML, siguiendo instrucciones muy estrictas con enfoque en el objetivo principal." },
               { role: "user", content: prompt }
           ],
-          temperature: 0.6,
+          temperature: 0.4,
           max_tokens: 8096,
       });
 
