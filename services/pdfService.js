@@ -6,9 +6,6 @@ const puppeteer = require("puppeteer");
 const os = require("os");
 const { PDFDocument } = require('pdf-lib'); // Asegúrate de tener: npm install pdf-lib
 
-// Importar la función principal de chartService.js
-const { createCoverPage } = require('./chartService'); // Asegúrate que la ruta es correcta
-
 /**
  * Genera un archivo PDF a partir de contenido HTML, incluyendo una portada dinámica.
  * @param {string} htmlContent - El contenido HTML principal de la rutina.
@@ -721,34 +718,6 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
             console.log("Estableciendo contenido de la PORTADA en Puppeteer...");
             await page.setContent(coverPageCompleteHtml, { waitUntil: 'networkidle0', timeout: 90000 });
             console.log("Contenido de la portada establecido. Esperando renderizado de gráficos...");
-
-            // --- INICIO: ESPERAS MEJORADAS PARA GRÁFICOS ---
-            try {
-                console.log("Esperando selectores de canvas...");
-                // Espera a que los elementos canvas sean visibles en la página
-                await page.waitForSelector('#radarChart', { visible: true, timeout: 30000 });
-                await page.waitForSelector('#volumeBarChart', { visible: true, timeout: 30000 });
-                console.log("Selectores de canvas encontrados.");
-
-                // Espera a que la variable global del gráfico radar exista.
-                // Esto indica que el script initRadarChart probablemente ha terminado.
-                console.log("Esperando inicialización del gráfico radar (variable window)...");
-                await page.waitForFunction('window.chartsReady === true', { timeout: 30000 });
-                console.log("Señal 'chartsReady' recibida. Los gráficos están renderizados.");
-
-                // Añade una pequeña espera fija adicional para asegurar que el renderizado finalice.
-                // Útil si hay animaciones o el gráfico de volumen tarda un poco más.
-                console.log("Pequeña espera adicional para renderizado (2s)...");
-                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos
-
-                console.log("Esperas para gráficos completadas.");
-
-            } catch (waitError) {
-                console.error("Error durante las esperas para los gráficos:", waitError.message);
-                // Se decide continuar aunque haya error en la espera, pero se advierte.
-                console.warn("Continuando la generación del PDF, pero los gráficos podrían faltar.");
-            }
-            // --- FIN: ESPERAS MEJORADAS PARA GRÁFICOS ---
 
             // Generar la primera página (Portada)
             const coverPagePdfBuffer = await page.pdf({
