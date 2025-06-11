@@ -63,29 +63,6 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
                 year: "numeric", month: "long", day: "numeric"
             });
 
-            // --- Generar HTML de la Portada Dinámica ---
-            console.log("Generando HTML de la portada...");
-            const { fullCoverPageHtml, styles, script, scores, volumeData } = createCoverPage(htmlContent, clientName, logoBase64);
-
-            const coverPageCompleteHtml = `
-             <!DOCTYPE html>
-             <html lang="es">
-             <head>
-                 <meta charset="UTF-8">
-                 <title>Portada - ${clientName}</title>
-                 <link rel="preconnect" href="https://fonts.googleapis.com">
-                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-                 <style>${styles}</style>
-             </head>
-             <body>
-                 ${fullCoverPageHtml}
-                 ${script}
-             </body>
-             </html>
-            `;
-            console.log("HTML de la portada generado.");
-
             // --- Ensamblar el HTML COMPLETO para la RUTINA (para la segunda parte del PDF) ---
             const routinePageHtml = `
              <!DOCTYPE html>
