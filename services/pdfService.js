@@ -714,12 +714,7 @@ async function generatePDF(htmlContent, clientName = "Cliente", tempDir = "", re
             // Configurar viewport
             await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 }); // A4 aprox
 
-            // --- Generar Portada ---
-            console.log("Estableciendo contenido de la PORTADA en Puppeteer...");
-            await page.setContent(coverPageCompleteHtml, { waitUntil: 'networkidle0', timeout: 90000 });
-            console.log("Contenido de la portada establecido. Esperando renderizado de gráficos...");
-
-            // Generar la primera página (Portada)
+                        // Generar la primera página (Portada)
             const coverPagePdfBuffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,
